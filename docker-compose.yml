@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  # Database
+  caddy:
+    container_name: caddy
+    image: caddy:latest
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile
+    ports:
+      - "8000:80"
+      - "8443:443"
+    depends_on:
+      - gateway
+      - frontend
+    networks:
+      - frontend
+      - backend
+    restart: always
+  postgres:
+    image: tt:15-alpine
+    environment:
+      POSTGRES_DB:  ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - DB
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    networks:
+      - DB
+
+  
+  # Gateway (Go)
+  gateway:
+    build: ./api/gateway
+    depends_on:
+      - auth-service
+      - user-service
+      - match-service
+      - chat-service
+      - notify-service
+      - media-service
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:8001
+      - USER_SERVICE_URL=http://user-service:8002
+      - MATCH_SERVICE_URL=http://match-service:8003
+      - CHAT_SERVICE_URL=http://chat-service:8004
+      - NOTIFY_SERVICE_URL=http://notify-service:8005
+      - MEDIA_SERVICE_URL=http://media-service:8006
+    networks:
+      - DB
+      - backend
+
+  # Auth Service (Go)
+  auth-service:
+    build: ./api/auth-service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=matcha
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - DB
+      - backend
+
+  # User Service (Go)
+  user-service:
+    build: ./api/user-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=matcha
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+    networks:
+      - DB
+      - backend
+
+  # Match Service (Python)
+  match-service:
+    build: ./api/match-service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=matcha
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - PORT=8003
+    networks:
+      - DB
+      - backend
+
+  # Chat Service (Go)
+  chat-service:
+    build: ./api/chat-service
+    ports:
+      - "8004:8004"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=matcha
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - DB
+      - backend
+
+
+  # Notification Service (Python)
+  notify-service:
+    build: ./api/notify-service
+    ports:
+      - "8005:8005"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=matcha
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=8005
+    networks:
+      - DB
+      - backend
+
+  # Media Service (Python)
+  media-service:
+    build: ./api/media-service
+    ports:
+      - "8006:8006"
+    environment:
+      - PORT=8006
+    volumes:
+      - media_uploads:/app/uploads
+    networks:
+      - DB
+      - backend
+
+  # Frontend (React)
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    depends_on:
+      - gateway
+    networks:
+      - frontend
+
+volumes:
+  postgres_data:
+  media_uploads:
