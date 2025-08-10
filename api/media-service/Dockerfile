@@ -2,17 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libjpeg-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ .
 
+# Variables d'environnement pour Flask
+ENV FLASK_APP=main.py
+ENV FLASK_ENV=development
+
 EXPOSE 8006
 
-CMD ["python", "main.py"]
+# --reload active le rechargement automatique
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8006", "--reload"]
+
