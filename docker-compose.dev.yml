@@ -1,0 +1,232 @@
+services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy-dev
+    environment:
+      VITE_HOSTNAME: ${VITE_HOSTNAME:-localhost}
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "8000:80"
+      - "8443:443"
+    depends_on:
+      - gateway
+      - frontend
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-matcha}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - DB
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - DB
+    restart: unless-stopped
+
+  # Gateway for development
+  gateway:
+    build:
+      context: ./api/gateway
+      target: development 
+    environment:
+      PORT: 8080
+      AUTH_SERVICE_URL: http://auth-service:8001
+      USER_SERVICE_URL: http://user-service:8002
+      MATCH_SERVICE_URL: http://match-service:8003
+      CHAT_SERVICE_URL: http://chat-service:8004
+      NOTIFY_SERVICE_URL: http://notify-service:8005
+      MEDIA_SERVICE_URL: http://media-service:8006
+      GIN_MODE: debug
+    volumes:
+      - ./api/gateway/src:/app/src 
+      - ./api/gateway/go.mod:/app/go.mod
+      - ./api/gateway/go.sum:/app/go.sum
+      - ./api/gateway/.air.toml:/app/.air.toml
+    depends_on:
+      - auth-service
+      - user-service
+      - match-service
+      - chat-service
+      - notify-service
+      - media-service
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./api/auth-service
+      target: development
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GIN_MODE: debug
+    volumes:
+      - ./api/auth-service/src:/app/src
+      - ./api/auth-service/go.mod:/app/go.mod
+      - ./api/auth-service/go.sum:/app/go.sum
+      - ./api/auth-service/.air.toml:/app/.air.toml
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./api/user-service
+      target: development
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      GIN_MODE: debug
+    volumes:
+      - ./api/user-service/src:/app/src
+      - ./api/user-service/go.mod:/app/go.mod
+      - ./api/user-service/go.sum:/app/go.sum
+      - ./api/user-service/.air.toml:/app/.air.toml
+    depends_on:
+      - postgres
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  match-service:
+    build: ./api/match-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      PORT: 8003
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+    volumes:
+      - ./api/match-service/src:/app/src:ro
+    depends_on:
+      - postgres
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  chat-service:
+    build:
+      context: ./api/chat-service
+      target: development
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GIN_MODE: debug
+    volumes:
+      - ./api/chat-service/src:/app/src
+      - ./api/chat-service/go.mod:/app/go.mod
+      - ./api/chat-service/go.sum:/app/go.sum
+      - ./api/chat-service/.air.toml:/app/.air.toml
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  notify-service:
+    build:
+      context: ./api/notify-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 8005
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+    volumes:
+      - ./api/notify-service/src:/app/src:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  media-service:
+    build: ./api/media-service
+    environment:
+      PORT: 8006
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+    volumes:
+      - media_uploads_dev:/app/uploads
+      - ./api/media-service/src:/app/src:ro
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
+    volumes:
+      - frontend_node_modules:/app/node_modules
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/vite.config.ts:/app/vite.config.ts:ro
+      - ./frontend/package.json:/app/package.json:ro
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js:ro
+    depends_on:
+      - gateway
+    networks:
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:
+  media_uploads_dev:
+  frontend_node_modules:
+
+networks:
+  frontend:
+  backend:
+  DB:
