@@ -1,31 +1,29 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
+# ---------- Builder stage ----------
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+COPY go.mod  go.sum ./
+RUN go mod download
+COPY src/ ./src/
+RUN CGO_ENABLED=0 GOOS=linux go build -o gateway ./src
+
+# ---------- Development stage ----------
+FROM golang:1.24-alpine AS development
 
 WORKDIR /app
 
-# Copy go mod files
+RUN go install github.com/air-verse/air@latest
+
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
-COPY src/ ./src/
+CMD ["air", "-c", ".air.toml"]
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o gateway ./src
+# ---------- Production stage ----------
+FROM alpine:latest AS production
 
-# Production stage
-FROM alpine:latest
-
-# Install ca-certificates for HTTPS requests
 RUN apk --no-cache add ca-certificates
-
 WORKDIR /root/
-
-# Copy the binary from builder stage
 COPY --from=builder /app/gateway .
-
-# Expose port
 EXPOSE 8080
-
-# Run the binary
 CMD ["./gateway"]
