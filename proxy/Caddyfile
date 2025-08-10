@@ -13,6 +13,6 @@ localhost:443, {$VITE_HOSTNAME}:443 {
     }
   }
   handle /api/* {
-    reverse_proxy gateway:3000
+    reverse_proxy gateway:8080
   }
 }
