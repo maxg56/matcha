@@ -47,7 +47,13 @@ else
         }
         echo "✅ pre-commit installé via pip"
     elif command_exists pip3; then
-        pip3 install --user pre-commit 2>/dev/null || {
+        pip install --user pre-commit || {
+            echo "⚠️  Installation système requise. Utilisation de --break-system-packages..."
+            pip install --break-system-packages pre-commit
+        }
+        echo "✅ pre-commit installé via pip"
+    elif command_exists pip3; then
+        pip3 install --user pre-commit || {
             echo "⚠️  Installation système requise. Utilisation de --break-system-packages..."
             pip3 install --break-system-packages pre-commit
         }
