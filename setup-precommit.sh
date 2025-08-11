@@ -172,7 +172,17 @@ if pre-commit run --all-files --show-diff-on-failure; then
     echo "✅ Tous les hooks fonctionnent correctement!"
 else
     echo "⚠️  Certains hooks ont échoué. Vérifiez les erreurs ci-dessus."
-    echo "   Vous pouvez exécuter 'pre-commit run --all-files' pour plus de détails."
+if [[ "$SKIP_TEST" -eq 1 ]]; then
+    echo "⏭️  Test de la configuration ignoré (--skip-test fourni)"
+    echo "   Vous pouvez exécuter 'pre-commit run --all-files' manuellement plus tard."
+else
+    echo "🧪 Test de la configuration..."
+    if pre-commit run --all-files --show-diff-on-failure; then
+        echo "✅ Tous les hooks fonctionnent correctement!"
+    else
+        echo "⚠️  Certains hooks ont échoué. Vérifiez les erreurs ci-dessus."
+        echo "   Vous pouvez exécuter 'pre-commit run --all-files' pour plus de détails."
+    fi
 fi
 
 echo ""
