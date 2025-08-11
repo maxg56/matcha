@@ -65,7 +65,8 @@ echo "📁 Vérification du frontend..."
 if [[ -f "frontend/package.json" ]]; then
     if ! command_exists pnpm; then
         echo "📦 Installation de pnpm..."
-        sudo pacman -S --needed pnpm
+        echo "📦 Installation de pnpm (version 10.14.0)..."
+        npm install -g pnpm@10.14.0
     fi
 
     echo "📦 Installation des dépendances frontend..."
