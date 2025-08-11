@@ -40,7 +40,7 @@ services:
   gateway:
     build:
       context: ./api/gateway
-      target: development 
+      target: development
     environment:
       PORT: 8080
       AUTH_SERVICE_URL: http://auth-service:8001
@@ -51,7 +51,7 @@ services:
       MEDIA_SERVICE_URL: http://media-service:8006
       GIN_MODE: debug
     volumes:
-      - ./api/gateway/src:/app/src 
+      - ./api/gateway/src:/app/src
       - ./api/gateway/go.mod:/app/go.mod
       - ./api/gateway/go.sum:/app/go.sum
       - ./api/gateway/.air.toml:/app/.air.toml

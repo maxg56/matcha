@@ -15,4 +15,3 @@ EXPOSE 8005
 
 # --reload active le rechargement automatique
 CMD ["flask", "run", "--host=0.0.0.0", "--port=8005", "--reload"]
-
