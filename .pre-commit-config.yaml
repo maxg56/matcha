@@ -1,0 +1,83 @@
+repos:
+  # Python format & lint - only for Python services
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        files: ^api/.*/src/.*\.py$
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        files: ^api/.*/src/.*\.py$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        files: ^api/.*/src/.*\.py$
+
+  # Go format & lint - for each Go service
+  - repo: local
+    hooks:
+      - id: go-fmt-auth
+        name: go fmt (auth-service)
+        entry: bash -c 'cd api/auth-service && go fmt ./...'
+        language: system
+        files: ^api/auth-service/.*\.go$
+      - id: go-vet-auth
+        name: go vet (auth-service)
+        entry: bash -c 'cd api/auth-service && go vet ./...'
+        language: system
+        files: ^api/auth-service/.*\.go$
+      - id: go-fmt-chat
+        name: go fmt (chat-service)
+        entry: bash -c 'cd api/chat-service && go fmt ./...'
+        language: system
+        files: ^api/chat-service/.*\.go$
+      - id: go-vet-chat
+        name: go vet (chat-service)
+        entry: bash -c 'cd api/chat-service && go vet ./...'
+        language: system
+        files: ^api/chat-service/.*\.go$
+      - id: go-fmt-gateway
+        name: go fmt (gateway)
+        entry: bash -c 'cd api/gateway && go fmt ./...'
+        language: system
+        files: ^api/gateway/.*\.go$
+      - id: go-vet-gateway
+        name: go vet (gateway)
+        entry: bash -c 'cd api/gateway && go vet ./...'
+        language: system
+        files: ^api/gateway/.*\.go$
+      - id: go-fmt-user
+        name: go fmt (user-service)
+        entry: bash -c 'cd api/user-service && go fmt ./...'
+        language: system
+        files: ^api/user-service/.*\.go$
+      - id: go-vet-user
+        name: go vet (user-service)
+        entry: bash -c 'cd api/user-service && go vet ./...'
+        language: system
+        files: ^api/user-service/.*\.go$
+
+  # TypeScript/React format & lint - frontend only
+  - repo: local
+    hooks:
+      - id: ts-lint
+        name: ESLint (frontend)
+        entry: bash -c 'cd frontend && pnpm run lint'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+  # Generic hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict

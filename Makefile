@@ -44,7 +44,7 @@ prod:
 		echo "No .env file found in srcs folder, please create one before running make"; \
 	fi
 prod-stop:
-	$(DOCKER_COMPOSE_CMD) -p $(NAME) -f $(DOCKER_COMPOSE_PATH_PROD) stop	
+	$(DOCKER_COMPOSE_CMD) -p $(NAME) -f $(DOCKER_COMPOSE_PATH_PROD) stop
 
 prod-down:
 	$(DOCKER_COMPOSE_CMD) -p $(NAME) -f $(DOCKER_COMPOSE_PATH_PROD) down -v

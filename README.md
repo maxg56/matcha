@@ -21,6 +21,8 @@ A microservices-based dating application built with Go, Python, and React.
 - Go 1.21+ (for local development)
 - Python 3.11+ (for local development)
 - Node.js 18+ (for local development)
+- pnpm (for frontend package management)
+- pre-commit (for code quality hooks)
 
 ## Quick Start
 
@@ -30,15 +32,41 @@ git clone <repository-url>
 cd matcha
 ```
 
-2. Start all services with Docker Compose:
+2. Copy environment variables:
 ```bash
-docker-compose up --build
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-3. Access the application:
+3. Set up pre-commit hooks (recommended):
+```bash
+# For standard Linux distributions
+./setup-precommit.sh
+
+# For Arch Linux
+./setup-precommit-arch.sh
+```
+
+4. Start all services with Docker Compose:
+```bash
+# Development mode
+make
+```
+
+5. Access the application:
 - Frontend: http://localhost:3000
 - API Gateway: http://localhost:8080
 - Individual services: http://localhost:800[1-6]
+
+## Development Tools
+
+The project includes several helper scripts and tools:
+
+- `Makefile` - Common development tasks
+- `setup-precommit.sh` - Pre-commit hooks setup for standard Linux
+- `setup-precommit-arch.sh` - Pre-commit hooks setup for Arch Linux
+- `docker-compose.yml` - Production Docker setup
+- `docker-compose.dev.yml` - Development Docker setup
 
 ## Development
 
@@ -47,6 +75,7 @@ docker-compose up --build
 ```bash
 cd api/<service-name>
 go mod tidy
+cd src
 go run main.go
 ```
 
@@ -55,6 +84,7 @@ go run main.go
 ```bash
 cd api/<service-name>
 pip install -r requirements.txt
+cd src
 python main.py
 ```
 
@@ -62,8 +92,8 @@ python main.py
 
 ```bash
 cd frontend
-npm install
-npm start
+pnpm install
+pnpm run dev
 ```
 
 ## Database
@@ -116,7 +146,11 @@ The application uses PostgreSQL as the primary database and Redis for caching an
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+The project includes example environment files:
+- `.env.example` - Template for environment variables
+- `.env.dev` - Development-specific configuration
+
+Copy `.env.example` to `.env` and configure the following variables:
 
 ```env
 # Database
@@ -157,8 +191,77 @@ pytest
 
 # Frontend
 cd frontend
-npm test
+pnpm test
 ```
+
+## Code Quality
+
+This project uses pre-commit hooks to maintain code quality:
+
+### Pre-commit Hooks
+- **Black**: Python code formatting
+- **isort**: Python import sorting
+- **flake8**: Python linting
+- **go fmt**: Go code formatting
+- **go vet**: Go code analysis
+- **ESLint**: TypeScript/JavaScript linting
+- **General**: Trailing whitespace, end of files, YAML validation, etc.
+
+### Running Quality Checks
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run on all files
+pre-commit run --all-files
+
+# Run on staged files only
+pre-commit run
+```
+
+### Continuous Integration
+
+The project includes GitHub Actions workflows for automated quality checks:
+
+- **Pre-commit Workflow** (`.github/workflows/pre-commit.yml`)
+  - Runs on every push and pull request
+  - Executes all pre-commit hooks automatically
+  - Can be triggered manually via GitHub Actions UI
+
+- **Legacy Lint Workflow** (`.github/workflows/lint.yml`)
+  - Individual linting jobs for Go, TypeScript, and Python
+  - More granular but slower than pre-commit approach
+
+The pre-commit workflow is recommended as it's faster and mirrors local development.
+```
+
+### Manual Commands
+```bash
+# Go formatting and vetting
+cd api/<go-service>
+go fmt ./...
+go vet ./...
+
+# Python formatting and linting
+cd api/<python-service>
+black src/
+isort src/
+flake8 src/
+
+# Frontend linting
+cd frontend
+pnpm run lint
+pnpm run lint:fix
+```
+
+## Documentation
+
+Additional documentation is available in the `doc/` folder:
+- `Pre-commit_Guide.md` - Detailed pre-commit setup guide
+- `Pre-commit_Fixes.md` - Common pre-commit fixes
+- `Pre-commit_Workflow.md` - GitHub Actions pre-commit workflow details
+- `GitHub_Actions_Lint.md` - Legacy CI/CD linting setup
+- `Types_de_commit.md` - Commit message conventions
 
 ## Contributing
 
