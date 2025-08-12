@@ -8,6 +8,8 @@ import (
 
 func main() {
 	r := gin.Default()
+	// Initialize database (will AutoMigrate models)
+	ConnectDatabase()
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
@@ -18,6 +20,7 @@ func main() {
 	})
 
 	// Auth routes
+	print("Setting up auth routes")
 	auth := r.Group("/api/v1/auth")
 	{
 		auth.POST("/register", registerHandler)
@@ -25,6 +28,8 @@ func main() {
 		auth.POST("/logout", logoutHandler)
 		auth.POST("/refresh", refreshTokenHandler)
 		auth.GET("/verify", verifyTokenHandler)
+		auth.POST("/forgot-password", forgotPasswordHandler)
+		auth.POST("/reset-password", resetPasswordHandler)
 	}
 
 	log.Println("Auth service starting on port 8001")
@@ -54,4 +59,14 @@ func refreshTokenHandler(c *gin.Context) {
 func verifyTokenHandler(c *gin.Context) {
 	// TODO: Implement token verification logic
 	c.JSON(http.StatusOK, gin.H{"message": "Verify token endpoint"})
+}
+
+func forgotPasswordHandler(c *gin.Context) {
+	// TODO: Implement forgot password logic
+	c.JSON(http.StatusOK, gin.H{"message": "Forgot password endpoint"})
+}
+
+func resetPasswordHandler(c *gin.Context) {
+	// TODO: Implement reset password logic
+	c.JSON(http.StatusOK, gin.H{"message": "Reset password endpoint"})
 }
