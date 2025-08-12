@@ -133,4 +133,5 @@ INSERT INTO messages (conv_id, sender_id, msg) VALUES
 (1, 1, 'hey'),
 (1, 2, 'how are you'),
 (1, 1, 'fine');
+
 -- SELECT t.name FROM tags t JOIN user_tags ut ON t.id = ut.tag_id WHERE ut.user_id = 1;
