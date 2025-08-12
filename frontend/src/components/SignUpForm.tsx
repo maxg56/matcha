@@ -1,6 +1,17 @@
 import { useState } from "react";
 
-const SignUpForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
+type SignUpFormData = {
+	firstName: string;
+	lastName: string;
+	username: string;
+	email: string;
+	password: string;
+	confirmPassword: string;
+	gender: string;
+	lookingFor: string;
+};
+
+const SignUpForm = ({ onSubmit }: { onSubmit: (data: SignUpFormData) => void }) => {
 	const [form, setForm] = useState({
 		firstName: "",
 		lastName: "",
