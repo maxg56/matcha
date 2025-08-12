@@ -41,7 +41,7 @@ services:
     build:
       context: ./api/gateway
       target: development
-    environment: 
+    environment:
       PORT: 8080
       JWT_SECRET: ${JWT_SECRET}
       GIN_MODE: debug
