@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"log"
@@ -38,17 +38,22 @@ func ConnectDatabase() {
 	DB = database
 	log.Println("✅ Base de données connectée")
 
-	// Auto-migrate schemas to keep in sync with init.sql
-	if err := DB.AutoMigrate(
-		&models.User{},
-		&models.Tag{},
-		&models.UserTag{},
-		&models.Image{},
-		&models.Relation{},
-		&models.Discussion{},
-		&models.Message{},
-	); err != nil {
-		log.Println("⚠️ AutoMigrate failed:", err)
+	// Optional: enable automatic migrations only when explicitly requested
+	if os.Getenv("AUTO_MIGRATE") == "true" {
+		log.Println("Running DB AutoMigrate (AUTO_MIGRATE=true)")
+		if err := DB.AutoMigrate(
+			&models.User{},
+			&models.Tag{},
+			&models.UserTag{},
+			&models.Image{},
+			&models.Relation{},
+			&models.Discussion{},
+			&models.Message{},
+		); err != nil {
+			log.Println("⚠️ AutoMigrate failed:", err)
+		}
+	} else {
+		log.Println("Skipping AutoMigrate (set AUTO_MIGRATE=true to enable)")
 	}
 }
 

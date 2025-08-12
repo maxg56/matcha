@@ -9,6 +9,7 @@ type User struct {
 	FirstName string          `gorm:"column:first_name" json:"first_name"`
 	LastName  string          `gorm:"column:last_name" json:"last_name"`
 	Email     string          `gorm:"column:email;uniqueIndex" json:"email"`
+	PasswordHash string       `gorm:"column:password_hash" json:"-"`
 	Fame      int             `gorm:"column:fame;default:0" json:"fame"`
 	Gender    string          `gorm:"column:gender;not null" json:"gender"`
 	SexPref   string          `gorm:"column:sex_pref;not null;default:both" json:"sex_pref"`

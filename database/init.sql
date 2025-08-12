@@ -7,6 +7,7 @@ CREATE TABLE users (
     first_name VARCHAR(255),
     last_name VARCHAR(255),
     email VARCHAR(255) UNIQUE,
+    password_hash TEXT,
     fame INT DEFAULT 0,
     gender VARCHAR(5) NOT NULL CHECK (gender IN ('woman', 'man')),
     sex_pref VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('woman', 'man', 'both')),
