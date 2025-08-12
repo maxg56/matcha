@@ -11,4 +11,3 @@ const SignUpButton: React.FC = () => {
 };
 
 export default SignUpButton;
-
