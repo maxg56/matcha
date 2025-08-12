@@ -1,29 +1,30 @@
 package main
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 func registerRoutes(r *gin.Engine) {
-    // Health check
-    r.GET("/health", func(c *gin.Context) {
-        c.JSON(http.StatusOK, gin.H{
-            "status":  "ok",
-            "service": "auth-service",
-        })
-    })
+	// Health check
+	r.GET("/health", func(c *gin.Context) {
+		respondSuccess(c, http.StatusOK, gin.H{
+			"service": "auth-service",
+			"ok":      true,
+		})
+	})
 
-    // Auth routes
-    auth := r.Group("/api/v1/auth")
-    {
-        auth.POST("/register", registerHandler)
-        auth.POST("/login", loginHandler)
-        auth.POST("/logout", logoutHandler)
-        auth.POST("/refresh", refreshTokenHandler)
-        auth.GET("/verify", verifyTokenHandler)
-        auth.POST("/forgot-password", forgotPasswordHandler)
-        auth.POST("/reset-password", resetPasswordHandler)
-    }
+	// Auth routes
+	h := NewAuthHandlers()
+	auth := r.Group("/api/v1/auth")
+	{
+		auth.POST("/register", h.Register)
+		auth.POST("/login", h.Login)
+		auth.POST("/logout", h.Logout)
+		auth.POST("/refresh", h.Refresh)
+		auth.GET("/verify", h.Verify)
+		auth.POST("/forgot-password", h.ForgotPassword)
+		auth.POST("/reset-password", h.ResetPassword)
+	}
 }

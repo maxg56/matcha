@@ -4,11 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
+	db "auth-service/src/conf"
 )
 
 func main() {
 	// Initialize database (will AutoMigrate models)
-	ConnectDatabase()
+	db.ConnectDatabase()
 	r := gin.Default()
 	// Register routes
 	registerRoutes(r)
