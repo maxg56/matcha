@@ -4,7 +4,7 @@ import "github.com/gin-gonic/gin"
 
 // Auth service routes
 func setupAuthRoutes(r *gin.Engine) {
-	auth := r.Group("/api/auth")
+	auth := r.Group("/api/v1/auth")
 
 	// Make base path return auth-service health
 	auth.GET("/", proxyRequest("auth", "/health"))
