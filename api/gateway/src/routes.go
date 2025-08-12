@@ -18,6 +18,7 @@ func setupAuthRoutes(r *gin.Engine) {
 // User service routes
 func setupUserRoutes(r *gin.Engine) {
 	user := r.Group("/api/users")
+	user.Use(jwtMiddleware())
 
 	user.GET("/profile", proxyRequest("user", "/profile"))
 	user.PUT("/profile", proxyRequest("user", "/profile"))
@@ -32,6 +33,7 @@ func setupUserRoutes(r *gin.Engine) {
 // Media service routes
 func setupMediaRoutes(r *gin.Engine) {
 	media := r.Group("/api/media")
+	media.Use(jwtMiddleware())
 
 	media.POST("/upload", proxyRequest("media", "/upload"))
 	media.GET("/:id", proxyRequest("media", "/media/:id"))
@@ -42,6 +44,7 @@ func setupMediaRoutes(r *gin.Engine) {
 // Match service routes
 func setupMatchRoutes(r *gin.Engine) {
 	match := r.Group("/api/matches")
+	match.Use(jwtMiddleware())
 
 	match.GET("/", proxyRequest("match", "/matches"))
 	match.POST("/like/:userId", proxyRequest("match", "/like/:userId"))
@@ -53,6 +56,7 @@ func setupMatchRoutes(r *gin.Engine) {
 // Chat service routes
 func setupChatRoutes(r *gin.Engine) {
 	chat := r.Group("/api/chat")
+	chat.Use(jwtMiddleware())
 
 	chat.GET("/conversations", proxyRequest("chat", "/conversations"))
 	chat.GET("/conversations/:id", proxyRequest("chat", "/conversations/:id"))
@@ -64,6 +68,7 @@ func setupChatRoutes(r *gin.Engine) {
 // Notification service routes
 func setupNotifyRoutes(r *gin.Engine) {
 	notify := r.Group("/api/notifications")
+	notify.Use(jwtMiddleware())
 
 	notify.GET("/", proxyRequest("notify", "/notifications"))
 	notify.PUT("/:id/read", proxyRequest("notify", "/notifications/:id/read"))

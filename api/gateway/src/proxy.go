@@ -88,22 +88,29 @@ func replacePlaceholders(path string, c *gin.Context) string {
 }
 
 func copyHeaders(c *gin.Context, req *http.Request) {
-	// Copy all headers except Host
+	// Copy all headers except Host, preserving multiple values
 	for key, values := range c.Request.Header {
-		if key != "Host" && len(values) > 0 {
-			req.Header.Set(key, values[0])
+		if key == "Host" {
+			continue
+		}
+		for _, v := range values {
+			req.Header.Add(key, v)
+		}
+	}
+	// Propagate authenticated user id if present in context
+	if v, ok := c.Get(ctxUserIDKey); ok {
+		if s, ok := v.(string); ok && s != "" {
+			req.Header.Set("X-User-ID", s)
 		}
 	}
 }
 
 func copyResponse(c *gin.Context, resp *http.Response) {
-	// Set status code
+	// Set status code and copy headers (including multiple Set-Cookie values)
 	c.Status(resp.StatusCode)
-
-	// Copy headers
 	for key, values := range resp.Header {
-		if len(values) > 0 {
-			c.Header(key, values[0])
+		for _, v := range values {
+			c.Writer.Header().Add(key, v)
 		}
 	}
 
