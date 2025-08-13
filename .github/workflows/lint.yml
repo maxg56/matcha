@@ -21,32 +21,34 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Download Go modules
+        run: |
+          for dir in api/*/; do
+            if [ -f "$dir/go.mod" ]; then
+              echo "Downloading modules for $dir"
+              (cd "$dir" && go mod download) || exit 1
+            fi
+          done
+
       - name: Run Go format check
         run: |
           for dir in api/*/; do
             if [ -f "$dir/go.mod" ]; then
               echo "Checking $dir"
-              cd "$dir"
-              go fmt ./...
-              go vet ./...
-              cd ../..
+              (cd "$dir" && go fmt ./... && go vet ./...) || exit 1
             fi
           done
 
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: api/auth-service
-
       - name: Run golangci-lint for all Go services
         run: |
+          # Install golangci-lint
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+          export PATH=$PATH:$(go env GOPATH)/bin
+          
           for dir in api/*/; do
             if [ -f "$dir/go.mod" ]; then
               echo "Linting $dir"
-              cd "$dir"
-              golangci-lint run
-              cd ../..
+              (cd "$dir" && golangci-lint run) || exit 1
             fi
           done
 
@@ -94,7 +96,7 @@ jobs:
           for dir in api/*/; do
             if [ -f "$dir/requirements.txt" ]; then
               echo "Installing dependencies for $dir"
-              pip install -r "$dir/requirements.txt"
+              pip install -r "$dir/requirements.txt" || exit 1
             fi
           done
 
@@ -103,8 +105,8 @@ jobs:
           for dir in api/*/; do
             if [ -f "$dir/requirements.txt" ] && [ -d "$dir/src" ]; then
               echo "Checking $dir"
-              black --check "$dir/src"
-              isort --check-only "$dir/src"
-              flake8 "$dir/src"
+              black --check "$dir/src" || exit 1
+              isort --check-only "$dir/src" || exit 1
+              flake8 "$dir/src" || exit 1
             fi
           done
