@@ -3,8 +3,8 @@ package main
 import (
     "fmt"
     "net/http"
+    "os"
     "time"
-	"os"
 
     "github.com/gin-gonic/gin"
     "golang.org/x/crypto/bcrypt"
@@ -108,6 +108,15 @@ func getDurationFromEnv(key string, fallback time.Duration) time.Duration {
     return fallback
 }
 
+// getJWTSecret retrieves JWT secret from environment with validation
+func getJWTSecret() (string, error) {
+    secret := os.Getenv("JWT_SECRET")
+    if secret == "" {
+        return "", fmt.Errorf("JWT_SECRET not configured")
+    }
+    return secret, nil
+}
+
 // TokenPair holds access and refresh tokens
 type TokenPair struct {
     AccessToken  string
@@ -116,24 +125,37 @@ type TokenPair struct {
 }
 
 func generateTokenPair(userID uint) (*TokenPair, error) {
+    // Get JWT secret from environment
+    secret, err := getJWTSecret()
+    if err != nil {
+        return nil, err
+    }
+    
+    now := time.Now()
+    userIDStr := fmt.Sprintf("%d", userID)
+    
     // Generate access token (short-lived)
     accessClaims := jwt.MapClaims{
-        "user_id": userID,
-        "exp":     time.Now().Add(time.Hour * 1).Unix(), // 1 hour
+        "sub":     userIDStr,           // Standard subject claim
+        "user_id": userID,              // Keep for backwards compatibility
+        "iat":     now.Unix(),          // Issued at time
+        "exp":     now.Add(time.Hour * 1).Unix(), // 1 hour
     }
     accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-    accessString, err := accessToken.SignedString([]byte("your-secret-key"))
+    accessString, err := accessToken.SignedString([]byte(secret))
     if err != nil {
         return nil, err
     }
 
     // Generate refresh token (long-lived)
     refreshClaims := jwt.MapClaims{
-        "user_id": userID,
-        "exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days
+        "sub":     userIDStr,           // Standard subject claim
+        "user_id": userID,              // Keep for backwards compatibility
+        "iat":     now.Unix(),          // Issued at time
+        "exp":     now.Add(time.Hour * 24 * 7).Unix(), // 7 days
     }
     refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-    refreshString, err := refreshToken.SignedString([]byte("your-secret-key"))
+    refreshString, err := refreshToken.SignedString([]byte(secret))
     if err != nil {
         return nil, err
     }

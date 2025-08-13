@@ -20,7 +20,7 @@ func verifyTokenHandler(c *gin.Context) {
     }
     token := strings.TrimPrefix(auth, "Bearer ")
     
-    // Verify JWT with secret
+    // Get JWT secret
     secret := os.Getenv("JWT_SECRET")
     if secret == "" {
         respondError(c, http.StatusInternalServerError, "server misconfigured: missing JWT_SECRET")
@@ -33,10 +33,21 @@ func verifyTokenHandler(c *gin.Context) {
         return
     }
     
+    // Validate expiration explicitly
+    if exp, ok := claims["exp"].(float64); ok {
+        if time.Now().Unix() > int64(exp) {
+            respondError(c, http.StatusUnauthorized, "token expired")
+            return
+        }
+    } else {
+        respondError(c, http.StatusUnauthorized, "invalid token claims: missing expiration")
+        return
+    }
+    
     // Extract user ID from claims
     userID, ok := claims["sub"].(string)
     if !ok || userID == "" {
-        respondError(c, http.StatusUnauthorized, "invalid token claims")
+        respondError(c, http.StatusUnauthorized, "invalid token claims: missing subject")
         return
     }
     
@@ -125,8 +136,35 @@ func refreshTokenHandler(c *gin.Context) {
 }
 
 func logoutHandler(c *gin.Context) {
-    // TODO: invalidate refresh token / add to denylist if needed
-    respondSuccess(c, http.StatusOK, gin.H{"message": "logged out"})
+    // Extract JWT token from Authorization header
+    auth := c.GetHeader("Authorization")
+    if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
+        respondError(c, http.StatusUnauthorized, "missing bearer token")
+        return
+    }
+    
+    tokenString := strings.TrimPrefix(auth, "Bearer ")
+    
+    // Parse token to get expiration and user info
+    secret := os.Getenv("JWT_SECRET")
+    if secret == "" {
+        respondError(c, http.StatusInternalServerError, "server misconfigured: missing JWT_SECRET")
+        return
+    }
+    
+    _, err := parseToken(tokenString, secret)
+    if err != nil {
+        // Token is already invalid, consider logout successful
+        respondSuccess(c, http.StatusOK, gin.H{"message": "logged out"})
+        return
+    }
+    
+    // For now, logout is successful even without Redis blacklisting
+    // In production, implement token blacklisting with Redis
+    respondSuccess(c, http.StatusOK, gin.H{
+        "message": "logged out successfully",
+        "note":    "token invalidation requires Redis - implement in production",
+    })
 }
 
 // Helper functions for JWT operations
