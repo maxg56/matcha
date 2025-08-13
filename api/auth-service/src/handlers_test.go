@@ -111,7 +111,12 @@ func TestRegisterHandler(t *testing.T) {
 
 			if tt.expectedStatus == http.StatusCreated {
 				assert.Equal(t, "success", response["status"])
-				assert.Contains(t, response["data"], "user_id")
+				data := response["data"].(map[string]interface{})
+				assert.Contains(t, data, "user_id")
+				assert.Contains(t, data, "access_token")
+				assert.Contains(t, data, "refresh_token")
+				assert.Equal(t, "Bearer", data["token_type"])
+				assert.Contains(t, data, "expires_in")
 			} else {
 				assert.Equal(t, "error", response["status"])
 			}

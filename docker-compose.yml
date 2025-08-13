@@ -72,6 +72,9 @@ services:
       DB_PASSWORD: password
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      AUTO_MIGRATE: "true"
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-jwt-refresh-secret}
     depends_on:
       - postgres
       - redis
