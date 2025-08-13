@@ -33,14 +33,14 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
     const prevStep = () => setStep(s => s - 1);
 
     const checkPassword = (password: string) => {
-        // Password must contain at least one lowercase, one uppercase, one digit, one special character, and be at least 8 characters long
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={};':"\\|,.<>/?`~])[A-Za-z\d!@#$%^&*()_\-+={};':"\\|,.<>/?`~]{8,}$/;
+		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={};':"\\|,.<>/?`~])/;
+		if (!regex.test(password) || password.length < 8) return false;
         return regex.test(password);
     };
 
     const handleFinalSubmit = () => {
         if (form.password !== form.confirmPassword) {
-            alert("Les mots de passe ne correspondent pas");
+            alert("passwords do not match");
             return;
         }
         onSubmit(form);
@@ -91,7 +91,7 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
             case 6:
                 return (
                     <div className="text-center text-green-600 font-semibold">
-                        Inscription réussie ! Vous pouvez maintenant vous connecter.
+                        Sign up successful! You can now log in.
                     </div>
                 );
             default:
