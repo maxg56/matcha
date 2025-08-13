@@ -188,32 +188,32 @@ func TestLoginHandler(t *testing.T) {
 		{
 			name: "valid login with username",
 			payload: map[string]interface{}{
-				"login": "loginuser",
-				"password":   "password",
+				"login":    "loginuser",
+				"password": "password",
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "valid login with email",
 			payload: map[string]interface{}{
-				"login": "login@example.com",
-				"password":   "password",
+				"login":    "login@example.com",
+				"password": "password",
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "invalid password",
 			payload: map[string]interface{}{
-				"login": "loginuser",
-				"password":   "wrongpassword",
+				"login":    "loginuser",
+				"password": "wrongpassword",
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "nonexistent user",
 			payload: map[string]interface{}{
-				"login": "nonexistent",
-				"password":   "password",
+				"login":    "nonexistent",
+				"password": "password",
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},

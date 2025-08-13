@@ -27,7 +27,7 @@ type RegisterRequest struct {
 
 // LoginRequest represents user login payload
 type LoginRequest struct {
-	Login    string `json:"login" binding:"required"`    // username or email
+	Login    string `json:"login" binding:"required"` // username or email
 	Password string `json:"password" binding:"required"`
 }
 
@@ -61,7 +61,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	utils.RespondSuccess(c, http.StatusCreated, gin.H{
-		"message":       "User registered successfully",
+		"message": "User registered successfully",
 		"user": gin.H{
 			"id":       user.ID,
 			"username": user.Username,

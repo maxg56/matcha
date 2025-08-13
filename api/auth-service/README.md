@@ -217,7 +217,7 @@ go test -v ./src -run TestToken
 
 ### Test Categories
 - ✅ Registration handlers
-- ✅ Login handlers  
+- ✅ Login handlers
 - ✅ Token operations (verify, refresh, logout)
 - ✅ Password reset
 - ✅ Health checks
