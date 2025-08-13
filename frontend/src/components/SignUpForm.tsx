@@ -33,6 +33,7 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
     const prevStep = () => setStep(s => s - 1);
 
     const checkPassword = (password: string) => {
+        // Password must contain at least one lowercase, one uppercase, one digit, one special character, and be at least 8 characters long
         const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?`~])[A-Za-z\d!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?`~]{8,}$/;
         return regex.test(password);
     };
