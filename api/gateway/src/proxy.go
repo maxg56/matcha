@@ -103,6 +103,11 @@ func copyHeaders(c *gin.Context, req *http.Request) {
 			req.Header.Set("X-User-ID", s)
 		}
 	}
+
+	// Forward original JWT token for services that need it
+	if token := extractToken(c); token != "" {
+		req.Header.Set("X-JWT-Token", token)
+	}
 }
 
 func copyResponse(c *gin.Context, resp *http.Response) {

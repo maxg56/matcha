@@ -111,9 +111,21 @@ func jwtMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 			return
 		}
+		// Check if token is blacklisted before parsing
+		if isTokenBlacklisted(tokenString) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token revoked"})
+			return
+		}
+
 		claims, err := parseJWT(tokenString, secret)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			errorMsg := "invalid token"
+			if strings.Contains(err.Error(), "expired") {
+				errorMsg = "token expired"
+			} else if strings.Contains(err.Error(), "not yet valid") {
+				errorMsg = "token not yet valid"
+			}
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": errorMsg})
 			return
 		}
 		// Extract common identifiers

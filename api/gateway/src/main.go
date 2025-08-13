@@ -19,6 +19,14 @@ func main() {
 	// Initialize services configuration
 	initServices()
 
+	// Initialize Redis for JWT blacklisting
+	if err := initRedis(); err != nil {
+		log.Printf("Failed to initialize Redis: %v", err)
+		log.Println("Redis initialization failed - JWT blacklisting will be disabled")
+	} else {
+		log.Println("Redis initialized successfully for JWT blacklisting")
+	}
+
 	// Set Gin mode
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
