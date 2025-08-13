@@ -1,4 +1,15 @@
 -- ====================
+-- RESET DES TABLES (ordre inverse des dépendances)
+-- ====================
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS discussion CASCADE;
+DROP TABLE IF EXISTS relations CASCADE;
+DROP TABLE IF EXISTS images CASCADE;
+DROP TABLE IF EXISTS user_tags CASCADE;
+DROP TABLE IF EXISTS tags CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- ====================
 -- TABLE : users
 -- ====================
 CREATE TABLE users (
@@ -29,7 +40,7 @@ CREATE TABLE tags (
 CREATE TABLE user_tags (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, tag_id) -- clé composite pour éviter les doublons
+    PRIMARY KEY (user_id, tag_id)
 );
 
 -- ====================
@@ -43,16 +54,14 @@ CREATE TABLE images (
 );
 
 -- ====================
--- TABLE : relation
+-- TABLE : relations
 -- ====================
 CREATE TABLE relations (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    value_user1 INT, -- 0=like, 1=not like, 2=block
-    value_user2 INT -- 0=like, 1=not like, 2=block
-    value_user1 VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('like', 'pass', 'block')),
-    value_user2 VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('like', 'pass', 'block')),
+    value_user1 VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (value_user1 IN ('like', 'pass', 'block')),
+    value_user2 VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (value_user2 IN ('like', 'pass', 'block'))
 );
 
 -- ====================
@@ -73,14 +82,16 @@ CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     conv_id INT NOT NULL REFERENCES discussion(id) ON DELETE CASCADE,
     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    msg TINYTEXT NOT NULL,
+    msg TEXT NOT NULL,
     time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ====================
--- TRIGGER : Mise à jour du last message
+-- FONCTION & TRIGGER : Mise à jour du dernier message
 -- ====================
--- Fonction qui met à jour la discussion
+DROP TRIGGER IF EXISTS trg_update_last_message ON messages;
+DROP FUNCTION IF EXISTS update_last_message;
+
 CREATE OR REPLACE FUNCTION update_last_message()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -92,13 +103,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Déclencheur sur insertion de message
 CREATE TRIGGER trg_update_last_message
 AFTER INSERT ON messages
 FOR EACH ROW
 EXECUTE FUNCTION update_last_message();
 
-
+-- ====================
+-- INSERTS DE TEST
+-- ====================
 INSERT INTO users (username, first_name, last_name, email, gender, sex_pref)
 VALUES
 ('test1', 'T', 'tester', 't@t.com', 'man', 'both'),
@@ -133,5 +145,3 @@ INSERT INTO messages (conv_id, sender_id, msg) VALUES
 (1, 1, 'hey'),
 (1, 2, 'how are you'),
 (1, 1, 'fine');
-
--- SELECT t.name FROM tags t JOIN user_tags ut ON t.id = ut.tag_id WHERE ut.user_id = 1;
