@@ -33,7 +33,7 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
     const prevStep = () => setStep(s => s - 1);
 
     const checkPassword = (password: string) => {
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>\/?`~])[A-Za-z\d!@#$%^&*()_\-+=\[\]{};':"\\|,.<>\/?`~]{8,}$/;
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?`~])[A-Za-z\d!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?`~]{8,}$/;
         return regex.test(password);
     };
 
