@@ -8,7 +8,7 @@ The test suite covers all main authentication functionality:
 
 ### 1. Registration Tests (`TestRegisterHandler`)
 - ✅ Valid user registration with all required fields
-- ✅ Validation of missing required fields  
+- ✅ Validation of missing required fields
 - ✅ Duplicate username/email prevention
 - ✅ Password hashing verification
 - ✅ Database persistence validation
@@ -90,7 +90,7 @@ Latest test run:
 ```
 === RUN   TestRegisterHandler
 --- PASS: TestRegisterHandler (0.07s)
-=== RUN   TestLoginHandler  
+=== RUN   TestLoginHandler
 --- PASS: TestLoginHandler (0.20s)
 === RUN   TestVerifyTokenHandler
 --- PASS: TestVerifyTokenHandler (0.00s)

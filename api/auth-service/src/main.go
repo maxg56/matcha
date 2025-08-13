@@ -11,7 +11,6 @@ import (
 func main() {
 	// Initialize database (will AutoMigrate models)
 	db.ConnectDatabase()
-	
 
 	// Initialize Redis for token blacklisting
 	if err := db.InitRedis(); err != nil {
@@ -20,7 +19,7 @@ func main() {
 	} else {
 		log.Println("Redis initialized successfully for token blacklisting")
 	}
-	
+
 	r := gin.Default()
 	// Register routes
 	registerRoutes(r)

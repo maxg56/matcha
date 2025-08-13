@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	jwt "github.com/golang-jwt/jwt/v5"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -46,7 +46,7 @@ func generateTestToken(userID int) string {
 	if secret == "" {
 		secret = "test-secret-key" // Fallback for tests only
 	}
-	
+
 	claims := jwt.MapClaims{
 		"sub":     "1",
 		"user_id": userID,
@@ -233,7 +233,7 @@ func TestVerifyTokenHandler(t *testing.T) {
 		"exp":   now.Add(15 * time.Minute).Unix(),
 		"scope": "access",
 	}
-	
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	validToken, err := token.SignedString([]byte("test-secret-key"))
 	require.NoError(t, err)
@@ -304,7 +304,7 @@ func TestRefreshTokenHandler(t *testing.T) {
 		"exp":   now.Add(7 * 24 * time.Hour).Unix(),
 		"scope": "refresh",
 	}
-	
+
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	validRefreshToken, err := refreshToken.SignedString([]byte("test-refresh-secret-key"))
 	require.NoError(t, err)
@@ -317,7 +317,7 @@ func TestRefreshTokenHandler(t *testing.T) {
 		"exp":   now.Add(15 * time.Minute).Unix(),
 		"scope": "access",
 	}
-	
+
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	validAccessToken, err := accessToken.SignedString([]byte("test-secret-key"))
 	require.NoError(t, err)
@@ -335,8 +335,8 @@ func TestRefreshTokenHandler(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "missing refresh token",
-			payload: map[string]interface{}{},
+			name:           "missing refresh token",
+			payload:        map[string]interface{}{},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -418,7 +418,7 @@ func TestLogoutHandler(t *testing.T) {
 			if tt.token != "" {
 				req.Header.Set("Authorization", tt.token)
 			}
-			
+
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 

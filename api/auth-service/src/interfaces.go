@@ -5,13 +5,13 @@ import "github.com/gin-gonic/gin"
 // AuthHandlers defines the contract for auth-related HTTP handlers.
 // This makes routing pluggable and simplifies testing/mocking.
 type AuthHandlers interface {
-    Register(*gin.Context)
-    Login(*gin.Context)
-    Logout(*gin.Context)
-    Refresh(*gin.Context)
-    Verify(*gin.Context)
-    ForgotPassword(*gin.Context)
-    ResetPassword(*gin.Context)
+	Register(*gin.Context)
+	Login(*gin.Context)
+	Logout(*gin.Context)
+	Refresh(*gin.Context)
+	Verify(*gin.Context)
+	ForgotPassword(*gin.Context)
+	ResetPassword(*gin.Context)
 }
 
 // defaultAuthHandlers is the default adapter that forwards to package-level handlers.
