@@ -17,6 +17,7 @@ import (
 	"gorm.io/gorm"
 
 	db "auth-service/src/conf"
+	"auth-service/src/handlers"
 	models "auth-service/src/models"
 	types "auth-service/src/types"
 )
@@ -36,7 +37,25 @@ func setupTestDB() *gorm.DB {
 func setupTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	registerRoutes(r)
+
+	// Health check
+	r.GET("/health", handlers.HealthCheckHandler)
+
+	// API routes - same structure as main.go
+	api := r.Group("/api/v1")
+	{
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", handlers.RegisterHandler)
+			auth.POST("/login", handlers.LoginHandler)
+			auth.POST("/logout", handlers.LogoutHandler)
+			auth.POST("/refresh", handlers.RefreshTokenHandler)
+			auth.GET("/verify", handlers.VerifyTokenHandler)
+			auth.POST("/forgot-password", handlers.ForgotPasswordHandler)
+			auth.POST("/reset-password", handlers.ResetPasswordHandler)
+		}
+	}
+
 	return r
 }
 
@@ -85,11 +104,14 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "valid registration",
 			payload: map[string]interface{}{
-				"username": "testuser",
-				"email":    "test@example.com",
-				"password": "password123",
-				"gender":   "man",
-				"sex_pref": "both",
+				"username":   "testuser",
+				"email":      "test@example.com",
+				"password":   "password123",
+				"first_name": "Test",
+				"last_name":  "User",
+				"birth_date": "1990-01-15",
+				"gender":     "man",
+				"sex_pref":   "both",
 			},
 			expectedStatus: http.StatusCreated,
 		},
@@ -103,11 +125,14 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "duplicate username",
 			payload: map[string]interface{}{
-				"username": "testuser", // same as first test
-				"email":    "different@example.com",
-				"password": "password123",
-				"gender":   "woman",
-				"sex_pref": "man",
+				"username":   "testuser", // same as first test
+				"email":      "different@example.com",
+				"password":   "password123",
+				"first_name": "Another",
+				"last_name":  "User",
+				"birth_date": "1985-05-20",
+				"gender":     "woman",
+				"sex_pref":   "man",
 			},
 			expectedStatus: http.StatusConflict,
 		},
@@ -128,15 +153,15 @@ func TestRegisterHandler(t *testing.T) {
 			json.Unmarshal(w.Body.Bytes(), &response)
 
 			if tt.expectedStatus == http.StatusCreated {
-				assert.Equal(t, "success", response["status"])
+				assert.Equal(t, true, response["success"])
 				data := response["data"].(map[string]interface{})
-				assert.Contains(t, data, "user_id")
 				assert.Contains(t, data, "access_token")
 				assert.Contains(t, data, "refresh_token")
 				assert.Equal(t, "Bearer", data["token_type"])
 				assert.Contains(t, data, "expires_in")
 			} else {
-				assert.Equal(t, "error", response["status"])
+				assert.Equal(t, false, response["success"])
+				assert.Contains(t, response, "error")
 			}
 		})
 	}
@@ -163,7 +188,7 @@ func TestLoginHandler(t *testing.T) {
 		{
 			name: "valid login with username",
 			payload: map[string]interface{}{
-				"identifier": "loginuser",
+				"login": "loginuser",
 				"password":   "password",
 			},
 			expectedStatus: http.StatusOK,
@@ -171,7 +196,7 @@ func TestLoginHandler(t *testing.T) {
 		{
 			name: "valid login with email",
 			payload: map[string]interface{}{
-				"identifier": "login@example.com",
+				"login": "login@example.com",
 				"password":   "password",
 			},
 			expectedStatus: http.StatusOK,
@@ -179,7 +204,7 @@ func TestLoginHandler(t *testing.T) {
 		{
 			name: "invalid password",
 			payload: map[string]interface{}{
-				"identifier": "loginuser",
+				"login": "loginuser",
 				"password":   "wrongpassword",
 			},
 			expectedStatus: http.StatusUnauthorized,
@@ -187,7 +212,7 @@ func TestLoginHandler(t *testing.T) {
 		{
 			name: "nonexistent user",
 			payload: map[string]interface{}{
-				"identifier": "nonexistent",
+				"login": "nonexistent",
 				"password":   "password",
 			},
 			expectedStatus: http.StatusUnauthorized,
@@ -209,13 +234,14 @@ func TestLoginHandler(t *testing.T) {
 			json.Unmarshal(w.Body.Bytes(), &response)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Equal(t, "success", response["status"])
+				assert.Equal(t, true, response["success"])
 				data := response["data"].(map[string]interface{})
 				assert.Contains(t, data, "access_token")
 				assert.Contains(t, data, "refresh_token")
 				assert.Equal(t, "Bearer", data["token_type"])
 			} else {
-				assert.Equal(t, "error", response["status"])
+				assert.Equal(t, false, response["success"])
+				assert.Contains(t, response, "error")
 			}
 		})
 	}
@@ -281,12 +307,13 @@ func TestVerifyTokenHandler(t *testing.T) {
 			json.Unmarshal(w.Body.Bytes(), &response)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Equal(t, "success", response["status"])
+				assert.Equal(t, true, response["success"])
 				data := response["data"].(map[string]interface{})
 				assert.Equal(t, true, data["valid"])
 				assert.Equal(t, "123", data["user_id"])
 			} else {
-				assert.Equal(t, "error", response["status"])
+				assert.Equal(t, false, response["success"])
+				assert.Contains(t, response, "error")
 			}
 		})
 	}
@@ -370,14 +397,15 @@ func TestRefreshTokenHandler(t *testing.T) {
 			json.Unmarshal(w.Body.Bytes(), &response)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Equal(t, "success", response["status"])
+				assert.Equal(t, true, response["success"])
 				data := response["data"].(map[string]interface{})
 				assert.Contains(t, data, "access_token")
 				assert.Contains(t, data, "refresh_token")
 				assert.Equal(t, "Bearer", data["token_type"])
 				assert.Contains(t, data, "expires_in")
 			} else {
-				assert.Equal(t, "error", response["status"])
+				assert.Equal(t, false, response["success"])
+				assert.Contains(t, response, "error")
 			}
 		})
 	}
@@ -428,12 +456,13 @@ func TestLogoutHandler(t *testing.T) {
 			json.Unmarshal(w.Body.Bytes(), &response)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Equal(t, "success", response["status"])
+				assert.Equal(t, true, response["success"])
 				data := response["data"].(map[string]interface{})
 				assert.Contains(t, data["message"], tt.expectedMsg[:10]) // Partial match
 			} else {
-				assert.Equal(t, "error", response["status"])
-				assert.Equal(t, tt.expectedMsg, response["message"])
+				assert.Equal(t, false, response["success"])
+				assert.Contains(t, response, "error")
+				assert.Equal(t, tt.expectedMsg, response["error"])
 			}
 		})
 	}
@@ -451,8 +480,8 @@ func TestHealthCheck(t *testing.T) {
 	var response map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &response)
 
-	assert.Equal(t, "success", response["status"])
+	assert.Equal(t, true, response["success"])
 	data := response["data"].(map[string]interface{})
 	assert.Equal(t, "auth-service", data["service"])
-	assert.Equal(t, true, data["ok"])
+	assert.Equal(t, "healthy", data["status"])
 }
