@@ -1,5 +1,6 @@
-package main
+package services
 
+// ServiceConfig represents the configuration for an upstream service
 type ServiceConfig struct {
 	Name string
 	URL  string
@@ -7,7 +8,8 @@ type ServiceConfig struct {
 
 var services map[string]ServiceConfig
 
-func initServices() {
+// InitServices initializes the service configuration map
+func InitServices() {
 	services = map[string]ServiceConfig{
 		"auth": {
 			Name: "auth-service",
@@ -36,7 +38,14 @@ func initServices() {
 	}
 }
 
-func getServicesStatus() map[string]string {
+// GetService returns service configuration by name
+func GetService(name string) (ServiceConfig, bool) {
+	service, exists := services[name]
+	return service, exists
+}
+
+// GetServicesStatus returns the status map of all configured services
+func GetServicesStatus() map[string]string {
 	status := make(map[string]string)
 	for name, service := range services {
 		status[name] = service.URL

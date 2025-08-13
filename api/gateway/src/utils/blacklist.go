@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 
 var redisClient *redis.Client
 
-// Initialize Redis client for JWT blacklisting
-func initRedis() error {
+// InitRedis initializes Redis client for JWT blacklisting
+func InitRedis() error {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "redis:6379"
@@ -46,8 +46,8 @@ func initRedis() error {
 	return nil
 }
 
-// Check if a JWT token is blacklisted
-func isTokenBlacklisted(token string) bool {
+// IsTokenBlacklisted checks if a JWT token is blacklisted
+func IsTokenBlacklisted(token string) bool {
 	if redisClient == nil {
 		return false // If Redis is not available, allow the token
 	}
@@ -69,8 +69,8 @@ func isTokenBlacklisted(token string) bool {
 	return exists > 0
 }
 
-// Add a token to the blacklist with TTL matching token expiration
-func blacklistToken(token string, ttl time.Duration) error {
+// BlacklistToken adds a token to the blacklist with TTL matching token expiration
+func BlacklistToken(token string, ttl time.Duration) error {
 	if redisClient == nil {
 		return nil // If Redis is not available, skip blacklisting
 	}

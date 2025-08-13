@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"bytes"
@@ -9,12 +9,16 @@ import (
 	"strings"
 	"time"
 
+	"gateway/src/middleware"
+	"gateway/src/services"
+	"gateway/src/utils"
 	"github.com/gin-gonic/gin"
 )
 
-func proxyRequest(serviceName, path string) gin.HandlerFunc {
+// ProxyRequest creates a handler that proxies requests to the specified service
+func ProxyRequest(serviceName, path string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		service, exists := services[serviceName]
+		service, exists := services.GetService(serviceName)
 		if !exists {
 			c.JSON(http.StatusServiceUnavailable, gin.H{
 				"error": fmt.Sprintf("Service %s not available", serviceName),
@@ -75,6 +79,7 @@ func proxyRequest(serviceName, path string) gin.HandlerFunc {
 	}
 }
 
+// replacePlaceholders replaces path parameters in the target path
 func replacePlaceholders(path string, c *gin.Context) string {
 	result := path
 
@@ -87,6 +92,7 @@ func replacePlaceholders(path string, c *gin.Context) string {
 	return result
 }
 
+// copyHeaders copies request headers and adds user context headers
 func copyHeaders(c *gin.Context, req *http.Request) {
 	// Copy all headers except Host, preserving multiple values
 	for key, values := range c.Request.Header {
@@ -97,19 +103,21 @@ func copyHeaders(c *gin.Context, req *http.Request) {
 			req.Header.Add(key, v)
 		}
 	}
+
 	// Propagate authenticated user id if present in context
-	if v, ok := c.Get(ctxUserIDKey); ok {
+	if v, ok := c.Get(middleware.CtxUserIDKey); ok {
 		if s, ok := v.(string); ok && s != "" {
 			req.Header.Set("X-User-ID", s)
 		}
 	}
 
 	// Forward original JWT token for services that need it
-	if token := extractToken(c); token != "" {
+	if token := utils.ExtractToken(c); token != "" {
 		req.Header.Set("X-JWT-Token", token)
 	}
 }
 
+// copyResponse copies the upstream response to the client
 func copyResponse(c *gin.Context, resp *http.Response) {
 	// Set status code and copy headers (including multiple Set-Cookie values)
 	c.Status(resp.StatusCode)
