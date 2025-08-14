@@ -10,14 +10,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
 
 const SignInButton: React.FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const navigate = useNavigate();
 
-    const handleLogin = () => {
+    const handleLogin = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!username || !password) return;
         console.log("Username:", username);
         console.log("Password:", password);
+        navigate("/ConversationPage");
     };
 
     return (
@@ -32,7 +37,7 @@ const SignInButton: React.FC = () => {
                         Entrez vos identifiants pour vous connecter.
                     </SheetDescription>
                 </SheetHeader>
-                <div className="grid gap-4 py-4">
+                <form className="grid gap-4 py-4" onSubmit={handleLogin}>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="username" className="text-right">
                             Username
@@ -43,6 +48,7 @@ const SignInButton: React.FC = () => {
                             onChange={(e) => setUsername(e.target.value)}
                             className="col-span-3"
                             placeholder="Votre nom d'utilisateur"
+                            autoComplete="username"
                         />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -56,20 +62,25 @@ const SignInButton: React.FC = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             className="col-span-3"
                             placeholder="Votre mot de passe"
+                            autoComplete="current-password"
                         />
                     </div>
-                    <Button onClick={handleLogin} className="w-full">
+                    <Button
+                        className="w-full"
+                        type="submit"
+                        disabled={!username || !password}
+                    >
                         Se connecter
                     </Button>
+                </form>
+                <div className="flex justify-end col-span-4">
+                    <a
+                        href="#"
+                        className="text-sm text-blue-600 hover:underline"
+                    >
+                        Mot de passe oublié ?
+                    </a>
                 </div>
-                    <div className="flex justify-end col-span-4">
-                        <a
-                            href="#"
-                            className="text-sm text-blue-600 hover:underline"
-                        >
-                            Mot de passe oublié ?
-                        </a>
-                    </div>
             </SheetContent>
         </Sheet>
     );

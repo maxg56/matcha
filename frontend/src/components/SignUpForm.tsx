@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowBigLeftDash, Check } from "lucide-react";
 import type { SignUpFormData } from "@/types/SignUpTypes";
 import PersonalInfoStep from "./signup/PersonalInfoStep";
@@ -33,14 +34,13 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
     const prevStep = () => setStep(s => s - 1);
 
     const checkPassword = (password: string) => {
-		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={};':"\\|,.<>/?`~])/;
-		if (!regex.test(password) || password.length < 8) return false;
-        return regex.test(password);
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={};':"\\|,.<>/?`~])/;
+        return regex.test(password) && password.length >= 8;
     };
 
     const handleFinalSubmit = () => {
         if (form.password !== form.confirmPassword) {
-            alert("passwords do not match");
+            alert("Passwords do not match");
             return;
         }
         onSubmit(form);
@@ -100,7 +100,22 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
     };
 
     return (
-        <div className="w-full max-w-md mx-auto p-4 bg-white rounded shadow-md">
+        <form
+            className="w-full max-w-md mx-auto p-4 bg-white rounded shadow-md"
+            onSubmit={e => {
+                e.preventDefault();
+                if (step < 6) {
+                    if (canGoNext) nextStep();
+                    else if (step >= 4 && step < 6) handleSkip();
+                } else {
+                    handleFinalSubmit();
+                }
+            }}
+        >
+            <Link to="/Accueil" className="text-blue-600 hover:underline mb-4 inline-block">
+                Back to Home
+            </Link>
+
             {renderStep()}
 
             <div className="mt-4 flex flex-col gap-4">
@@ -108,6 +123,7 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
                     <div>
                         {step > 0 && (
                             <button
+                                type="button"
                                 onClick={prevStep}
                                 className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 mr-2"
                             >
@@ -119,7 +135,7 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
                         {step < 6 ? (
                             canGoNext ? (
                                 <button
-                                    onClick={nextStep}
+                                    type="submit"
                                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                                 >
                                     <Check className="inline mr-1" />
@@ -127,6 +143,7 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
                             ) : (
                                 step >= 4 && step < 6 && (
                                     <button
+                                        type="button"
                                         onClick={handleSkip}
                                         className="px-4 py-2 bg-amber-300 rounded hover:bg-amber-500"
                                     >
@@ -135,23 +152,27 @@ const SignUpFormWizard = ({ onSubmit }: { onSubmit: (data: SignUpFormData & { bi
                                 )
                             )
                         ) : (
-                            <button
-                                onClick={handleFinalSubmit}
-                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            <Link to="/ConversationPage"
                             >
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                    onClick={handleFinalSubmit}
+                                >
                                 Valider
                             </button>
+                            </Link>
                         )}
                     </div>
                 </div>
                 <div className="mt-2">
                     <div
                         className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
-                        style={{ width: `${((step + 1) / 7) * 100}%` }}
+                        style={{ width: `${((step + 1) / 8) * 100}%` }}
                     />
                 </div>
             </div>
-        </div>
+        </form>
     );
 };
 
