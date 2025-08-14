@@ -104,14 +104,15 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "valid registration",
 			payload: map[string]interface{}{
-				"username":   "testuser",
-				"email":      "test@example.com",
-				"password":   "password123",
-				"first_name": "Test",
-				"last_name":  "User",
-				"birth_date": "1990-01-15",
-				"gender":     "man",
-				"sex_pref":   "both",
+				"username":          "testuser",
+				"email":             "test@example.com",
+				"password":          "password123",
+				"first_name":        "Test",
+				"last_name":         "User",
+				"birth_date":        "1990-01-15",
+				"gender":            "man",
+				"sex_pref":          "both",
+				"relationship_type": "long_term",
 			},
 			expectedStatus: http.StatusCreated,
 		},
@@ -125,14 +126,15 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "duplicate username",
 			payload: map[string]interface{}{
-				"username":   "testuser", // same as first test
-				"email":      "different@example.com",
-				"password":   "password123",
-				"first_name": "Another",
-				"last_name":  "User",
-				"birth_date": "1985-05-20",
-				"gender":     "woman",
-				"sex_pref":   "man",
+				"username":          "testuser", // same as first test
+				"email":             "different@example.com",
+				"password":          "password123",
+				"first_name":        "Another",
+				"last_name":         "User",
+				"birth_date":        "1985-05-20",
+				"gender":            "woman",
+				"sex_pref":          "man",
+				"relationship_type": "short_term",
 			},
 			expectedStatus: http.StatusConflict,
 		},
@@ -172,11 +174,15 @@ func TestLoginHandler(t *testing.T) {
 
 	// First create a test user
 	user := models.User{
-		Username:     "loginuser",
-		Email:        "login@example.com",
-		PasswordHash: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // "password"
-		Gender:       string(types.GenderMale),
-		SexPref:      string(types.SexPrefBoth),
+		Username:         "loginuser",
+		Email:            "login@example.com",
+		PasswordHash:     "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // "password"
+		FirstName:        "Login",
+		LastName:         "User",
+		BirthDate:        time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:           string(types.GenderMale),
+		SexPref:          string(types.SexPrefBoth),
+		RelationshipType: "long_term",
 	}
 	db.DB.Create(&user)
 
