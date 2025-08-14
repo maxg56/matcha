@@ -44,7 +44,7 @@ jobs:
           # Install golangci-lint
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
           export PATH=$PATH:$(go env GOPATH)/bin
-          
+
           for dir in api/*/; do
             if [ -f "$dir/go.mod" ]; then
               echo "Linting $dir"
