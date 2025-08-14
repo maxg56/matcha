@@ -16,14 +16,14 @@ import (
 
 // RegisterRequest represents user registration payload
 type RegisterRequest struct {
-	Username         string        `json:"username" binding:"required"`
-	Email            string        `json:"email" binding:"required,email"`
-	Password         string        `json:"password" binding:"required,min=8"`
-	FirstName        string        `json:"first_name" binding:"required"`
-	LastName         string        `json:"last_name" binding:"required"`
-	BirthDate        string        `json:"birth_date" binding:"required"`
-	Gender           types.Gender  `json:"gender" binding:"required"`
-	SexPref          types.SexPref `json:"sex_pref" binding:"required"`
+	Username         string                 `json:"username" binding:"required"`
+	Email            string                 `json:"email" binding:"required,email"`
+	Password         string                 `json:"password" binding:"required,min=8"`
+	FirstName        string                 `json:"first_name" binding:"required"`
+	LastName         string                 `json:"last_name" binding:"required"`
+	BirthDate        string                 `json:"birth_date" binding:"required"`
+	Gender           types.Gender           `json:"gender" binding:"required"`
+	SexPref          types.SexPref          `json:"sex_pref" binding:"required"`
 	RelationshipType types.RelationshipType `json:"relationship_type" binding:"required"`
 }
 
