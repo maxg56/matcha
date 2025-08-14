@@ -8,17 +8,27 @@ import (
 
 // SetupMediaRoutes configures media service routes
 func SetupMediaRoutes(r *gin.Engine) {
-	media := r.Group("/api/media")
+	media := r.Group("/api/v1/media")
+
+	// Health check endpoint (without authentication)
+	media.GET("/health", proxy.ProxyRequest("media", "/health"))
+	media.GET("/", proxy.ProxyRequest("media", "/health"))
+
 	media.Use(middleware.JWTMiddleware()) // All media routes require authentication
 
 	// File upload and management
 	media.POST("/upload", proxy.ProxyRequest("media", "/api/v1/media/upload"))
-	media.GET("/:id", proxy.ProxyRequest("media", "/api/v1/media/:id"))
-	media.DELETE("/:id", proxy.ProxyRequest("media", "/api/v1/media/:id"))
+	media.GET("/get/:filename", proxy.ProxyRequest("media", "/api/v1/media/get/:filename"))
+	media.DELETE("/delete/:filename", proxy.ProxyRequest("media", "/api/v1/media/delete/:filename"))
 
-	// User media retrieval
+	// Image processing
+	media.POST("/resize", proxy.ProxyRequest("media", "/api/v1/media/resize"))
+
+	// User media management
+	media.GET("/my", proxy.ProxyRequest("media", "/api/v1/media/my"))
 	media.GET("/user/:userId", proxy.ProxyRequest("media", "/api/v1/media/user/:userId"))
+	media.POST("/profile", proxy.ProxyRequest("media", "/api/v1/media/profile"))
 
-	// Health check endpoint
-	media.GET("/", proxy.ProxyRequest("media", "/health"))
+	// Health check endpoint (without authentication)
+	r.GET("/api/media/health", proxy.ProxyRequest("media", "/health"))
 }

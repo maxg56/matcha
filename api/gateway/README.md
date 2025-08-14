@@ -116,7 +116,7 @@ services = map[string]ServiceConfig{
         URL:  "http://auth-service:8001",
     },
     "user": {
-        Name: "user-service", 
+        Name: "user-service",
         URL:  "http://user-service:8002",
     },
     // ... other services
@@ -225,7 +225,7 @@ go test -cover .
 
 **Proxy Tests:**
 - Header forwarding
-- Path parameter replacement  
+- Path parameter replacement
 - Query parameter preservation
 - Response copying
 

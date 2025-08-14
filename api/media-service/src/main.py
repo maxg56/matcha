@@ -1,57 +1,49 @@
-import os
+"""
+Media Service - Service de gestion des médias pour Matcha
 
-from flask import Flask, jsonify
-from flask_cors import CORS
+Fournit les fonctionnalités d'upload, récupération, suppression et redimensionnement d'images.
+"""
 
-app = Flask(__name__)
-CORS(app)
+import logging
+from pathlib import Path
 
-# Configure upload settings
-UPLOAD_FOLDER = "uploads"
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
+from app import create_app
+from config.database import create_tables, test_connection
+from config.settings import UPLOAD_FOLDER, get_debug_mode, get_port
+from models import db
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def allowed_file(filename):
-    has_extension = "." in filename
-    extension = filename.rsplit(".", 1)[1].lower()
-    return has_extension and extension in ALLOWED_EXTENSIONS
-
-
-@app.route("/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "ok", "service": "media-service"})
-
-
-@app.route("/api/v1/media/upload", methods=["POST"])
-def upload_file():
-    # TODO: Implement file upload logic
-    return jsonify({"message": "Upload file endpoint"})
-
-
-@app.route("/api/v1/media/get/<filename>", methods=["GET"])
-def get_file(filename):
-    # TODO: Implement get file logic
-    return jsonify({"message": f"Get file endpoint for {filename}"})
-
-
-@app.route("/api/v1/media/delete/<filename>", methods=["DELETE"])
-def delete_file(filename):
-    # TODO: Implement delete file logic
-    return jsonify({"message": f"Delete file endpoint for {filename}"})
-
-
-@app.route("/api/v1/media/resize", methods=["POST"])
-def resize_image():
-    # TODO: Implement image resizing logic
-    return jsonify({"message": "Resize image endpoint"})
+# Create the Flask app
+app = create_app()
 
 
 if __name__ == "__main__":
     # Create upload directory if it doesn't exist
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
+    upload_path = Path(UPLOAD_FOLDER)
+    upload_path.mkdir(exist_ok=True)
 
-    port = int(os.environ.get("PORT", 8006))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = get_port()
+    debug_mode = get_debug_mode()
+
+    logger.info(f"Starting media service on port {port}")
+    logger.info(f"Upload directory: {upload_path.absolute()}")
+    logger.info(f"Debug mode: {debug_mode}")
+
+    # Test database connection
+    if not test_connection():
+        logger.error("Failed to connect to database. Exiting...")
+        exit(1)
+
+    # Create tables within application context
+    with app.app_context():
+        try:
+            create_tables(db)
+            logger.info("Database tables initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize database tables: {e}")
+            exit(1)
+
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
