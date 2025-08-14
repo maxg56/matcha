@@ -19,6 +19,11 @@ func SetupMediaRoutes(r *gin.Engine) {
 	// Image processing
 	media.POST("/resize", proxy.ProxyRequest("media", "/api/v1/media/resize"))
 
+	// User media management
+	media.GET("/my", proxy.ProxyRequest("media", "/api/v1/media/my"))
+	media.GET("/user/:userId", proxy.ProxyRequest("media", "/api/v1/media/user/:userId"))
+	media.POST("/profile", proxy.ProxyRequest("media", "/api/v1/media/profile"))
+
 	// Health check endpoint (without authentication)
 	r.GET("/api/media/health", proxy.ProxyRequest("media", "/health"))
 }

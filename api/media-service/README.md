@@ -4,10 +4,13 @@ Service de gestion des médias pour l'application Matcha. Permet l'upload, la r�
 
 ## 📋 Fonctionnalités
 
-- **Upload de fichiers** : Upload sécurisé avec validation des types et tailles
-- **Récupération de fichiers** : Service de fichiers avec gestion d'erreurs
-- **Suppression de fichiers** : Suppression sécurisée par nom de fichier
-- **Redimensionnement d'images** : Redimensionnement avec optimisation
+- **Upload de fichiers** : Upload sécurisé avec validation et stockage en base de données
+- **Récupération de fichiers** : Service de fichiers avec contrôle d'accès
+- **Suppression de fichiers** : Suppression logique avec vérification de propriété
+- **Redimensionnement d'images** : Redimensionnement avec optimisation et nouvelles entrées DB
+- **Gestion des médias utilisateur** : Liste des médias par utilisateur
+- **Images de profil** : Définition d'image de profil principale
+- **Base de données** : Métadonnées complètes stockées en PostgreSQL
 - **Health Check** : Monitoring de l'état du service
 
 ## 🚀 Démarrage Rapide
@@ -15,6 +18,7 @@ Service de gestion des médias pour l'application Matcha. Permet l'upload, la r�
 ### Prérequis
 
 - Python 3.8+
+- PostgreSQL 12+
 - Dépendances listées dans `requirements.txt`
 
 ### Installation
@@ -27,6 +31,24 @@ source venv/bin/activate  # Linux/Mac
 
 # Installer les dépendances
 pip install -r requirements.txt
+
+# Configurer l'environnement
+cp .env.example .env
+# Éditer .env avec vos paramètres de base de données
+```
+
+### Configuration Base de Données
+
+```bash
+# Initialiser la base de données
+cd src
+python manage.py init
+
+# Vérifier le statut
+python manage.py check
+
+# Reset complet si nécessaire
+python manage.py reset
 ```
 
 ### Lancement
@@ -65,7 +87,7 @@ Content-Type: multipart/form-data
 **Paramètres :**
 - `file` : Fichier à uploader (required)
 
-**Formats supportés :** PNG, JPG, JPEG, GIF, WEBP  
+**Formats supportés :** PNG, JPG, JPEG, GIF, WEBP
 **Taille max :** 16MB
 
 **Réponse :**
@@ -108,6 +130,7 @@ DELETE /api/v1/media/delete/<filename>
 ```
 POST /api/v1/media/resize
 Content-Type: application/json
+Authorization: Bearer <jwt-token>
 ```
 
 **Body :**
@@ -122,19 +145,90 @@ Content-Type: application/json
 **Contraintes :**
 - Width/Height : 1-4096 pixels
 - Formats : PNG, JPG, JPEG, GIF, WEBP
+- L'utilisateur doit être propriétaire de l'image
 
 **Réponse :**
 ```json
 {
   "success": true,
   "data": {
+    "id": 2,
     "original_filename": "image_uuid.jpg",
+    "original_id": 1,
     "resized_filename": "image_uuid_resized_200x200.jpg",
     "url": "http://localhost:8006/api/v1/media/get/image_uuid_resized_200x200.jpg",
     "width": 200,
-    "height": 200
+    "height": 200,
+    "file_size": 15420
   },
   "message": "Image resized successfully"
+}
+```
+
+### Lister Mes Médias
+```
+GET /api/v1/media/my
+Authorization: Bearer <jwt-token>
+```
+
+**Réponse :**
+```json
+{
+  "success": true,
+  "data": {
+    "media": [
+      {
+        "id": 1,
+        "filename": "image_uuid.jpg",
+        "original_name": "photo.jpg",
+        "file_size": 245760,
+        "mime_type": "image/jpeg",
+        "width": 1920,
+        "height": 1080,
+        "is_profile": true,
+        "created_at": "2024-01-15T10:30:00",
+        "description": null,
+        "url": "/api/v1/media/get/image_uuid.jpg"
+      }
+    ],
+    "count": 1
+  },
+  "message": "Found 1 media files"
+}
+```
+
+### Médias d'un Utilisateur
+```
+GET /api/v1/media/user/<user_id>
+Authorization: Bearer <jwt-token>
+```
+
+**Réponse :** Format similaire à `/my` mais informations publiques uniquement
+
+### Définir Image de Profil
+```
+POST /api/v1/media/profile
+Content-Type: application/json
+Authorization: Bearer <jwt-token>
+```
+
+**Body :**
+```json
+{
+  "image_id": 1
+}
+```
+
+**Réponse :**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "filename": "image_uuid.jpg",
+    "is_profile": true
+  },
+  "message": "Profile image set successfully"
 }
 ```
 

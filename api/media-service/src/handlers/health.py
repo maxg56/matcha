@@ -1,6 +1,7 @@
 """
 Health check handler
 """
+
 from utils.responses import respond_success
 
 

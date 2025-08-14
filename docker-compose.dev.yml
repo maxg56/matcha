@@ -228,6 +228,11 @@ volumes:
       device: ./volumes/redis
       o: bind
   media_uploads_dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/media_uploads
+      o: bind
   frontend_node_modules:
 
 networks:
