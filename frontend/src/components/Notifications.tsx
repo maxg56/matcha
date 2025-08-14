@@ -14,7 +14,7 @@ export function NotificationButton() {
 
     const handleClick = () => {
         setOpen(prev => !prev);
-        if (!open) clearNotifications(); 
+        if (!open) clearNotifications();
     };
 
     return (

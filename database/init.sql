@@ -20,15 +20,48 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     birth_date DATE NOT NULL,
+    age INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM AGE(birth_date))) STORED,
+    height INT, -- previously 'size'
+
+    alcohol_consumption VARCHAR(9) CHECK (alcohol_consumption IN ('yes','sometimes','no')),
+    smoking VARCHAR(9) CHECK (smoking IN ('yes','sometimes','no')),
+    cannabis VARCHAR(9) CHECK (cannabis IN ('yes','sometimes','no')),
+    drugs VARCHAR(9) CHECK (drugs IN ('yes','sometimes','no')),
+    pets VARCHAR(3)  CHECK (pets IN ('yes','no')),
+
+    social_activity_level VARCHAR(10) CHECK (social_activity_level IN ('low','medium','high','other')),
+    sport_activity VARCHAR(10) CHECK (sport_activity IN ('low','medium','high','other')),
+    education_level VARCHAR(20) CHECK (education_level IN ('high_school','bachelor','master','doctorate','other')),
+
+    personal_opinion TEXT,
+    bio VARCHAR(400), -- limited to 400 characters
+
+    birth_city VARCHAR(100),
+    current_city VARCHAR(100),
+    job VARCHAR(100),
+    religion VARCHAR(50) CHECK (religion IN ('christianity','islam','hinduism','buddhism','atheism','other')),
+    relationship_type VARCHAR(20) NOT NULL CHECK (relationship_type IN ('friendship','short_term','long_term','life','other')),
+    children_status VARCHAR(10) CHECK (children_status IN ('yes','no','other')), -- new: does user have children
+    children_details TEXT, -- optional: number/age of children
+
+    zodiac_sign VARCHAR(50),
+
+    hair_color VARCHAR(20) CHECK (hair_color IN ('black','brown','blonde','red','gray','white','other')),
+    skin_color VARCHAR(20) CHECK (skin_color IN ('white','black','brown','yellow','olive','other')),
+    eye_color VARCHAR(20) CHECK (eye_color IN ('brown','blue','green','hazel','gray','other')),
+
     fame INT DEFAULT 0,
-    gender VARCHAR(5) NOT NULL CHECK (gender IN ('woman', 'man')),
-    sex_pref VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('woman', 'man', 'both')),
-    bio VARCHAR(400),
-    latitude NUMERIC(9, 6),
-    longitude NUMERIC(9, 6),
+    gender VARCHAR(6) NOT NULL CHECK (gender IN ('woman', 'man', 'other')),
+    sex_pref VARCHAR(6) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('woman', 'man', 'both','other')),
+
+    political_view VARCHAR(20) CHECK (political_view IN ('left','center','right','apolitical','other')),
+
+    latitude NUMERIC(9,6),
+    longitude NUMERIC(9,6),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- ====================
 -- TABLE : tags

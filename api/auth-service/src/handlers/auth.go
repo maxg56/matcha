@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -15,14 +16,15 @@ import (
 
 // RegisterRequest represents user registration payload
 type RegisterRequest struct {
-	Username  string        `json:"username" binding:"required"`
-	Email     string        `json:"email" binding:"required,email"`
-	Password  string        `json:"password" binding:"required,min=8"`
-	FirstName string        `json:"first_name" binding:"required"`
-	LastName  string        `json:"last_name" binding:"required"`
-	BirthDate string        `json:"birth_date" binding:"required"`
-	Gender    types.Gender  `json:"gender" binding:"required"`
-	SexPref   types.SexPref `json:"sex_pref" binding:"required"`
+	Username         string                 `json:"username" binding:"required"`
+	Email            string                 `json:"email" binding:"required,email"`
+	Password         string                 `json:"password" binding:"required,min=8"`
+	FirstName        string                 `json:"first_name" binding:"required"`
+	LastName         string                 `json:"last_name" binding:"required"`
+	BirthDate        string                 `json:"birth_date" binding:"required"`
+	Gender           types.Gender           `json:"gender" binding:"required"`
+	SexPref          types.SexPref          `json:"sex_pref" binding:"required"`
+	RelationshipType types.RelationshipType `json:"relationship_type" binding:"required"`
 }
 
 // LoginRequest represents user login payload
@@ -124,16 +126,22 @@ func createUser(req RegisterRequest) (*models.User, error) {
 		return nil, fmt.Errorf("failed to process password")
 	}
 
-	// Note: birth_date handling can be added when the User model includes it
+	// Parse birth date
+	birthDate, err := parseDate(req.BirthDate)
+	if err != nil {
+		return nil, fmt.Errorf("invalid birth date format: %w", err)
+	}
 
 	user := models.User{
-		Username:     req.Username,
-		Email:        req.Email,
-		PasswordHash: string(hash),
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		Gender:       string(req.Gender),
-		SexPref:      string(req.SexPref),
+		Username:         req.Username,
+		Email:            req.Email,
+		PasswordHash:     string(hash),
+		FirstName:        req.FirstName,
+		LastName:         req.LastName,
+		BirthDate:        birthDate,
+		Gender:           string(req.Gender),
+		SexPref:          string(req.SexPref),
+		RelationshipType: string(req.RelationshipType),
 	}
 
 	if err := db.DB.Create(&user).Error; err != nil {
@@ -141,4 +149,9 @@ func createUser(req RegisterRequest) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+// parseDate parses date string in YYYY-MM-DD format
+func parseDate(dateStr string) (time.Time, error) {
+	return time.Parse("2006-01-02", dateStr)
 }
