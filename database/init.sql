@@ -14,17 +14,20 @@ DROP TABLE IF EXISTS users CASCADE;
 -- ====================
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(255) UNIQUE,
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
-    email VARCHAR(255) UNIQUE,
-    password_hash TEXT,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    birth_date DATE NOT NULL,
     fame INT DEFAULT 0,
     gender VARCHAR(5) NOT NULL CHECK (gender IN ('woman', 'man')),
     sex_pref VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('woman', 'man', 'both')),
     bio VARCHAR(400),
     latitude NUMERIC(9, 6),
-    longitude NUMERIC(9, 6)
+    longitude NUMERIC(9, 6),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ====================
@@ -50,8 +53,15 @@ CREATE TABLE user_tags (
 CREATE TABLE images (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    image VARCHAR(255) NOT NULL,
-    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    filename VARCHAR(255) NOT NULL UNIQUE,
+    original_name VARCHAR(255),
+    file_size INT,
+    mime_type VARCHAR(100),
+    width INT,
+    height INT,
+    is_profile BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ====================
@@ -110,12 +120,34 @@ FOR EACH ROW
 EXECUTE FUNCTION update_last_message();
 
 -- ====================
+-- TRIGGER : Mise à jour automatique de updated_at
+-- ====================
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_users_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trg_update_images_updated_at
+BEFORE UPDATE ON images
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- ====================
 -- INSERTS DE TEST
 -- ====================
-INSERT INTO users (username, first_name, last_name, email, gender, sex_pref)
+INSERT INTO users (username, first_name, last_name, email, password_hash, birth_date, gender, sex_pref)
 VALUES
-('test1', 'T', 'tester', 't@t.com', 'man', 'both'),
-('test2', 'te', 'tes', 'tes@t.com', 'woman', 'man');
+('testuser', 'Test', 'User', 'test@test.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1990-01-01', 'man', 'both'),
+('test1', 'T', 'tester', 't@t.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1992-05-15', 'man', 'both'),
+('test2', 'te', 'tes', 'tes@t.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1995-08-20', 'woman', 'man');
 
 INSERT INTO tags (name) VALUES
 ('🌍 Voyage'),
