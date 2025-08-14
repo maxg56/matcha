@@ -11,6 +11,7 @@ repos:
     hooks:
       - id: isort
         files: ^api/.*/src/.*\.py$
+        args: ["--profile", "black"]
 
 
   # Go format & lint - for each Go service

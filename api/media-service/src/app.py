@@ -7,19 +7,21 @@ import os
 from pathlib import Path
 
 from config.database import create_tables, init_database
+
 # Import configuration
 from config.settings import MAX_CONTENT_LENGTH, UPLOAD_FOLDER, get_database_url
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 from handlers.deletion import delete_file
+
 # Import handlers
 from handlers.health import health_check
 from handlers.resize import resize_image
 from handlers.retrieval import get_file
 from handlers.upload import upload_file
-from handlers.user_media import (get_user_media, list_user_media,
-                                 set_profile_image)
+from handlers.user_media import get_user_media, list_user_media, set_profile_image
+
 # Import models
 from models import Image, db
 
