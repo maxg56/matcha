@@ -1,72 +1,47 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	db "auth-service/src/conf"
+	"auth-service/src/handlers"
 )
 
 func main() {
-	r := gin.Default()
 	// Initialize database (will AutoMigrate models)
-	ConnectDatabase()
+	db.ConnectDatabase()
+
+	// Initialize Redis for token blacklisting
+	if err := db.InitRedis(); err != nil {
+		log.Printf("Failed to initialize Redis: %v", err)
+		log.Println("Redis initialization failed - tokens will not be blacklisted on logout")
+	} else {
+		log.Println("Redis initialized successfully for token blacklisting")
+	}
+
+	r := gin.Default()
 
 	// Health check
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"service": "auth-service",
-		})
-	})
+	r.GET("/health", handlers.HealthCheckHandler)
 
-	// Auth routes
-	print("Setting up auth routes")
-	auth := r.Group("/api/v1/auth")
+	// API routes
+	api := r.Group("/api/v1")
 	{
-		auth.POST("/register", registerHandler)
-		auth.POST("/login", loginHandler)
-		auth.POST("/logout", logoutHandler)
-		auth.POST("/refresh", refreshTokenHandler)
-		auth.GET("/verify", verifyTokenHandler)
-		auth.POST("/forgot-password", forgotPasswordHandler)
-		auth.POST("/reset-password", resetPasswordHandler)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", handlers.RegisterHandler)
+			auth.POST("/login", handlers.LoginHandler)
+			auth.POST("/logout", handlers.LogoutHandler)
+			auth.POST("/refresh", handlers.RefreshTokenHandler)
+			auth.GET("/verify", handlers.VerifyTokenHandler)
+			auth.POST("/forgot-password", handlers.ForgotPasswordHandler)
+			auth.POST("/reset-password", handlers.ResetPasswordHandler)
+		}
 	}
 
 	log.Println("Auth service starting on port 8001")
 	log.Fatal(http.ListenAndServe(":8001", r))
-}
-
-func registerHandler(c *gin.Context) {
-	// TODO: Implement registration logic
-	c.JSON(http.StatusOK, gin.H{"message": "Register endpoint"})
-}
-
-func loginHandler(c *gin.Context) {
-	// TODO: Implement login logic
-	c.JSON(http.StatusOK, gin.H{"message": "Login endpoint"})
-}
-
-func logoutHandler(c *gin.Context) {
-	// TODO: Implement logout logic
-	c.JSON(http.StatusOK, gin.H{"message": "Logout endpoint"})
-}
-
-func refreshTokenHandler(c *gin.Context) {
-	// TODO: Implement token refresh logic
-	c.JSON(http.StatusOK, gin.H{"message": "Refresh token endpoint"})
-}
-
-func verifyTokenHandler(c *gin.Context) {
-	// TODO: Implement token verification logic
-	c.JSON(http.StatusOK, gin.H{"message": "Verify token endpoint"})
-}
-
-func forgotPasswordHandler(c *gin.Context) {
-	// TODO: Implement forgot password logic
-	c.JSON(http.StatusOK, gin.H{"message": "Forgot password endpoint"})
-}
-
-func resetPasswordHandler(c *gin.Context) {
-	// TODO: Implement reset password logic
-	c.JSON(http.StatusOK, gin.H{"message": "Reset password endpoint"})
 }

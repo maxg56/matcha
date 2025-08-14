@@ -75,6 +75,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GIN_MODE: debug
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ./api/auth-service/src:/app/src
       - ./api/auth-service/go.mod:/app/go.mod
@@ -215,6 +216,17 @@ services:
 
 volumes:
   postgres_data_dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/data
+      o: bind
+  redis_data_dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/redis
+      o: bind
   media_uploads_dev:
   frontend_node_modules:
 
