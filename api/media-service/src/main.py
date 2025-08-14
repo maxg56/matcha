@@ -1,57 +1,72 @@
-import os
+"""
+Media Service - Service de gestion des médias pour Matcha
 
-from flask import Flask, jsonify
+Fournit les fonctionnalités d'upload, récupération, suppression et redimensionnement d'images.
+"""
+import logging
+from pathlib import Path
+from flask import Flask
 from flask_cors import CORS
 
+# Import configuration
+from config.settings import UPLOAD_FOLDER, MAX_CONTENT_LENGTH, get_port, get_debug_mode
+
+# Import handlers
+from handlers.health import health_check
+from handlers.upload import upload_file
+from handlers.retrieval import get_file
+from handlers.deletion import delete_file
+from handlers.resize import resize_image
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Configure upload settings
-UPLOAD_FOLDER = "uploads"
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+# Configure app settings
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
+app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
 
-def allowed_file(filename):
-    has_extension = "." in filename
-    extension = filename.rsplit(".", 1)[1].lower()
-    return has_extension and extension in ALLOWED_EXTENSIONS
-
-
+# Register routes
 @app.route("/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "ok", "service": "media-service"})
+def health():
+    return health_check()
 
 
 @app.route("/api/v1/media/upload", methods=["POST"])
-def upload_file():
-    # TODO: Implement file upload logic
-    return jsonify({"message": "Upload file endpoint"})
+def upload():
+    return upload_file()
 
 
 @app.route("/api/v1/media/get/<filename>", methods=["GET"])
-def get_file(filename):
-    # TODO: Implement get file logic
-    return jsonify({"message": f"Get file endpoint for {filename}"})
+def get(filename):
+    return get_file(filename)
 
 
 @app.route("/api/v1/media/delete/<filename>", methods=["DELETE"])
-def delete_file(filename):
-    # TODO: Implement delete file logic
-    return jsonify({"message": f"Delete file endpoint for {filename}"})
+def delete(filename):
+    return delete_file(filename)
 
 
 @app.route("/api/v1/media/resize", methods=["POST"])
-def resize_image():
-    # TODO: Implement image resizing logic
-    return jsonify({"message": "Resize image endpoint"})
+def resize():
+    return resize_image()
 
 
 if __name__ == "__main__":
     # Create upload directory if it doesn't exist
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
-
-    port = int(os.environ.get("PORT", 8006))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    upload_path = Path(UPLOAD_FOLDER)
+    upload_path.mkdir(exist_ok=True)
+    
+    port = get_port()
+    debug_mode = get_debug_mode()
+    
+    logger.info(f"Starting media service on port {port}")
+    logger.info(f"Upload directory: {upload_path.absolute()}")
+    logger.info(f"Debug mode: {debug_mode}")
+    
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)

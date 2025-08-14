@@ -13,12 +13,12 @@ func SetupMediaRoutes(r *gin.Engine) {
 
 	// File upload and management
 	media.POST("/upload", proxy.ProxyRequest("media", "/api/v1/media/upload"))
-	media.GET("/:id", proxy.ProxyRequest("media", "/api/v1/media/:id"))
-	media.DELETE("/:id", proxy.ProxyRequest("media", "/api/v1/media/:id"))
+	media.GET("/get/:filename", proxy.ProxyRequest("media", "/api/v1/media/get/:filename"))
+	media.DELETE("/delete/:filename", proxy.ProxyRequest("media", "/api/v1/media/delete/:filename"))
 
-	// User media retrieval
-	media.GET("/user/:userId", proxy.ProxyRequest("media", "/api/v1/media/user/:userId"))
+	// Image processing
+	media.POST("/resize", proxy.ProxyRequest("media", "/api/v1/media/resize"))
 
-	// Health check endpoint
-	media.GET("/", proxy.ProxyRequest("media", "/health"))
+	// Health check endpoint (without authentication)
+	r.GET("/api/media/health", proxy.ProxyRequest("media", "/health"))
 }
