@@ -8,7 +8,12 @@ import (
 
 // SetupMediaRoutes configures media service routes
 func SetupMediaRoutes(r *gin.Engine) {
-	media := r.Group("/api/media")
+	media := r.Group("/api/v1/media")
+	
+	// Health check endpoint (without authentication)
+	media.GET("/health", proxy.ProxyRequest("media", "/health"))
+	media.GET("/", proxy.ProxyRequest("media", "/health"))
+	
 	media.Use(middleware.JWTMiddleware()) // All media routes require authentication
 
 	// File upload and management
