@@ -179,6 +179,6 @@ pre-commit run --all-files
 
 Quality checks include:
 - Go: `go fmt`, `go vet`
-- Python: `black`, `isort`, `flake8` 
+- Python: `black`, `isort`, `flake8`
 - Frontend: ESLint
 - General: trailing whitespace, YAML validation
