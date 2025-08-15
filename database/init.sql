@@ -20,7 +20,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     birth_date DATE NOT NULL,
-    age INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM AGE(birth_date))) STORED,
+    -- age INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM AGE(birth_date))) STORED, -- cause PostgreSQL does not support GENERATED ALWAYS AS for DATE types
     height INT, -- previously 'size'
 
     alcohol_consumption VARCHAR(9) CHECK (alcohol_consumption IN ('yes','sometimes','no')),
@@ -176,11 +176,6 @@ EXECUTE FUNCTION update_updated_at_column();
 -- ====================
 -- INSERTS DE TEST
 -- ====================
-INSERT INTO users (username, first_name, last_name, email, password_hash, birth_date, gender, sex_pref)
-VALUES
-('testuser', 'Test', 'User', 'test@test.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1990-01-01', 'man', 'both'),
-('test1', 'T', 'tester', 't@t.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1992-05-15', 'man', 'both'),
-('test2', 'te', 'tes', 'tes@t.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1995-08-20', 'woman', 'man');
 
 INSERT INTO tags (name) VALUES
 ('🌍 Voyage'),
@@ -200,14 +195,3 @@ INSERT INTO tags (name) VALUES
 ('🍷 Gastronomie & vin'),
 ('👨🏻‍💻​​ Code avec vim'),
 ('⛰️ Randonnée & plein air');
-
-INSERT INTO user_tags (user_id, tag_id) VALUES
-(1, 3), (1, 6), (1, 8),
-(2, 10), (2, 3), (2, 8);
-
-INSERT INTO discussion (user1_id, user2_id) VALUES (1, 2);
-
-INSERT INTO messages (conv_id, sender_id, msg) VALUES
-(1, 1, 'hey'),
-(1, 2, 'how are you'),
-(1, 1, 'fine');

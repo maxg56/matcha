@@ -214,6 +214,22 @@ services:
       - frontend
     restart: unless-stopped
 
+  user-creation:
+    build: ./user-creation
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASSWORD:-password}
+    networks:
+      - DB
+    depends_on:
+      - postgres
+    volumes:
+      - ./user-creation:/app
+    restart: unless-stopped
+
 volumes:
   postgres_data_dev:
     driver: local
@@ -228,11 +244,6 @@ volumes:
       device: ./volumes/redis
       o: bind
   media_uploads_dev:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/media_uploads
-      o: bind
   frontend_node_modules:
 
 networks:
