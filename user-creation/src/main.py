@@ -30,7 +30,7 @@ cur.execute("""
     """)
 count = cur.fetchone()[0]
 if count > 0:
-    print("⚠️ Il y a déjà {count} utilisateurs dans la base de données.")
+    print(f"⚠️ Il y a déjà {count} utilisateurs dans la base de données.")
     print("Vide la table avant de créer de nouveaux utilisateurs random.")
     exit(1)
 
