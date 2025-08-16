@@ -79,9 +79,9 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
       {/* Custom header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      <header className="sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-xl">
         <div className="flex items-center justify-between h-16 px-4">
           <TopBar 
             title=""
@@ -89,13 +89,13 @@ export default function ChatPage() {
             onBack={handleBack}
             rightAction={
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="hover:bg-accent">
+                <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <Phone className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="hover:bg-accent">
+                <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <Video className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="hover:bg-accent">
+                <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <MoreHorizontal className="h-5 w-5" />
                 </Button>
               </div>
@@ -105,12 +105,12 @@ export default function ChatPage() {
           {/* Match info */}
           <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
             <div className="relative">
-              <Avatar className="w-10 h-10">
+              <Avatar className="w-10 h-10 ring-2 ring-white/20">
                 <AvatarImage src={mockMatch.image} alt={mockMatch.name} />
                 <AvatarFallback>{mockMatch.name[0]}</AvatarFallback>
               </Avatar>
               {mockMatch.isOnline && (
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background shadow-lg" />
               )}
             </div>
             <div>

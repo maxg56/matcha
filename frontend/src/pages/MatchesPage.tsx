@@ -92,7 +92,8 @@ export default function MatchesPage() {
   };
 
   return (
-    <ResponsiveLayout title="Likes Reçus" showNavigation={true} maxWidth="lg">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <ResponsiveLayout title="Likes Reçus" showNavigation={true} maxWidth="lg">
       <div className="p-4">
         {/* Header avec bouton pour liker */}
         <div className="flex items-center justify-between mb-6">
@@ -104,7 +105,7 @@ export default function MatchesPage() {
           </div>
           <Button 
             onClick={handleOpenLikeModal}
-            className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+            className="gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600"
           >
             <Plus className="h-4 w-4" />
             Liker des profils
@@ -126,6 +127,7 @@ export default function MatchesPage() {
         onLike={handleLikeProfile}
         onPass={handlePassProfile}
       />
-    </ResponsiveLayout>
+      </ResponsiveLayout>
+    </div>
   );
 }
