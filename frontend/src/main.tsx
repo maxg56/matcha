@@ -22,7 +22,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <div className="min-h-screen bg-background text-foreground">
-        <NotificationButton />
+          {/* <NotificationButton /> */}
         <Routes>
           {/* Auth routes */}
           <Route path="/login" element={<LoginPage />} />
