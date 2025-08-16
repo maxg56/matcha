@@ -209,7 +209,7 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
     <div className="mb-6">
       <button
         onClick={() => setActiveSection(activeSection === sectionKey ? null : sectionKey)}
-        className="w-full flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-accent/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg"
       >
         <div className="flex items-center gap-3">
           <div className="text-primary">{icon}</div>
@@ -226,7 +226,7 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
       </button>
       
       {activeSection === sectionKey && (
-        <div className="mt-3 p-4 bg-background border border-border rounded-xl">
+        <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg">
           {children}
         </div>
       )}
@@ -248,11 +248,11 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
           key={option.value}
           onClick={() => onToggle(option.value)}
           className={cn(
-            "p-2 md:p-3 rounded-lg border text-xs md:text-sm font-medium transition-colors",
-            "flex items-center gap-1 md:gap-2 justify-center",
+            "p-2 md:p-3 rounded-lg border text-xs md:text-sm font-medium transition-all duration-300",
+            "flex items-center gap-1 md:gap-2 justify-center shadow-lg",
             selectedValues.includes(option.value)
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-background border-border hover:bg-accent"
+              ? "bg-purple-500 text-white border-purple-500"
+              : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
           )}
         >
           <span>{option.icon}</span>
@@ -263,9 +263,9 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-background">
+    <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-10">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10 shadow-xl">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
@@ -273,10 +273,10 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
           <h1 className="text-xl font-bold">Filtres</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={resetFilters}>
+          <Button variant="outline" onClick={resetFilters} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600">
             Réinitialiser
           </Button>
-          <Button onClick={applyFilters}>
+          <Button onClick={applyFilters} className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white shadow-lg">
             Appliquer
           </Button>
         </div>
