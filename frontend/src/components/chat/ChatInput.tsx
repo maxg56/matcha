@@ -35,14 +35,14 @@ export function ChatInput({
 
   return (
     <div className={cn(
-      "sticky bottom-0 bg-background/80 backdrop-blur-md border-t border-border p-4",
+      "sticky bottom-0 glass-card backdrop-blur-md border-t border-border/30 p-4",
       className
     )}>
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
         <Button
           variant="ghost"
           size="icon"
-          className="flex-shrink-0 hover:bg-accent mb-1"
+          className="flex-shrink-0 hover:glass-light mb-1 rounded-full"
           disabled={disabled}
         >
           <Plus className="h-5 w-5" />
@@ -56,9 +56,9 @@ export function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             className={cn(
-              "min-h-0 resize-none border-border/50 rounded-2xl",
+              "min-h-0 resize-none border-border/30 rounded-2xl",
               "focus:ring-primary/50 pr-12",
-              "bg-muted/50 backdrop-blur-sm"
+              "glass-light backdrop-blur-sm"
             )}
             rows={1}
             style={{
@@ -74,10 +74,10 @@ export function ChatInput({
             size="icon"
             className={cn(
               "absolute right-2 bottom-2 h-8 w-8 rounded-full",
-              "transition-all duration-200",
+              "transition-all duration-200 shadow-lg",
               message.trim() 
-                ? "bg-primary hover:bg-primary/90 scale-100" 
-                : "bg-muted-foreground/20 scale-75"
+                ? "glass-purple hover:scale-110 scale-100" 
+                : "glass-light scale-75"
             )}
           >
             <Send className="h-4 w-4" />

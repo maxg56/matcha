@@ -22,8 +22,8 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
         "max-w-[80%] px-4 py-2 rounded-3xl",
         "transform transition-all duration-200 hover:scale-[1.02]",
         message.isOwn
-          ? "bg-primary text-primary-foreground rounded-br-lg"
-          : "bg-muted text-foreground rounded-bl-lg"
+          ? "glass-purple text-white rounded-br-lg shadow-lg"
+          : "glass-card text-foreground rounded-bl-lg shadow-lg"
       )}>
         <p className="text-sm leading-relaxed whitespace-pre-wrap">
           {message.content}
@@ -31,7 +31,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
         
         <div className={cn(
           "flex items-center justify-end gap-1 mt-1",
-          message.isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+          message.isOwn ? "text-white/70" : "text-muted-foreground"
         )}>
           <span className="text-xs">
             {message.timestamp}
@@ -41,14 +41,14 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
             <div className="flex">
               <div className={cn(
                 "w-1 h-1 rounded-full mx-0.5",
-                message.status === 'sent' && "bg-primary-foreground/50",
-                message.status === 'delivered' && "bg-primary-foreground/70",
-                message.status === 'read' && "bg-primary-foreground"
+                message.status === 'sent' && "bg-white/50",
+                message.status === 'delivered' && "bg-white/70",
+                message.status === 'read' && "bg-white"
               )} />
               <div className={cn(
                 "w-1 h-1 rounded-full",
-                message.status === 'delivered' && "bg-primary-foreground/70",
-                message.status === 'read' && "bg-primary-foreground"
+                message.status === 'delivered' && "bg-white/70",
+                message.status === 'read' && "bg-white"
               )} />
             </div>
           )}

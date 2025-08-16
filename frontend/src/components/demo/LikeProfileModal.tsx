@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Heart, X as XIcon, MapPin, Briefcase } from 'lucide-react';
+import { X, Heart, X as XIcon, MapPin, Briefcase, Star, Zap, Crown, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -185,24 +185,69 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
           </div>
 
           {/* Action Buttons */}
-          <div className="p-4 flex gap-4 border-t border-border">
-            <Button
-              variant="outline"
-              size="lg"
-              className="flex-1 gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-              onClick={handlePass}
-            >
-              <XIcon className="h-5 w-5" />
-              Passer
-            </Button>
-            <Button
-              size="lg"
-              className="flex-1 gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
-              onClick={handleLike}
-            >
-              <Heart className="h-5 w-5" />
-              Liker
-            </Button>
+          <div className="p-4 space-y-3 border-t border-border">
+            {/* Main actions */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="flex-1 gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                onClick={handlePass}
+              >
+                <XIcon className="h-5 w-5" />
+                Passer
+              </Button>
+              <Button
+                size="lg"
+                className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600"
+                onClick={handleLike}
+              >
+                <Heart className="h-5 w-5" />
+                Liker
+              </Button>
+            </div>
+
+            {/* Premium actions */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                onClick={() => console.log('Super Like - Premium feature')}
+              >
+                <Star className="h-4 w-4" />
+                Super Like
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300"
+                onClick={() => console.log('Boost - Premium feature')}
+              >
+                <Zap className="h-4 w-4" />
+                Boost
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2 border-yellow-200 text-yellow-600 hover:bg-yellow-50 hover:border-yellow-300"
+                onClick={() => console.log('Premium gift - Premium feature')}
+              >
+                <Gift className="h-4 w-4" />
+                Cadeau
+              </Button>
+            </div>
+
+            {/* Premium upgrade hint */}
+            <div className="text-center">
+              <button
+                onClick={() => console.log('Upgrade to premium')}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mx-auto"
+              >
+                <Crown className="h-3 w-3" />
+                <span>Débloquer toutes les fonctionnalités</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -20,8 +20,8 @@ export function BlurredLikeCard({ like, onClick, className }: BlurredLikeCardPro
     <div
       onClick={handleClick}
       className={cn(
-        "relative aspect-[3/4] rounded-2xl overflow-hidden bg-muted cursor-pointer",
-        "hover:scale-[1.02] active:scale-[0.98] transition-all duration-200",
+        "relative aspect-[3/4] rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer",
+        "hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg",
         className
       )}
     >
@@ -45,7 +45,7 @@ export function BlurredLikeCard({ like, onClick, className }: BlurredLikeCardPro
       
       {/* Lock icon center */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-black/50 backdrop-blur-sm rounded-full p-4">
+        <div className="bg-black/50 backdrop-blur-sm rounded-full p-4 shadow-lg">
           <Lock className="h-8 w-8 text-white" />
         </div>
       </div>
