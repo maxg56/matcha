@@ -13,7 +13,7 @@ import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import SettingsPage from './pages/SettingsPage';
-import CompleteSettingsPage from './pages/CompleteSettingsPage';
+import EditProfilePage from './pages/EditProfilePage';
 import ComponentsDemo from './components/demo/ComponentsDemo';
 import CarouselDemo from './pages/CarouselDemo';
 import { NotificationButton } from './components/Notifications';
@@ -39,8 +39,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/chat/:matchId" element={<ChatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/settings/complete" element={<CompleteSettingsPage />} />
           
           {/* Demo routes */}
           <Route path="/demo" element={<ComponentsDemo />} />

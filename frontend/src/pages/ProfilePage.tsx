@@ -9,7 +9,9 @@ import {
   Briefcase, 
   GraduationCap,
   Camera,
-  LogOut
+  Heart,
+  Eye,
+  MessageCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,8 +38,6 @@ const mockUser = {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(mockUser);
 
   return (
     <ResponsiveLayout
@@ -51,16 +51,22 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold text-foreground">Mon Profil</h2>
           <div className="flex gap-2">
             <Button 
-              variant={isEditing ? "default" : "outline"} 
+              variant="outline" 
               size="sm" 
               className="gap-2"
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => navigate('/edit-profile')}
             >
               <Edit3 className="h-4 w-4" />
-              {isEditing ? "Sauvegarder" : "Modifier"}
+              Modifier
             </Button>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => navigate('/settings')}
+            >
+              <Settings className="h-4 w-4" />
+              Paramètres
             </Button>
           </div>
         </div>
@@ -97,6 +103,7 @@ export default function ProfilePage() {
                 variant="outline"
                 size="icon"
                 className="absolute top-4 right-4 bg-white/80 hover:bg-white"
+                onClick={() => navigate('/edit-profile')}
               >
                 <Camera className="h-5 w-5" />
               </Button>
@@ -113,47 +120,17 @@ export default function ProfilePage() {
               <div className="space-y-2 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedUser.location}
-                      onChange={(e) => setEditedUser({...editedUser, location: e.target.value})}
-                      className="text-sm flex-1 bg-transparent border-b border-border focus:border-primary outline-none"
-                      placeholder="Votre localisation"
-                    />
-                  ) : (
-                    <span className="text-sm">{editedUser.location}</span>
-                  )}
+                  <span className="text-sm">{mockUser.location}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <Briefcase className="h-4 w-4" />
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedUser.occupation}
-                      onChange={(e) => setEditedUser({...editedUser, occupation: e.target.value})}
-                      className="text-sm flex-1 bg-transparent border-b border-border focus:border-primary outline-none"
-                      placeholder="Votre profession"
-                    />
-                  ) : (
-                    <span className="text-sm">{editedUser.occupation}</span>
-                  )}
+                  <span className="text-sm">{mockUser.occupation}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedUser.education}
-                      onChange={(e) => setEditedUser({...editedUser, education: e.target.value})}
-                      className="text-sm flex-1 bg-transparent border-b border-border focus:border-primary outline-none"
-                      placeholder="Votre formation"
-                    />
-                  ) : (
-                    <span className="text-sm">{editedUser.education}</span>
-                  )}
+                  <span className="text-sm">{mockUser.education}</span>
                 </div>
               </div>
             </div>
@@ -161,94 +138,75 @@ export default function ProfilePage() {
             {/* Bio */}
             <div>
               <h3 className="font-semibold text-foreground mb-2">À propos de moi</h3>
-              {isEditing ? (
-                <textarea
-                  value={editedUser.bio}
-                  onChange={(e) => setEditedUser({...editedUser, bio: e.target.value})}
-                  className="w-full p-3 border border-border rounded-lg bg-background text-foreground resize-none"
-                  rows={4}
-                  placeholder="Parlez-nous de vous..."
-                />
-              ) : (
-                <p className="text-muted-foreground leading-relaxed">
-                  {editedUser.bio}
-                </p>
-              )}
+              <p className="text-muted-foreground leading-relaxed">
+                {mockUser.bio}
+              </p>
             </div>
 
             {/* Interests */}
             <div>
               <h3 className="font-semibold text-foreground mb-3">Centres d'intérêt</h3>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedUser.interests.join(', ')}
-                  onChange={(e) => setEditedUser({
-                    ...editedUser, 
-                    interests: e.target.value.split(',').map(s => s.trim()).filter(s => s)
-                  })}
-                  className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
-                  placeholder="Vos centres d'intérêt séparés par des virgules"
-                />
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {editedUser.interests.map((interest) => (
-                    <Badge
-                      key={interest}
-                      variant="secondary"
-                      className="bg-primary/10 text-primary border-primary/20"
-                    >
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {mockUser.interests.map((interest) => (
+                  <Badge
+                    key={interest}
+                    variant="secondary"
+                    className="bg-primary/10 text-primary border-primary/20"
+                  >
+                    {interest}
+                  </Badge>
+                ))}
+              </div>
             </div>
 
             {/* Stats */}
             <div className="bg-card rounded-2xl p-4 border border-border/50">
               <h3 className="font-semibold text-foreground mb-4 text-center">
-                Mes statistiques
+                Statistiques
               </h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-primary mb-1">
-                    {mockUser.stats.matches}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-pink-100 dark:bg-pink-900/20 mx-auto mb-2">
+                    <Heart className="h-6 w-6 text-pink-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Matches</div>
+                  <div className="text-2xl font-bold text-foreground">{mockUser.stats.matches}</div>
+                  <div className="text-xs text-muted-foreground">Matches</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary mb-1">
-                    {mockUser.stats.likes}
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 mx-auto mb-2">
+                    <Heart className="h-6 w-6 text-red-600 fill-current" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Likes</div>
+                  <div className="text-2xl font-bold text-foreground">{mockUser.stats.likes}</div>
+                  <div className="text-xs text-muted-foreground">Likes</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary mb-1">
-                    {mockUser.stats.views}
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 mx-auto mb-2">
+                    <Eye className="h-6 w-6 text-blue-600" />
                   </div>
-                  <div className="text-sm text-muted-foreground">Vues</div>
+                  <div className="text-2xl font-bold text-foreground">{mockUser.stats.views}</div>
+                  <div className="text-xs text-muted-foreground">Vues</div>
                 </div>
               </div>
             </div>
 
             {/* Action buttons */}
-            <div className="space-y-3 pt-4">
+            <div className="flex gap-3 pt-4">
               <Button 
-                variant="outline" 
-                className="w-full gap-2"
-                onClick={() => navigate('/settings')}
+                className="flex-1 gap-2" 
+                onClick={() => navigate('/edit-profile')}
               >
-                <Settings className="h-4 w-4" />
-                Paramètres
+                <Edit3 className="h-4 w-4" />
+                Modifier mon profil
               </Button>
-              
               <Button 
                 variant="outline" 
-                className="w-full gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
+                className="flex-1 gap-2"
+                onClick={() => navigate('/discover')}
               >
-                <LogOut className="h-4 w-4" />
-                Se déconnecter
+                <Heart className="h-4 w-4" />
+                Découvrir
               </Button>
             </div>
           </div>

@@ -7,24 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   User, 
-  Bell, 
-  Shield, 
-  Eye, 
-  Heart, 
-  MapPin, 
   Calendar,
   Edit3,
   Camera,
-  Trash2,
-  LogOut,
-  Crown,
-  Zap,
-  Star,
-  ChevronRight,
-  Globe,
-  Moon,
-  Volume2,
-  Vibrate,
+  Save,
+  X,
   Ruler,
   Palette,
   GraduationCap,
@@ -37,8 +24,11 @@ import {
   Dog,
   Activity,
   Users,
-  Save,
-  X
+  Heart,
+  MapPin,
+  Star,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -85,16 +75,13 @@ interface UserProfile {
   // Profile settings
   gender: string;
   sexPref: string;
-  fame: number;
   
-  // Location
-  latitude: number;
-  longitude: number;
+  // Tags
+  tags: string[];
   
   // Profile
   avatar: string;
-  verified: boolean;
-  premium: boolean;
+  photos: string[];
 }
 
 const mockUser: UserProfile = {
@@ -129,12 +116,13 @@ const mockUser: UserProfile = {
   politicalView: 'center',
   gender: 'man',
   sexPref: 'woman',
-  fame: 75,
-  latitude: 48.8566,
-  longitude: 2.3522,
+  tags: ['🌍 Voyage', '🍳 Cuisine', '🚴 Sport', '🎮 Jeux vidéo', '📚 Lecture'],
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-  verified: true,
-  premium: false
+  photos: [
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop'
+  ]
 };
 
 const fieldOptions = {
@@ -234,16 +222,27 @@ const fieldOptions = {
   ]
 };
 
-export default function CompleteSettingsPage() {
+const availableTags = [
+  '🌍 Voyage', '🍳 Cuisine', '🚴 Sport', '🏋️ Fitness',
+  '🎮 Jeux vidéo', '📚 Lecture', '🎶 Musique', '🎨 Art & Créativité',
+  '🐶 Amoureux des animaux', '🌱 Écologie & nature', '🎥 Cinéma & séries',
+  '💃 Danse', '📷 Photographie', '🚀 Tech & innovation',
+  '🍷 Gastronomie & vin', '👨‍💻 Code avec vim', '⛰️ Randonnée & plein air'
+];
+
+export default function EditProfilePage() {
   const [user, setUser] = useState<UserProfile>(mockUser);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [tempData, setTempData] = useState<Partial<UserProfile>>({});
+  const [hasChanges, setHasChanges] = useState(false);
 
   const updateField = <K extends keyof UserProfile>(field: K, value: UserProfile[K]) => {
     if (editingSection) {
       setTempData(prev => ({ ...prev, [field]: value }));
+      setHasChanges(true);
     } else {
       setUser(prev => ({ ...prev, [field]: value }));
+      setHasChanges(true);
     }
   };
 
@@ -256,6 +255,7 @@ export default function CompleteSettingsPage() {
     setUser(prev => ({ ...prev, ...tempData }));
     setEditingSection(null);
     setTempData({});
+    setHasChanges(false);
   };
 
   const cancelEditing = () => {
@@ -263,8 +263,22 @@ export default function CompleteSettingsPage() {
     setTempData({});
   };
 
+  const saveAllChanges = () => {
+    console.log('Saving all profile changes:', user);
+    setHasChanges(false);
+    // TODO: API call to save profile
+  };
+
   const getCurrentValue = <K extends keyof UserProfile>(field: K): UserProfile[K] => {
     return editingSection && tempData[field] !== undefined ? tempData[field] as UserProfile[K] : user[field];
+  };
+
+  const toggleTag = (tag: string) => {
+    const currentTags = getCurrentValue('tags');
+    const newTags = currentTags.includes(tag)
+      ? currentTags.filter(t => t !== tag)
+      : [...currentTags, tag];
+    updateField('tags', newTags);
   };
 
   const SettingSection = ({ 
@@ -272,7 +286,7 @@ export default function CompleteSettingsPage() {
     icon, 
     children, 
     sectionKey,
-    editable = false
+    editable = true
   }: { 
     title: string; 
     icon: React.ReactNode; 
@@ -341,7 +355,7 @@ export default function CompleteSettingsPage() {
         </div>
         
         {editable && editingSection && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {options.map(option => (
               <button
                 key={option.value}
@@ -450,51 +464,110 @@ export default function CompleteSettingsPage() {
     );
   };
 
+  const TextInput = ({ 
+    field, 
+    label, 
+    placeholder,
+    type = "text"
+  }: { 
+    field: keyof UserProfile; 
+    label: string; 
+    placeholder: string;
+    type?: string;
+  }) => {
+    const currentValue = getCurrentValue(field) as string;
+    
+    return (
+      <div className="p-4 border-b border-border last:border-b-0">
+        <h3 className="font-medium text-foreground mb-2">{label}</h3>
+        {editingSection ? (
+          <input
+            type={type}
+            value={currentValue || ''}
+            onChange={(e) => updateField(field, e.target.value as any)}
+            placeholder={placeholder}
+            className="w-full p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        ) : (
+          <p className="text-foreground">
+            {currentValue || <span className="text-muted-foreground italic">{placeholder}</span>}
+          </p>
+        )}
+      </div>
+    );
+  };
+
   return (
     <ResponsiveLayout
-      title="Profil Complet"
+      title="Modifier mon profil"
       showNavigation={true}
       maxWidth="lg"
     >
       <div className="p-4 space-y-6">
-        {/* Profile Header */}
-        <SettingSection title="Photo de Profil" icon={<Camera className="h-5 w-5" />} sectionKey="photo">
-          <div className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage src={user.avatar} alt={user.firstName} />
-                  <AvatarFallback>{user.firstName[0]}{user.lastName[0]}</AvatarFallback>
-                </Avatar>
-                <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary/90">
-                  <Camera className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-foreground">{user.firstName} {user.lastName}</h3>
-                  {user.verified && (
-                    <Badge variant="default" className="bg-blue-500 text-white text-xs">
-                      Vérifié
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">@{user.username}</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-              </div>
+        {/* Save Button */}
+        {hasChanges && (
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border border-border rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Vous avez des modifications non sauvegardées</p>
+              <Button onClick={saveAllChanges} className="gap-2">
+                <Save className="h-4 w-4" />
+                Sauvegarder tout
+              </Button>
             </div>
+          </div>
+        )}
+
+        {/* Photos */}
+        <SettingSection title="Photos" icon={<Camera className="h-5 w-5" />} sectionKey="photos">
+          <div className="p-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {user.photos.map((photo, index) => (
+                <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                  <img 
+                    src={photo} 
+                    alt={`Photo ${index + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                  {index === 0 && (
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="default" className="text-xs">Principal</Badge>
+                    </div>
+                  )}
+                  <button className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600">
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              <button className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary transition-colors flex items-center justify-center">
+                <div className="text-center">
+                  <Plus className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Ajouter</p>
+                </div>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">Ajoutez au moins 2 photos. La première sera votre photo principale.</p>
           </div>
         </SettingSection>
 
         {/* Basic Information */}
         <SettingSection title="Informations de Base" icon={<User className="h-5 w-5" />} sectionKey="basic" editable>
+          <TextInput field="firstName" label="Prénom" placeholder="Votre prénom" />
+          <TextInput field="lastName" label="Nom" placeholder="Votre nom" />
+          <TextInput field="username" label="Nom d'utilisateur" placeholder="@username" />
           <div className="p-4 border-b border-border">
-            <h3 className="font-medium text-foreground mb-2">Âge</h3>
-            <p className="text-foreground">{user.age} ans (né le {new Date(user.birthDate).toLocaleDateString('fr-FR')})</p>
+            <h3 className="font-medium text-foreground mb-2">Date de naissance</h3>
+            <p className="text-foreground">{new Date(user.birthDate).toLocaleDateString('fr-FR')} ({user.age} ans)</p>
+            <p className="text-xs text-muted-foreground mt-1">L'âge ne peut pas être modifié</p>
           </div>
           <SelectField field="gender" options={fieldOptions.gender} label="Genre" editable={editingSection === 'basic'} />
           <SelectField field="sexPref" options={fieldOptions.sexPref} label="Intéressé par" editable={editingSection === 'basic'} />
           <SliderField field="height" label="Taille" min={140} max={220} unit="cm" />
+        </SettingSection>
+
+        {/* Bio */}
+        <SettingSection title="À propos de moi" icon={<Heart className="h-5 w-5" />} sectionKey="bio" editable>
+          <TextArea field="bio" label="Bio" placeholder="Parlez-nous de vous..." maxLength={400} />
+          <TextArea field="personalOpinion" label="Ma vision de la vie" placeholder="Votre philosophie, vos valeurs..." />
         </SettingSection>
 
         {/* Physical Appearance */}
@@ -521,95 +594,59 @@ export default function CompleteSettingsPage() {
         </SettingSection>
 
         {/* Personal Information */}
-        <SettingSection title="Informations Personnelles" icon={<Heart className="h-5 w-5" />} sectionKey="personal" editable>
-          <TextArea field="bio" label="Bio" placeholder="Parlez-nous de vous..." maxLength={400} />
-          <TextArea field="personalOpinion" label="Opinion personnelle" placeholder="Votre vision de la vie..." />
+        <SettingSection title="Informations Personnelles" icon={<Church className="h-5 w-5" />} sectionKey="personal" editable>
           <SelectField field="religion" options={fieldOptions.religion} label="Religion" editable={editingSection === 'personal'} />
           <SelectField field="relationshipType" options={fieldOptions.relationshipType} label="Type de relation recherchée" editable={editingSection === 'personal'} />
           <SelectField field="childrenStatus" options={fieldOptions.childrenStatus} label="Situation avec les enfants" editable={editingSection === 'personal'} />
           <SelectField field="politicalView" options={fieldOptions.politicalView} label="Orientation politique" editable={editingSection === 'personal'} />
+          <TextInput field="zodiacSign" label="Signe du zodiaque" placeholder="Votre signe astrologique" />
         </SettingSection>
 
         {/* Location & Career */}
         <SettingSection title="Localisation & Carrière" icon={<MapPin className="h-5 w-5" />} sectionKey="location" editable>
-          <div className="p-4 border-b border-border">
-            <h3 className="font-medium text-foreground mb-2">Ville de naissance</h3>
-            {editingSection === 'location' ? (
-              <input
-                type="text"
-                value={getCurrentValue('birthCity') || ''}
-                onChange={(e) => updateField('birthCity', e.target.value)}
-                className="w-full p-2 border border-border rounded-lg"
-                placeholder="Ville de naissance"
-              />
-            ) : (
-              <p className="text-foreground">{user.birthCity}</p>
-            )}
-          </div>
-          <div className="p-4 border-b border-border">
-            <h3 className="font-medium text-foreground mb-2">Ville actuelle</h3>
-            {editingSection === 'location' ? (
-              <input
-                type="text"
-                value={getCurrentValue('currentCity') || ''}
-                onChange={(e) => updateField('currentCity', e.target.value)}
-                className="w-full p-2 border border-border rounded-lg"
-                placeholder="Ville actuelle"
-              />
-            ) : (
-              <p className="text-foreground">{user.currentCity}</p>
-            )}
-          </div>
-          <div className="p-4">
-            <h3 className="font-medium text-foreground mb-2">Profession</h3>
-            {editingSection === 'location' ? (
-              <input
-                type="text"
-                value={getCurrentValue('job') || ''}
-                onChange={(e) => updateField('job', e.target.value)}
-                className="w-full p-2 border border-border rounded-lg"
-                placeholder="Votre profession"
-              />
-            ) : (
-              <p className="text-foreground">{user.job}</p>
-            )}
-          </div>
+          <TextInput field="birthCity" label="Ville de naissance" placeholder="Où êtes-vous né(e) ?" />
+          <TextInput field="currentCity" label="Ville actuelle" placeholder="Où habitez-vous ?" />
+          <TextInput field="job" label="Profession" placeholder="Votre métier" />
         </SettingSection>
 
-        {/* Fame Score */}
-        <SettingSection title="Popularité" icon={<Star className="h-5 w-5" />} sectionKey="fame">
+        {/* Tags/Interests */}
+        <SettingSection title="Centres d'intérêt" icon={<Star className="h-5 w-5" />} sectionKey="interests" editable>
           <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-foreground">Score de popularité</h3>
-              <span className="text-lg font-bold text-primary">{user.fame}/100</span>
+            <h3 className="font-medium text-foreground mb-3">Vos centres d'intérêt</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {user.tags.map(tag => (
+                <Badge
+                  key={tag}
+                  variant="default"
+                  className="cursor-pointer hover:bg-destructive"
+                  onClick={() => editingSection === 'interests' && toggleTag(tag)}
+                >
+                  {tag}
+                  {editingSection === 'interests' && (
+                    <X className="h-3 w-3 ml-1" />
+                  )}
+                </Badge>
+              ))}
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-pink-500 to-rose-500 h-2 rounded-full transition-all"
-                style={{ width: `${user.fame}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Votre score augmente avec les likes, messages et interactions
-            </p>
-          </div>
-        </SettingSection>
-
-        {/* Account Actions */}
-        <SettingSection title="Actions du Compte" icon={<Shield className="h-5 w-5" />} sectionKey="account">
-          <div className="p-4 space-y-3">
-            <Button variant="outline" className="w-full gap-2">
-              <Eye className="h-4 w-4" />
-              Modifier la visibilité du profil
-            </Button>
-            <Button variant="outline" className="w-full gap-2 text-destructive border-destructive hover:bg-destructive/10">
-              <Trash2 className="h-4 w-4" />
-              Supprimer le compte
-            </Button>
-            <Button variant="outline" className="w-full gap-2 text-destructive border-destructive hover:bg-destructive/10">
-              <LogOut className="h-4 w-4" />
-              Se déconnecter
-            </Button>
+            
+            {editingSection === 'interests' && (
+              <>
+                <h4 className="font-medium text-foreground mb-2">Ajouter des centres d'intérêt</h4>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags
+                    .filter(tag => !user.tags.includes(tag))
+                    .map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground hover:bg-accent transition-colors"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                </div>
+              </>
+            )}
           </div>
         </SettingSection>
       </div>

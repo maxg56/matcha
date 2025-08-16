@@ -2,19 +2,11 @@ import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
-  User, 
   Bell, 
   Shield, 
   Eye, 
-  Heart, 
-  MapPin, 
-  Calendar,
-  Edit3,
-  Camera,
   Trash2,
   LogOut,
   Crown,
@@ -27,7 +19,6 @@ import {
   Vibrate
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
 
 interface SettingItemProps {
   icon: React.ReactNode;
@@ -88,16 +79,10 @@ function SettingSection({ title, children }: SettingSectionProps) {
 }
 
 const mockUser = {
-  name: 'Alex Martin',
-  age: 26,
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-  location: 'Paris, France',
-  verified: true,
   premium: false
 };
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
   const [notifications, setNotifications] = useState({
     matches: true,
     messages: true,
@@ -117,12 +102,6 @@ export default function SettingsPage() {
     profileVisibility: true
   });
 
-  const [discovery, setDiscovery] = useState({
-    ageRange: [22, 35],
-    distance: [25],
-    showMe: 'women' // 'women', 'men', 'everyone'
-  });
-
   const [preferences, setPreferences] = useState({
     darkMode: false,
     language: 'Français',
@@ -136,125 +115,21 @@ export default function SettingsPage() {
       maxWidth="lg"
     >
       <div className="p-4 space-y-6">
-        {/* Profile Section */}
-        <SettingSection title="Mon Profil">
-          <div className="p-4">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="relative">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={mockUser.avatar} alt={mockUser.name} />
-                  <AvatarFallback>AM</AvatarFallback>
-                </Avatar>
-                <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary/90">
-                  <Camera className="h-3 w-3" />
-                </button>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-foreground">{mockUser.name}, {mockUser.age}</h3>
-                  {mockUser.verified && (
-                    <Badge variant="default" className="bg-blue-500 text-white text-xs">
-                      Vérifié
-                    </Badge>
-                  )}
-                  {mockUser.premium && (
-                    <Badge variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Premium
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {mockUser.location}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Edit3 className="h-4 w-4" />
-                Modifier
-              </Button>
-            </div>
-          </div>
-          
-          <div className="border-t border-border">
-            <SettingItem
-              icon={<User className="h-4 w-4" />}
-              title="Informations personnelles"
-              description="Age, occupation, bio, intérêts"
-              onClick={() => navigate('/settings/complete')}
-            />
-            <SettingItem
-              icon={<Camera className="h-4 w-4" />}
-              title="Photos"
-              description="Gérer vos photos de profil"
-              onClick={() => console.log('Manage photos')}
-            />
-            <SettingItem
-              icon={<Shield className="h-4 w-4" />}
-              title="Vérification"
-              description="Vérifiez votre profil avec une photo"
-              onClick={() => console.log('Verify profile')}
-            />
-          </div>
-        </SettingSection>
-
-        {/* Discovery Preferences */}
-        <SettingSection title="Préférences de Découverte">
-          <SettingItem
-            icon={<Heart className="h-4 w-4" />}
-            title="Qui souhaitez-vous voir ?"
-            description={discovery.showMe === 'women' ? 'Femmes' : discovery.showMe === 'men' ? 'Hommes' : 'Tout le monde'}
-            onClick={() => console.log('Change show me preference')}
-          />
-          
-          <div className="p-4 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <h3 className="font-medium text-foreground">Tranche d'âge</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {discovery.ageRange[0]} - {discovery.ageRange[1]} ans
-                  </p>
-                </div>
-              </div>
-            </div>
-            <Slider
-              value={discovery.ageRange}
-              min={18}
-              max={65}
-              step={1}
-              onValueChange={(value) => setDiscovery({...discovery, ageRange: value})}
-              className="mb-4"
-            />
-          </div>
-
-          <div className="p-4 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <h3 className="font-medium text-foreground">Distance maximale</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {discovery.distance[0]} km
-                  </p>
-                </div>
-              </div>
-            </div>
-            <Slider
-              value={discovery.distance}
-              min={1}
-              max={100}
-              step={1}
-              onValueChange={(value) => setDiscovery({...discovery, distance: value})}
-            />
-          </div>
-        </SettingSection>
-
         {/* Notifications */}
         <SettingSection title="Notifications">
           <SettingItem
-            icon={<Heart className="h-4 w-4" />}
+            icon={<Bell className="h-4 w-4" />}
+            title="Notifications push"
+            description="Recevoir des notifications sur votre appareil"
+          >
+            <Switch 
+              checked={notifications.push}
+              onCheckedChange={(checked) => setNotifications({...notifications, push: checked})}
+            />
+          </SettingItem>
+
+          <SettingItem
+            icon={<Bell className="h-4 w-4" />}
             title="Nouveaux likes"
             description="Être notifié quand quelqu'un vous like"
           >
@@ -307,6 +182,17 @@ export default function SettingsPage() {
               onCheckedChange={(checked) => setNotifications({...notifications, vibration: checked})}
             />
           </SettingItem>
+
+          <SettingItem
+            icon={<Bell className="h-4 w-4" />}
+            title="Notifications email"
+            description="Recevoir des emails de notification"
+          >
+            <Switch 
+              checked={notifications.email}
+              onCheckedChange={(checked) => setNotifications({...notifications, email: checked})}
+            />
+          </SettingItem>
         </SettingSection>
 
         {/* Privacy & Safety */}
@@ -323,7 +209,7 @@ export default function SettingsPage() {
           </SettingItem>
 
           <SettingItem
-            icon={<Calendar className="h-4 w-4" />}
+            icon={<Eye className="h-4 w-4" />}
             title="Afficher mon âge"
             description="Visible sur votre profil"
           >
@@ -334,13 +220,24 @@ export default function SettingsPage() {
           </SettingItem>
 
           <SettingItem
-            icon={<MapPin className="h-4 w-4" />}
+            icon={<Eye className="h-4 w-4" />}
             title="Afficher la distance"
             description="Montrer votre distance approximative"
           >
             <Switch 
               checked={privacy.showDistance}
               onCheckedChange={(checked) => setPrivacy({...privacy, showDistance: checked})}
+            />
+          </SettingItem>
+
+          <SettingItem
+            icon={<Eye className="h-4 w-4" />}
+            title="Accusés de lecture"
+            description="Montrer quand vous avez lu les messages"
+          >
+            <Switch 
+              checked={privacy.readReceipts}
+              onCheckedChange={(checked) => setPrivacy({...privacy, readReceipts: checked})}
             />
           </SettingItem>
 
@@ -352,11 +249,10 @@ export default function SettingsPage() {
           />
 
           <SettingItem
-            icon={<Trash2 className="h-4 w-4" />}
-            title="Supprimer le compte"
-            description="Supprimer définitivement votre compte"
-            onClick={() => console.log('Delete account')}
-            className="text-destructive"
+            icon={<Shield className="h-4 w-4" />}
+            title="Signaler un problème"
+            description="Signaler un bug ou un utilisateur"
+            onClick={() => console.log('Report issue')}
           />
         </SettingSection>
 
@@ -379,6 +275,17 @@ export default function SettingsPage() {
             description={preferences.language}
             onClick={() => console.log('Change language')}
           />
+
+          <SettingItem
+            icon={<Volume2 className="h-4 w-4" />}
+            title="Lecture automatique"
+            description="Lire automatiquement les vidéos"
+          >
+            <Switch 
+              checked={preferences.autoPlay}
+              onCheckedChange={(checked) => setPreferences({...preferences, autoPlay: checked})}
+            />
+          </SettingItem>
         </SettingSection>
 
         {/* Premium */}
@@ -415,8 +322,40 @@ export default function SettingsPage() {
           </SettingSection>
         )}
 
+        {/* Support & Legal */}
+        <SettingSection title="Support & Légal">
+          <SettingItem
+            icon={<Shield className="h-4 w-4" />}
+            title="Aide et support"
+            description="Centre d'aide et contact"
+            onClick={() => console.log('Open help')}
+          />
+
+          <SettingItem
+            icon={<Shield className="h-4 w-4" />}
+            title="Conditions d'utilisation"
+            description="Lire nos conditions"
+            onClick={() => console.log('Open terms')}
+          />
+
+          <SettingItem
+            icon={<Shield className="h-4 w-4" />}
+            title="Politique de confidentialité"
+            description="Comment nous protégeons vos données"
+            onClick={() => console.log('Open privacy policy')}
+          />
+        </SettingSection>
+
         {/* Account Actions */}
         <SettingSection title="Compte">
+          <SettingItem
+            icon={<Trash2 className="h-4 w-4" />}
+            title="Supprimer le compte"
+            description="Supprimer définitivement votre compte"
+            onClick={() => console.log('Delete account')}
+            className="text-destructive"
+          />
+
           <SettingItem
             icon={<LogOut className="h-4 w-4" />}
             title="Se déconnecter"
