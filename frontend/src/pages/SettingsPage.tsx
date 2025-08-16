@@ -3,6 +3,7 @@ import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/contexts/ThemeContext';
 import { 
   Bell, 
   Shield, 
@@ -33,7 +34,7 @@ function SettingItem({ icon, title, description, children, onClick, className }:
   return (
     <div 
       className={cn(
-        "flex items-center justify-between p-4 hover:bg-accent/50 transition-colors",
+        "flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors",
         onClick && "cursor-pointer",
         className
       )}
@@ -71,8 +72,10 @@ function SettingSection({ title, children }: SettingSectionProps) {
   return (
     <div className="mb-6">
       <h2 className="text-lg font-semibold text-foreground mb-3 px-4">{title}</h2>
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {children}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -83,6 +86,8 @@ const mockUser = {
 };
 
 export default function SettingsPage() {
+  const { theme, toggleTheme } = useTheme();
+  
   const [notifications, setNotifications] = useState({
     matches: true,
     messages: true,
@@ -103,18 +108,18 @@ export default function SettingsPage() {
   });
 
   const [preferences, setPreferences] = useState({
-    darkMode: false,
     language: 'Français',
     autoPlay: true
   });
 
   return (
-    <ResponsiveLayout
-      title="Paramètres"
-      showNavigation={true}
-      maxWidth="lg"
-    >
-      <div className="p-4 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <ResponsiveLayout
+        title="Paramètres"
+        showNavigation={true}
+        maxWidth="lg"
+      >
+        <div className="p-4 space-y-6">
         {/* Notifications */}
         <SettingSection title="Notifications">
           <SettingItem
@@ -264,8 +269,8 @@ export default function SettingsPage() {
             description="Interface sombre pour vos yeux"
           >
             <Switch 
-              checked={preferences.darkMode}
-              onCheckedChange={(checked) => setPreferences({...preferences, darkMode: checked})}
+              checked={theme === 'dark'}
+              onCheckedChange={toggleTheme}
             />
           </SettingItem>
 
@@ -292,7 +297,7 @@ export default function SettingsPage() {
         {!mockUser.premium && (
           <SettingSection title="Premium">
             <div className="p-4">
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-4 text-white mb-4">
+              <div className="bg-gradient-to-r from-purple-500 to-violet-500 rounded-xl p-4 text-white mb-4 shadow-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Crown className="h-5 w-5" />
                   <h3 className="font-semibold">Matcha Premium</h3>
@@ -300,7 +305,7 @@ export default function SettingsPage() {
                 <p className="text-sm opacity-90 mb-3">
                   Débloquez toutes les fonctionnalités premium pour une expérience optimale
                 </p>
-                <Button className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                <Button className="bg-white/20 hover:bg-white/30 text-white border-white/30 shadow-lg transition-colors">
                   Découvrir Premium
                 </Button>
               </div>
@@ -369,7 +374,8 @@ export default function SettingsPage() {
           <p>Matcha v1.0.0</p>
           <p className="mt-1">© 2024 Matcha. Tous droits réservés.</p>
         </div>
-      </div>
-    </ResponsiveLayout>
+        </div>
+      </ResponsiveLayout>
+    </div>
   );
 }

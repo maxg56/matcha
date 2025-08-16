@@ -119,142 +119,155 @@ export default function MessagesPage() {
 
   if (isMobile) {
     return (
-      <ResponsiveLayout title="Messages" showNavigation={true}>
-        <div className="p-4">
-          {newMatches.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold text-foreground">Nouveaux Matches</h2>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <ResponsiveLayout title="Messages" showNavigation={true}>
+          <div className="p-4">
+            {newMatches.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h2 className="font-semibold text-foreground">Nouveaux Matches</h2>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {newMatches.map((match) => (
+                    <div 
+                      key={match.id}
+                      className="flex-shrink-0 w-20 text-center cursor-pointer"
+                      onClick={() => handleMatchClick(match.id)}
+                    >
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg p-2 mb-2">
+                        <Avatar className="w-16 h-16 mx-auto">
+                          <AvatarImage src={match.image} alt={match.name} />
+                          <AvatarFallback>{match.name[0]}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <p className="text-xs font-medium text-foreground truncate">{match.name}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {newMatches.map((match) => (
-                  <div 
-                    key={match.id}
-                    className="flex-shrink-0 w-20 text-center cursor-pointer"
-                    onClick={() => handleMatchClick(match.id)}
-                  >
-                    <Avatar className="w-16 h-16 mx-auto mb-2">
-                      <AvatarImage src={match.image} alt={match.name} />
-                      <AvatarFallback>{match.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <p className="text-xs font-medium text-foreground truncate">{match.name}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <MobileMessagesList matches={messagesMatches} onMatchClick={handleMatchClick} onProfileClick={handleProfileClick} />
-        </div>
-      </ResponsiveLayout>
+            )}
+            <MobileMessagesList matches={messagesMatches} onMatchClick={handleMatchClick} onProfileClick={handleProfileClick} />
+          </div>
+        </ResponsiveLayout>
+      </div>
     );
   }
 
   // Desktop layout
   return (
-    <ResponsiveLayout title="Messages" showNavigation={true} maxWidth="full">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <ResponsiveLayout title="Messages" showNavigation={true} maxWidth="full">
       <div className="flex h-full">
-        {/* New matches horizontal feed */}
-        {newMatches.length > 0 && (
-          <div className="w-80 border-r border-border bg-card">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold text-foreground">Nouveaux Matches</h2>
+          {/* New matches horizontal feed */}
+          {newMatches.length > 0 && (
+            <div className="w-80 border-r border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 m-4">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold text-foreground">Nouveaux Matches</h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {newMatches.length} nouvelle{newMatches.length > 1 ? 's' : ''} connexion{newMatches.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+                
+                <div className="p-4 space-y-4">
+                  {newMatches.map((match) => (
+                    <div
+                      key={match.id}
+                      className="bg-gray-50 dark:bg-gray-700 p-3 rounded-2xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-all duration-300 border border-gray-200 dark:border-gray-600"
+                      onClick={() => handleMatchClick(match.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={match.image} alt={match.name} />
+                          <AvatarFallback>{match.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-foreground">{match.name}, {match.age}</p>
+                            {match.isNew && (
+                              <Badge className="text-xs bg-primary/20 text-primary border-primary/30">Nouveau</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{match.matchedAt}</p>
+                          <div className="flex gap-1 mt-1">
+                            {match.commonInterests.slice(0, 2).map((interest) => (
+                              <Badge key={interest} variant="outline" className="text-xs">
+                                {interest}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {newMatches.length} nouvelle{newMatches.length > 1 ? 's' : ''} connexion{newMatches.length > 1 ? 's' : ''}
-              </p>
             </div>
-            
-            <div className="p-4 space-y-4">
-              {newMatches.map((match) => (
-                <div
-                  key={match.id}
-                  className="flex items-center gap-3 p-3 rounded-2xl hover:bg-accent/50 cursor-pointer transition-colors"
-                  onClick={() => handleMatchClick(match.id)}
-                >
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={match.image} alt={match.name} />
-                    <AvatarFallback>{match.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-foreground">{match.name}, {match.age}</p>
-                      {match.isNew && (
-                        <Badge className="text-xs bg-primary/10 text-primary">Nouveau</Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{match.matchedAt}</p>
-                    <div className="flex gap-1 mt-1">
-                      {match.commonInterests.slice(0, 2).map((interest) => (
-                        <Badge key={interest} variant="outline" className="text-xs">
-                          {interest}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Messages panel */}
-        <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold text-foreground">Conversations</h2>
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-3">
-              {messagesMatches.map((match) => (
-                <div
-                  key={match.id}
-                  onClick={() => handleMatchClick(match.id)}
-                  className="flex items-center gap-4 p-4 rounded-2xl hover:bg-accent/50 cursor-pointer transition-colors"
-                >
-                  <Avatar className="w-14 h-14">
-                    <AvatarImage src={match.image} alt={match.name} />
-                    <AvatarFallback>{match.name[0]}</AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-medium text-foreground truncate">
-                        {match.name}, {match.age}
-                      </h3>
-                      <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                        {match.timestamp}
-                      </span>
-                    </div>
-                    
-                    {match.lastMessage && (
-                      <p className="text-sm text-muted-foreground truncate">
-                        {match.lastMessage}
-                      </p>
-                    )}
-                    
-                    <div className="flex gap-1 mt-1">
-                      {match.commonInterests.slice(0, 2).map((interest) => (
-                        <Badge key={interest} variant="outline" className="text-xs">
-                          {interest}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {match.unread && (
-                    <div className="w-3 h-3 bg-primary rounded-full" />
-                  )}
+          {/* Messages panel */}
+          <div className="flex-1 flex flex-col">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 m-4 flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  <h2 className="font-semibold text-foreground">Conversations</h2>
                 </div>
-              ))}
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-4 space-y-3">
+                  {messagesMatches.map((match) => (
+                    <div
+                      key={match.id}
+                      onClick={() => handleMatchClick(match.id)}
+                      className="bg-gray-50 dark:bg-gray-700 p-4 rounded-2xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-all duration-300 border border-gray-200 dark:border-gray-600"
+                    >
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-14 h-14">
+                          <AvatarImage src={match.image} alt={match.name} />
+                          <AvatarFallback>{match.name[0]}</AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-medium text-foreground truncate">
+                              {match.name}, {match.age}
+                            </h3>
+                            <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
+                              {match.timestamp}
+                            </span>
+                          </div>
+                          
+                          {match.lastMessage && (
+                            <p className="text-sm text-muted-foreground truncate">
+                              {match.lastMessage}
+                            </p>
+                          )}
+                          
+                          <div className="flex gap-1 mt-1">
+                            {match.commonInterests.slice(0, 2).map((interest) => (
+                              <Badge key={interest} variant="outline" className="text-xs">
+                                {interest}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {match.unread && (
+                          <div className="w-3 h-3 bg-primary rounded-full shadow-lg" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
       </div>
       
       {selectedProfile && (
@@ -266,7 +279,8 @@ export default function MessagesPage() {
           onPass={(id) => console.log('Passed:', id)}
         />
       )}
-    </ResponsiveLayout>
+      </ResponsiveLayout>
+    </div>
   );
 }
 
@@ -287,47 +301,49 @@ function MobileMessagesList({ matches, onMatchClick, onProfileClick }: {
           <div
             key={match.id}
             onClick={() => onMatchClick(match.id)}
-            className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border/50 hover:bg-accent/50 transition-colors"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
           >
-            <div className="relative">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onProfileClick(match);
-                }}
-              >
-                <Avatar className="w-14 h-14">
-                  <AvatarImage src={match.image} alt={match.name} />
-                  <AvatarFallback>{match.name[0]}</AvatarFallback>
-                </Avatar>
-              </button>
-              {match.unread && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-background" />
-              )}
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="font-medium text-foreground truncate">
-                  {match.name}, {match.age}
-                </h3>
-                <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                  {match.timestamp}
-                </span>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onProfileClick(match);
+                  }}
+                >
+                  <Avatar className="w-14 h-14">
+                    <AvatarImage src={match.image} alt={match.name} />
+                    <AvatarFallback>{match.name[0]}</AvatarFallback>
+                  </Avatar>
+                </button>
+                {match.unread && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-background shadow-lg" />
+                )}
               </div>
-              
-              {match.lastMessage && (
-                <p className="text-sm text-muted-foreground truncate mb-2">
-                  {match.lastMessage}
-                </p>
-              )}
-              
-              <div className="flex gap-1">
-                {match.commonInterests.slice(0, 2).map((interest) => (
-                  <Badge key={interest} variant="outline" className="text-xs">
-                    {interest}
-                  </Badge>
-                ))}
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-medium text-foreground truncate">
+                    {match.name}, {match.age}
+                  </h3>
+                  <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
+                    {match.timestamp}
+                  </span>
+                </div>
+                
+                {match.lastMessage && (
+                  <p className="text-sm text-muted-foreground truncate mb-2">
+                    {match.lastMessage}
+                  </p>
+                )}
+                
+                <div className="flex gap-1">
+                  {match.commonInterests.slice(0, 2).map((interest) => (
+                    <Badge key={interest} variant="outline" className="text-xs glass">
+                      {interest}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
