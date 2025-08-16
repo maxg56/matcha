@@ -1,122 +1,178 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Eye, 
+  EyeOff, 
+  Mail, 
+  Lock, 
+  User,
+  Heart,
+  AlertCircle
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    login: '', // pseudo ou email
+    password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate login
-    setTimeout(() => {
-      console.log('Login:', formData);
-      navigate('/discover');
-      setIsLoading(false);
-    }, 1000);
-  };
+  const [error, setError] = useState('');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (error) setError(''); // Clear error when user types
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.login || !formData.password) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // TODO: API call for login
+      console.log('Login attempt:', formData);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For demo, navigate to discover
+      navigate('/discover');
+    } catch (err) {
+      setError('Identifiants incorrects');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isEmail = (str: string) => {
+    return str.includes('@');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-3xl flex items-center justify-center mx-auto mb-4">
-            <Heart className="h-8 w-8 text-primary-foreground fill-current" />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header */}
+      <div className="flex items-center justify-center pt-8 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <Heart className="h-7 w-7 text-white fill-current" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Bon retour !
-          </h1>
-          <p className="text-muted-foreground">
-            Connectez-vous à votre compte Matcha
-          </p>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Matcha</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Trouvez l'amour</p>
+          </div>
         </div>
+      </div>
 
-        {/* Login Form */}
-        <Card className="border-border/50 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-xl text-center">
-              Connexion
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          {/* Welcome Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Bon retour !
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                Connectez-vous pour continuer votre aventure
+              </p>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Login Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Pseudo ou Email
+                </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    className="pl-10"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="votre@email.com"
-                    required
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    {isEmail(formData.login) ? (
+                      <Mail className="h-5 w-5" />
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.login}
+                    onChange={(e) => handleInputChange('login', e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                    placeholder="votre.email@exemple.com ou @pseudo"
+                    autoComplete="username"
                   />
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
+
+              {/* Password Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Mot de passe
+                </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    className="pl-10 pr-10"
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="••••••••"
-                    required
+                    className="w-full pl-11 pr-11 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                    placeholder="Votre mot de passe"
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-5 w-5" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5" />
                     )}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-primary hover:text-primary/80 transition-colors"
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* Forgot Password */}
+              <div className="text-right">
+                <button
+                  type="button"
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors"
+                  onClick={() => console.log('Forgot password')}
                 >
                   Mot de passe oublié ?
-                </Link>
+                </button>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isLoading || !formData.login || !formData.password}
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Connexion...
                   </div>
                 ) : (
@@ -126,45 +182,40 @@ export default function LoginPage() {
             </form>
 
             {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Ou
-                </span>
-              </div>
+            <div className="flex items-center my-6">
+              <div className="flex-1 border-t border-gray-200 dark:border-gray-600"></div>
+              <span className="px-4 text-sm text-gray-500 dark:text-gray-400">ou</span>
+              <div className="flex-1 border-t border-gray-200 dark:border-gray-600"></div>
             </div>
 
-            {/* Sign up link */}
+            {/* Sign Up Link */}
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Pas encore de compte ?
+              <p className="text-gray-600 dark:text-gray-400 mb-3">
+                Vous n'avez pas encore de compte ?
               </p>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => navigate('/onboarding')}
+              <Button
+                variant="outline"
+                onClick={() => navigate('/inscription')}
+                className="w-full py-3 border-2 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-semibold rounded-xl transition-colors"
               >
                 Créer un compte
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-xs text-muted-foreground">
-            En continuant, vous acceptez nos{' '}
-            <Link to="/terms" className="text-primary hover:text-primary/80">
-              Conditions d'utilisation
-            </Link>{' '}
-            et notre{' '}
-            <Link to="/privacy" className="text-primary hover:text-primary/80">
-              Politique de confidentialité
-            </Link>
-          </p>
+          {/* Footer */}
+          <div className="text-center mt-8">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              En vous connectant, vous acceptez nos{' '}
+              <button className="text-purple-600 dark:text-purple-400 hover:underline">
+                Conditions d'utilisation
+              </button>{' '}
+              et notre{' '}
+              <button className="text-purple-600 dark:text-purple-400 hover:underline">
+                Politique de confidentialité
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>
