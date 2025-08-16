@@ -42,7 +42,7 @@ export function ResponsiveLayout({
   if (isMobile) {
     // Mobile Layout
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen flex flex-col bg-background">
         {title && <TopBar title={title} />}
         
         <main className="flex-1 overflow-hidden">
@@ -56,7 +56,7 @@ export function ResponsiveLayout({
 
   // Desktop Layout
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen flex bg-background">
       {showNavigation && <SideNavigation />}
       
       <div className="flex-1 flex flex-col">
