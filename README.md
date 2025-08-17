@@ -116,8 +116,6 @@ The application uses PostgreSQL as the primary database and Redis for caching an
 - GET `/api/v1/users/profile/:id` - Get user profile
 - PUT `/api/v1/users/profile/:id` - Update user profile
 - DELETE `/api/v1/users/profile/:id` - Delete user profile
-- GET `/api/v1/users/search` - Search users
-- POST `/api/v1/users/upload-photo` - Upload profile photo
 
 ### Match Service (Port 8003)
 - GET `/api/v1/matches` - Get potential matches
