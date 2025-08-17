@@ -29,7 +29,7 @@ func setupTestDB() *gorm.DB {
 	}
 
 	// Auto-migrate models
-	database.AutoMigrate(&models.User{})
+	database.AutoMigrate(&models.Users{})
 
 	return database
 }
@@ -173,7 +173,7 @@ func TestLoginHandler(t *testing.T) {
 	router := setupTestRouter()
 
 	// First create a test user
-	user := models.User{
+	user := models.Users{
 		Username:         "loginuser",
 		Email:            "login@example.com",
 		PasswordHash:     "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // "password"
