@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MessageCircle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { ProfileModal } from '@/components/demo/ProfileModal';
 
 const mockMatches = [

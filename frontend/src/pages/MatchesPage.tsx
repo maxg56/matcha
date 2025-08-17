@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
-import { Heart, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BlurredLikesGrid } from '@/components/cards/BlurredLikeCard';
 import { Button } from '@/components/ui/button';

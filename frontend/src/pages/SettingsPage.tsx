@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { useTheme } from '@/contexts/ThemeContext';
 import { 
   Bell, 
@@ -372,7 +371,7 @@ export default function SettingsPage() {
         {/* App Info */}
         <div className="text-center text-sm text-muted-foreground pt-4 pb-8">
           <p>Matcha v1.0.0</p>
-          <p className="mt-1">© 2024 Matcha. Tous droits réservés.</p>
+          <p className="mt-1">© 2025 Matcha. Tous droits réservés.</p>
         </div>
         </div>
       </ResponsiveLayout>

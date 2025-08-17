@@ -9,10 +9,8 @@ import {
   MapPin, 
   Briefcase, 
   GraduationCap,
-  Camera,
   Heart,
   Eye,
-  MessageCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
