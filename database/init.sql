@@ -178,18 +178,19 @@ EXECUTE FUNCTION update_updated_at_column();
 -- ====================
 -- TRIGGER : Mise à jour automatique de age
 -- ====================
--- CREATE OR REPLACE FUNCTION set_user_age()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     NEW.age := DATE_PART('year', AGE(CURRENT_DATE, NEW.birth_date));
---     RETURN NEW;
--- END;
--- $$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION set_user_age()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.age := DATE_PART('year', AGE(CURRENT_DATE, NEW.birth_date));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- CREATE TRIGGER trg_set_user_age
--- BEFORE INSERT ON users
--- FOR EACH ROW
--- EXECUTE FUNCTION set_user_age();
+CREATE TRIGGER trg_set_user_age
+BEFORE INSERT OR UPDATE ON users
+FOR EACH ROW
+WHEN (NEW.birth_date IS NOT NULL)
+EXECUTE FUNCTION set_user_age();
 
 
 
