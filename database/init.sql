@@ -178,6 +178,18 @@ EXECUTE FUNCTION update_updated_at_column();
 -- ====================
 -- TRIGGER : Mise à jour automatique de age
 -- ====================
+CREATE OR REPLACE FUNCTION update_users_age()
+RETURNS void AS $$
+BEGIN
+    UPDATE users
+    SET age = DATE_PART('year', AGE(CURRENT_DATE, birth_date))
+    WHERE birth_date IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ====================
+-- TRIGGER : Calcul d'âge individuel lors INSERT/UPDATE
+-- ====================
 CREATE OR REPLACE FUNCTION set_user_age()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -191,6 +203,21 @@ BEFORE INSERT OR UPDATE ON users
 FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
+
+-- ====================
+-- EXTENSION : pg_cron pour planification automatique
+-- ====================
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- ====================
+-- JOB QUOTIDIEN : Mise à jour automatique des âges
+-- ====================
+-- Planifier la mise à jour des âges chaque jour à minuit
+SELECT cron.schedule(
+    'update_users_age_daily',
+    '0 0 * * *',
+    'SELECT update_users_age();'
+);
 
 
 
