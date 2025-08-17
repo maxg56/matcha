@@ -30,11 +30,18 @@ services:
       - DB
     restart: unless-stopped
 
+  adminer:
+    image: adminer
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
   redis:
     image: redis:7-alpine
     networks:
       - DB
     restart: unless-stopped
+
 
   # Gateway for development
   gateway:
