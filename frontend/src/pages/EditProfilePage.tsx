@@ -1,36 +1,26 @@
 import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Save } from 'lucide-react';
 import { 
   User, 
-  Calendar,
-  Edit3,
   Camera,
-  Save,
-  X,
-  Ruler,
   Palette,
-  GraduationCap,
-  Briefcase,
-  Church,
-  Baby,
   Wine,
-  Cigarette,
-  PillBottle,
-  Dog,
   Activity,
-  Users,
   Heart,
   MapPin,
-  Star,
-  Plus,
-  Trash2
+  Star
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { 
+  SettingSection,
+  SelectField,
+  TextArea,
+  SliderField,
+  TextInput,
+  PhotosSection,
+  InterestsSection
+} from '@/components/edit-profile';
 
 interface UserProfile {
   // Basic info
@@ -281,221 +271,10 @@ export default function EditProfilePage() {
     updateField('tags', newTags);
   };
 
-  const SettingSection = ({ 
-    title, 
-    icon, 
-    children, 
-    sectionKey,
-    editable = true
-  }: { 
-    title: string; 
-    icon: React.ReactNode; 
-    children: React.ReactNode; 
-    sectionKey: string;
-    editable?: boolean;
-  }) => (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="text-primary">{icon}</div>
-          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        </div>
-        {editable && (
-          <div className="flex items-center gap-2">
-            {editingSection === sectionKey ? (
-              <>
-                <Button variant="outline" size="sm" onClick={cancelEditing}>
-                  <X className="h-4 w-4 mr-2" />
-                  Annuler
-                </Button>
-                <Button size="sm" onClick={saveChanges}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Sauver
-                </Button>
-              </>
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => startEditing(sectionKey)}>
-                <Edit3 className="h-4 w-4 mr-2" />
-                Modifier
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {children}
-      </div>
-    </div>
-  );
 
-  const SelectField = ({ 
-    field, 
-    options, 
-    label,
-    editable = true
-  }: { 
-    field: keyof UserProfile; 
-    options: Array<{value: string, label: string, icon: string}>; 
-    label: string;
-    editable?: boolean;
-  }) => {
-    const currentValue = getCurrentValue(field) as string;
-    const currentOption = options.find(opt => opt.value === currentValue);
-    
-    return (
-      <div className="p-4 border-b border-border last:border-b-0">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-medium text-foreground">{label}</h3>
-          {!editable && currentOption && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{currentOption.icon}</span>
-              <span>{currentOption.label}</span>
-            </div>
-          )}
-        </div>
-        
-        {editable && editingSection && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {options.map(option => (
-              <button
-                key={option.value}
-                onClick={() => updateField(field, option.value as any)}
-                className={cn(
-                  "p-2 rounded-lg border text-xs font-medium transition-colors",
-                  "flex items-center gap-1 justify-center",
-                  currentValue === option.value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:bg-accent"
-                )}
-              >
-                <span>{option.icon}</span>
-                <span>{option.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {(!editable || !editingSection) && currentOption && (
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{currentOption.icon}</span>
-            <span className="text-foreground">{currentOption.label}</span>
-          </div>
-        )}
-      </div>
-    );
-  };
 
-  const TextArea = ({ 
-    field, 
-    label, 
-    placeholder,
-    maxLength
-  }: { 
-    field: keyof UserProfile; 
-    label: string; 
-    placeholder: string;
-    maxLength?: number;
-  }) => {
-    const currentValue = getCurrentValue(field) as string;
-    
-    return (
-      <div className="p-4 border-b border-border last:border-b-0">
-        <h3 className="font-medium text-foreground mb-2">{label}</h3>
-        {editingSection ? (
-          <textarea
-            value={currentValue || ''}
-            onChange={(e) => updateField(field, e.target.value as any)}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            className="w-full p-3 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-            rows={3}
-          />
-        ) : (
-          <p className="text-foreground">
-            {currentValue || <span className="text-muted-foreground italic">{placeholder}</span>}
-          </p>
-        )}
-        {maxLength && editingSection && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {(currentValue || '').length} / {maxLength}
-          </p>
-        )}
-      </div>
-    );
-  };
 
-  const SliderField = ({ 
-    field, 
-    label, 
-    min, 
-    max, 
-    unit,
-    step = 1
-  }: { 
-    field: keyof UserProfile; 
-    label: string; 
-    min: number; 
-    max: number; 
-    unit: string;
-    step?: number;
-  }) => {
-    const currentValue = getCurrentValue(field) as number;
-    
-    return (
-      <div className="p-4 border-b border-border last:border-b-0">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-foreground">{label}</h3>
-          <span className="text-sm text-muted-foreground">
-            {currentValue} {unit}
-          </span>
-        </div>
-        {editingSection ? (
-          <Slider
-            value={[currentValue]}
-            min={min}
-            max={max}
-            step={step}
-            onValueChange={(value) => updateField(field, value[0] as any)}
-          />
-        ) : (
-          <div className="text-foreground">{currentValue} {unit}</div>
-        )}
-      </div>
-    );
-  };
 
-  const TextInput = ({ 
-    field, 
-    label, 
-    placeholder,
-    type = "text"
-  }: { 
-    field: keyof UserProfile; 
-    label: string; 
-    placeholder: string;
-    type?: string;
-  }) => {
-    const currentValue = getCurrentValue(field) as string;
-    
-    return (
-      <div className="p-4 border-b border-border last:border-b-0">
-        <h3 className="font-medium text-foreground mb-2">{label}</h3>
-        {editingSection ? (
-          <input
-            type={type}
-            value={currentValue || ''}
-            onChange={(e) => updateField(field, e.target.value as any)}
-            placeholder={placeholder}
-            className="w-full p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        ) : (
-          <p className="text-foreground">
-            {currentValue || <span className="text-muted-foreground italic">{placeholder}</span>}
-          </p>
-        )}
-      </div>
-    );
-  };
 
   return (
     <ResponsiveLayout
@@ -518,136 +297,367 @@ export default function EditProfilePage() {
         )}
 
         {/* Photos */}
-        <SettingSection title="Photos" icon={<Camera className="h-5 w-5" />} sectionKey="photos">
-          <div className="p-4">
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {user.photos.map((photo, index) => (
-                <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                  <img 
-                    src={photo} 
-                    alt={`Photo ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                  {index === 0 && (
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="default" className="text-xs">Principal</Badge>
-                    </div>
-                  )}
-                  <button className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600">
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              <button className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary transition-colors flex items-center justify-center">
-                <div className="text-center">
-                  <Plus className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Ajouter</p>
-                </div>
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground">Ajoutez au moins 2 photos. La première sera votre photo principale.</p>
-          </div>
+        <SettingSection 
+          title="Photos" 
+          icon={<Camera className="h-5 w-5" />} 
+          sectionKey="photos"
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <PhotosSection photos={user.photos} />
         </SettingSection>
 
         {/* Basic Information */}
-        <SettingSection title="Informations de Base" icon={<User className="h-5 w-5" />} sectionKey="basic" editable>
-          <TextInput field="firstName" label="Prénom" placeholder="Votre prénom" />
-          <TextInput field="lastName" label="Nom" placeholder="Votre nom" />
-          <TextInput field="username" label="Nom d'utilisateur" placeholder="@username" />
+        <SettingSection 
+          title="Informations de Base" 
+          icon={<User className="h-5 w-5" />} 
+          sectionKey="basic" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <TextInput 
+            field="firstName" 
+            label="Prénom" 
+            placeholder="Votre prénom" 
+            currentValue={getCurrentValue('firstName') as string}
+            editingSection={editingSection === 'basic'}
+            onChange={updateField}
+          />
+          <TextInput 
+            field="lastName" 
+            label="Nom" 
+            placeholder="Votre nom" 
+            currentValue={getCurrentValue('lastName') as string}
+            editingSection={editingSection === 'basic'}
+            onChange={updateField}
+          />
+          <TextInput 
+            field="username" 
+            label="Nom d'utilisateur" 
+            placeholder="@username" 
+            currentValue={getCurrentValue('username') as string}
+            editingSection={editingSection === 'basic'}
+            onChange={updateField}
+          />
           <div className="p-4 border-b border-border">
             <h3 className="font-medium text-foreground mb-2">Date de naissance</h3>
             <p className="text-foreground">{new Date(user.birthDate).toLocaleDateString('fr-FR')} ({user.age} ans)</p>
             <p className="text-xs text-muted-foreground mt-1">L'âge ne peut pas être modifié</p>
           </div>
-          <SelectField field="gender" options={fieldOptions.gender} label="Genre" editable={editingSection === 'basic'} />
-          <SelectField field="sexPref" options={fieldOptions.sexPref} label="Intéressé par" editable={editingSection === 'basic'} />
-          <SliderField field="height" label="Taille" min={140} max={220} unit="cm" />
+          <SelectField 
+            field="gender" 
+            options={fieldOptions.gender} 
+            label="Genre" 
+            currentValue={getCurrentValue('gender') as string}
+            editable={true}
+            editingSection={editingSection === 'basic'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="sexPref" 
+            options={fieldOptions.sexPref} 
+            label="Intéressé par" 
+            currentValue={getCurrentValue('sexPref') as string}
+            editable={true}
+            editingSection={editingSection === 'basic'}
+            onChange={updateField}
+          />
+          <SliderField 
+            field="height" 
+            label="Taille" 
+            min={140} 
+            max={220} 
+            unit="cm" 
+            currentValue={getCurrentValue('height') as number}
+            editingSection={editingSection === 'basic'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Bio */}
-        <SettingSection title="À propos de moi" icon={<Heart className="h-5 w-5" />} sectionKey="bio" editable>
-          <TextArea field="bio" label="Bio" placeholder="Parlez-nous de vous..." maxLength={400} />
-          <TextArea field="personalOpinion" label="Ma vision de la vie" placeholder="Votre philosophie, vos valeurs..." />
+        <SettingSection 
+          title="À propos de moi" 
+          icon={<Heart className="h-5 w-5" />} 
+          sectionKey="bio" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <TextArea 
+            field="bio" 
+            label="Bio" 
+            placeholder="Parlez-nous de vous..." 
+            maxLength={400}
+            currentValue={getCurrentValue('bio') as string}
+            editingSection={editingSection === 'bio'}
+            onChange={updateField}
+          />
+          <TextArea 
+            field="personalOpinion" 
+            label="Ma vision de la vie" 
+            placeholder="Votre philosophie, vos valeurs..."
+            currentValue={getCurrentValue('personalOpinion') as string}
+            editingSection={editingSection === 'bio'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Physical Appearance */}
-        <SettingSection title="Apparence Physique" icon={<Palette className="h-5 w-5" />} sectionKey="appearance" editable>
-          <SelectField field="hairColor" options={fieldOptions.hairColor} label="Couleur des cheveux" editable={editingSection === 'appearance'} />
-          <SelectField field="eyeColor" options={fieldOptions.eyeColor} label="Couleur des yeux" editable={editingSection === 'appearance'} />
-          <SelectField field="skinColor" options={fieldOptions.skinColor} label="Couleur de peau" editable={editingSection === 'appearance'} />
+        <SettingSection 
+          title="Apparence Physique" 
+          icon={<Palette className="h-5 w-5" />} 
+          sectionKey="appearance" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <SelectField 
+            field="hairColor" 
+            options={fieldOptions.hairColor} 
+            label="Couleur des cheveux"
+            currentValue={getCurrentValue('hairColor') as string}
+            editable={true}
+            editingSection={editingSection === 'appearance'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="eyeColor" 
+            options={fieldOptions.eyeColor} 
+            label="Couleur des yeux"
+            currentValue={getCurrentValue('eyeColor') as string}
+            editable={true}
+            editingSection={editingSection === 'appearance'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="skinColor" 
+            options={fieldOptions.skinColor} 
+            label="Couleur de peau"
+            currentValue={getCurrentValue('skinColor') as string}
+            editable={true}
+            editingSection={editingSection === 'appearance'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Lifestyle */}
-        <SettingSection title="Style de Vie" icon={<Wine className="h-5 w-5" />} sectionKey="lifestyle" editable>
-          <SelectField field="alcoholConsumption" options={fieldOptions.alcoholConsumption} label="Consommation d'alcool" editable={editingSection === 'lifestyle'} />
-          <SelectField field="smoking" options={fieldOptions.smoking} label="Tabac" editable={editingSection === 'lifestyle'} />
-          <SelectField field="cannabis" options={fieldOptions.cannabis} label="Cannabis" editable={editingSection === 'lifestyle'} />
-          <SelectField field="drugs" options={fieldOptions.drugs} label="Autres drogues" editable={editingSection === 'lifestyle'} />
-          <SelectField field="pets" options={fieldOptions.pets} label="Animaux de compagnie" editable={editingSection === 'lifestyle'} />
+        <SettingSection 
+          title="Style de Vie" 
+          icon={<Wine className="h-5 w-5" />} 
+          sectionKey="lifestyle" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <SelectField 
+            field="alcoholConsumption" 
+            options={fieldOptions.alcoholConsumption} 
+            label="Consommation d'alcool"
+            currentValue={getCurrentValue('alcoholConsumption') as string}
+            editable={true}
+            editingSection={editingSection === 'lifestyle'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="smoking" 
+            options={fieldOptions.smoking} 
+            label="Tabac"
+            currentValue={getCurrentValue('smoking') as string}
+            editable={true}
+            editingSection={editingSection === 'lifestyle'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="cannabis" 
+            options={fieldOptions.cannabis} 
+            label="Cannabis"
+            currentValue={getCurrentValue('cannabis') as string}
+            editable={true}
+            editingSection={editingSection === 'lifestyle'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="drugs" 
+            options={fieldOptions.drugs} 
+            label="Autres drogues"
+            currentValue={getCurrentValue('drugs') as string}
+            editable={true}
+            editingSection={editingSection === 'lifestyle'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="pets" 
+            options={fieldOptions.pets} 
+            label="Animaux de compagnie"
+            currentValue={getCurrentValue('pets') as string}
+            editable={true}
+            editingSection={editingSection === 'lifestyle'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Activity & Education */}
-        <SettingSection title="Activité & Éducation" icon={<Activity className="h-5 w-5" />} sectionKey="activity" editable>
-          <SelectField field="socialActivityLevel" options={fieldOptions.activityLevel} label="Niveau d'activité sociale" editable={editingSection === 'activity'} />
-          <SelectField field="sportActivity" options={fieldOptions.activityLevel} label="Activité sportive" editable={editingSection === 'activity'} />
-          <SelectField field="educationLevel" options={fieldOptions.educationLevel} label="Niveau d'éducation" editable={editingSection === 'activity'} />
+        <SettingSection 
+          title="Activité & Éducation" 
+          icon={<Activity className="h-5 w-5" />} 
+          sectionKey="activity" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <SelectField 
+            field="socialActivityLevel" 
+            options={fieldOptions.activityLevel} 
+            label="Niveau d'activité sociale"
+            currentValue={getCurrentValue('socialActivityLevel') as string}
+            editable={true}
+            editingSection={editingSection === 'activity'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="sportActivity" 
+            options={fieldOptions.activityLevel} 
+            label="Activité sportive"
+            currentValue={getCurrentValue('sportActivity') as string}
+            editable={true}
+            editingSection={editingSection === 'activity'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="educationLevel" 
+            options={fieldOptions.educationLevel} 
+            label="Niveau d'éducation"
+            currentValue={getCurrentValue('educationLevel') as string}
+            editable={true}
+            editingSection={editingSection === 'activity'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Personal Information */}
-        <SettingSection title="Informations Personnelles" icon={<Church className="h-5 w-5" />} sectionKey="personal" editable>
-          <SelectField field="religion" options={fieldOptions.religion} label="Religion" editable={editingSection === 'personal'} />
-          <SelectField field="relationshipType" options={fieldOptions.relationshipType} label="Type de relation recherchée" editable={editingSection === 'personal'} />
-          <SelectField field="childrenStatus" options={fieldOptions.childrenStatus} label="Situation avec les enfants" editable={editingSection === 'personal'} />
-          <SelectField field="politicalView" options={fieldOptions.politicalView} label="Orientation politique" editable={editingSection === 'personal'} />
-          <TextInput field="zodiacSign" label="Signe du zodiaque" placeholder="Votre signe astrologique" />
+        <SettingSection 
+          title="Informations Personnelles" 
+          icon={<Heart className="h-5 w-5" />} 
+          sectionKey="personal" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <SelectField 
+            field="religion" 
+            options={fieldOptions.religion} 
+            label="Religion"
+            currentValue={getCurrentValue('religion') as string}
+            editable={true}
+            editingSection={editingSection === 'personal'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="relationshipType" 
+            options={fieldOptions.relationshipType} 
+            label="Type de relation recherchée"
+            currentValue={getCurrentValue('relationshipType') as string}
+            editable={true}
+            editingSection={editingSection === 'personal'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="childrenStatus" 
+            options={fieldOptions.childrenStatus} 
+            label="Situation avec les enfants"
+            currentValue={getCurrentValue('childrenStatus') as string}
+            editable={true}
+            editingSection={editingSection === 'personal'}
+            onChange={updateField}
+          />
+          <SelectField 
+            field="politicalView" 
+            options={fieldOptions.politicalView} 
+            label="Orientation politique"
+            currentValue={getCurrentValue('politicalView') as string}
+            editable={true}
+            editingSection={editingSection === 'personal'}
+            onChange={updateField}
+          />
+          <TextInput 
+            field="zodiacSign" 
+            label="Signe du zodiaque" 
+            placeholder="Votre signe astrologique"
+            currentValue={getCurrentValue('zodiacSign') as string}
+            editingSection={editingSection === 'personal'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Location & Career */}
-        <SettingSection title="Localisation & Carrière" icon={<MapPin className="h-5 w-5" />} sectionKey="location" editable>
-          <TextInput field="birthCity" label="Ville de naissance" placeholder="Où êtes-vous né(e) ?" />
-          <TextInput field="currentCity" label="Ville actuelle" placeholder="Où habitez-vous ?" />
-          <TextInput field="job" label="Profession" placeholder="Votre métier" />
+        <SettingSection 
+          title="Localisation & Carrière" 
+          icon={<MapPin className="h-5 w-5" />} 
+          sectionKey="location" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <TextInput 
+            field="birthCity" 
+            label="Ville de naissance" 
+            placeholder="Où êtes-vous né(e) ?"
+            currentValue={getCurrentValue('birthCity') as string}
+            editingSection={editingSection === 'location'}
+            onChange={updateField}
+          />
+          <TextInput 
+            field="currentCity" 
+            label="Ville actuelle" 
+            placeholder="Où habitez-vous ?"
+            currentValue={getCurrentValue('currentCity') as string}
+            editingSection={editingSection === 'location'}
+            onChange={updateField}
+          />
+          <TextInput 
+            field="job" 
+            label="Profession" 
+            placeholder="Votre métier"
+            currentValue={getCurrentValue('job') as string}
+            editingSection={editingSection === 'location'}
+            onChange={updateField}
+          />
         </SettingSection>
 
         {/* Tags/Interests */}
-        <SettingSection title="Centres d'intérêt" icon={<Star className="h-5 w-5" />} sectionKey="interests" editable>
-          <div className="p-4">
-            <h3 className="font-medium text-foreground mb-3">Vos centres d'intérêt</h3>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {user.tags.map(tag => (
-                <Badge
-                  key={tag}
-                  variant="default"
-                  className="cursor-pointer hover:bg-destructive"
-                  onClick={() => editingSection === 'interests' && toggleTag(tag)}
-                >
-                  {tag}
-                  {editingSection === 'interests' && (
-                    <X className="h-3 w-3 ml-1" />
-                  )}
-                </Badge>
-              ))}
-            </div>
-            
-            {editingSection === 'interests' && (
-              <>
-                <h4 className="font-medium text-foreground mb-2">Ajouter des centres d'intérêt</h4>
-                <div className="flex flex-wrap gap-2">
-                  {availableTags
-                    .filter(tag => !user.tags.includes(tag))
-                    .map(tag => (
-                      <button
-                        key={tag}
-                        onClick={() => toggleTag(tag)}
-                        className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground hover:bg-accent transition-colors"
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                </div>
-              </>
-            )}
-          </div>
+        <SettingSection 
+          title="Centres d'intérêt" 
+          icon={<Star className="h-5 w-5" />} 
+          sectionKey="interests" 
+          editable
+          editingSection={editingSection}
+          onStartEditing={startEditing}
+          onSaveChanges={saveChanges}
+          onCancelEditing={cancelEditing}
+        >
+          <InterestsSection
+            selectedTags={getCurrentValue('tags') as string[]}
+            availableTags={availableTags}
+            editingSection={editingSection === 'interests'}
+            onToggleTag={toggleTag}
+          />
         </SettingSection>
       </div>
     </ResponsiveLayout>

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
 import { 
@@ -9,76 +8,14 @@ import {
   Eye, 
   Trash2,
   LogOut,
-  Crown,
-  Zap,
-  Star,
-  ChevronRight,
   Globe,
   Moon,
   Volume2,
-  Vibrate
+  Vibrate,
+  Star
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { SettingItem, SettingSection, PremiumSection } from '@/components/settings';
 
-interface SettingItemProps {
-  icon: React.ReactNode;
-  title: string;
-  description?: string;
-  children?: React.ReactNode;
-  onClick?: () => void;
-  className?: string;
-}
-
-function SettingItem({ icon, title, description, children, onClick, className }: SettingItemProps) {
-  return (
-    <div 
-      className={cn(
-        "flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors",
-        onClick && "cursor-pointer",
-        className
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-3 flex-1">
-        <div className="text-muted-foreground">
-          {icon}
-        </div>
-        <div className="flex-1">
-          <h3 className="font-medium text-foreground">{title}</h3>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
-        </div>
-      </div>
-      {children && (
-        <div className="flex items-center gap-2">
-          {children}
-        </div>
-      )}
-      {onClick && !children && (
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      )}
-    </div>
-  );
-}
-
-interface SettingSectionProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-function SettingSection({ title, children }: SettingSectionProps) {
-  return (
-    <div className="mb-6">
-      <h2 className="text-lg font-semibold text-foreground mb-3 px-4">{title}</h2>
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const mockUser = {
   premium: false
@@ -293,38 +230,7 @@ export default function SettingsPage() {
         </SettingSection>
 
         {/* Premium */}
-        {!mockUser.premium && (
-          <SettingSection title="Premium">
-            <div className="p-4">
-              <div className="bg-gradient-to-r from-purple-500 to-violet-500 rounded-xl p-4 text-white mb-4 shadow-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Crown className="h-5 w-5" />
-                  <h3 className="font-semibold">Matcha Premium</h3>
-                </div>
-                <p className="text-sm opacity-90 mb-3">
-                  Débloquez toutes les fonctionnalités premium pour une expérience optimale
-                </p>
-                <Button className="bg-white/20 hover:bg-white/30 text-white border-white/30 shadow-lg transition-colors">
-                  Découvrir Premium
-                </Button>
-              </div>
-            </div>
-            
-            <SettingItem
-              icon={<Zap className="h-4 w-4" />}
-              title="Boost"
-              description="Soyez vu par plus de personnes"
-              onClick={() => console.log('Purchase boost')}
-            />
-
-            <SettingItem
-              icon={<Star className="h-4 w-4" />}
-              title="Super Likes"
-              description="Montrez votre intérêt spécial"
-              onClick={() => console.log('Purchase super likes')}
-            />
-          </SettingSection>
-        )}
+        <PremiumSection isPremium={mockUser.premium} />
 
         {/* Support & Legal */}
         <SettingSection title="Support & Légal">

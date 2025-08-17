@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ProfilePhotoViewer } from '@/components/ui/photo-viewer';
 import { 
   Settings, 
   Edit3, 
