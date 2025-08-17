@@ -6,7 +6,7 @@ import (
 )
 
 // User maps to table `users`
-type User struct {
+type Users struct {
 	ID           uint          `gorm:"primaryKey;column:id" json:"id"`
 	Username     string        `gorm:"column:username;uniqueIndex;not null" json:"username"`
 	FirstName    string        `gorm:"column:first_name;not null" json:"first_name"`
@@ -56,4 +56,4 @@ type User struct {
 	UpdatedAt time.Time       `gorm:"column:updated_at;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
-func (User) TableName() string { return "users" }
+func (Users) TableName() string { return "users" }

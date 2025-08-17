@@ -70,7 +70,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	// Check for existing users
-	var existing models.User
+	var existing models.Users
 	if err := db.DB.Where("username = ? OR email = ?", req.Username, req.Email).First(&existing).Error; err == nil && existing.ID != 0 {
 		utils.RespondError(c, http.StatusConflict, "username or email already in use")
 		return
@@ -113,7 +113,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Find user by username or email
-	var user models.User
+	var user models.Users
 	if err := db.DB.Where("username = ? OR email = ?", req.Login, req.Login).First(&user).Error; err != nil || user.ID == 0 {
 		utils.RespondError(c, http.StatusUnauthorized, "invalid credentials")
 		return
@@ -147,7 +147,7 @@ func LoginHandler(c *gin.Context) {
 }
 
 // createUser creates a new user in the database with full profile
-func createUser(req RegisterRequest) (*models.User, error) {
+func createUser(req RegisterRequest) (*models.Users, error) {
 	// Hash password
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -163,7 +163,7 @@ func createUser(req RegisterRequest) (*models.User, error) {
 	// Calculate age
 	age := calculateAge(birthDate)
 
-	user := models.User{
+	user := models.Users{
 		Username:         req.Username,
 		Email:            req.Email,
 		PasswordHash:     string(hash),

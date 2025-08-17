@@ -25,8 +25,8 @@ func ConnectDatabase() {
 		Host:     GetenvOrDefault("DB_HOST", "localhost"),
 		Port:     GetenvOrDefault("DB_PORT", "5432"),
 		User:     GetenvOrDefault("DB_USER", "postgres"),
-		Password: GetenvOrDefault("DB_PASSWORD", "pass"),
-		DBName:   GetenvOrDefault("DB_NAME", "testdb"),
+		Password: GetenvOrDefault("DB_PASSWORD", "password"),
+		DBName:   GetenvOrDefault("DB_NAME", "matcha_dev"),
 	}
 
 	dsn := "host=" + config.Host + " user=" + config.User + " password=" + config.Password + " dbname=" + config.DBName + " port=" + config.Port + " sslmode=disable"
@@ -42,7 +42,7 @@ func ConnectDatabase() {
 	if os.Getenv("AUTO_MIGRATE") == "true" {
 		log.Println("Running DB AutoMigrate (AUTO_MIGRATE=true)")
 		if err := DB.AutoMigrate(
-			&models.User{},
+			&models.Users{},
 			&models.Tag{},
 			&models.UserTag{},
 			&models.Image{},
