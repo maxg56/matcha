@@ -56,7 +56,7 @@ func DeleteProfileHandler(c *gin.Context) {
 	}
 
 	// Delete related images
-	if err := tx.Where("user_id = ?", user.ID).Delete(&models.UserImage{}).Error; err != nil {
+	if err := tx.Where("user_id = ?", user.ID).Delete(&models.Image{}).Error; err != nil {
 		tx.Rollback()
 		utils.RespondError(c, http.StatusInternalServerError, "failed to delete user images")
 		return
