@@ -21,7 +21,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     birth_date DATE NOT NULL,
     -- age INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM AGE(birth_date))) STORED, -- cause PostgreSQL does not support GENERATED ALWAYS AS for DATE types
-    age INT
+    age INT,
     height INT, -- previously 'size'
 
     alcohol_consumption VARCHAR(9) CHECK (alcohol_consumption IN ('yes','sometimes','no')),
@@ -204,20 +204,6 @@ FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
 
--- ====================
--- EXTENSION : pg_cron pour planification automatique
--- ====================
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
--- ====================
--- JOB QUOTIDIEN : Mise à jour automatique des âges
--- ====================
--- Planifier la mise à jour des âges chaque jour à minuit
-SELECT cron.schedule(
-    'update_users_age_daily',
-    '0 0 * * *',
-    'SELECT update_users_age();'
-);
 
 
 
