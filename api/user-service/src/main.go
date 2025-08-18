@@ -5,9 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"user-service/src/conf"
+	"user-service/src/handlers"
+	"user-service/src/middleware"
 )
 
 func main() {
+	// Initialize database
+	conf.InitDB()
+
 	r := gin.Default()
 
 	// Health check
@@ -21,38 +28,19 @@ func main() {
 	// User routes
 	users := r.Group("/api/v1/users")
 	{
-		users.GET("/profile/:id", getProfileHandler)
-		users.PUT("/profile/:id", updateProfileHandler)
-		users.DELETE("/profile/:id", deleteProfileHandler)
-		users.GET("/search", searchUsersHandler)
-		users.POST("/upload-photo", uploadPhotoHandler)
+		// Public routes
+		users.GET("/profile/:id", handlers.GetProfileHandler)
+
+		// Protected routes
+		protected := users.Group("")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			protected.POST("/profile/:id", handlers.UpdateProfileHandler)
+			protected.PUT("/profile/:id", handlers.UpdateProfileHandler)
+			protected.DELETE("/profile/:id", handlers.DeleteProfileHandler)
+		}
 	}
 
 	log.Println("User service starting on port 8002")
 	log.Fatal(http.ListenAndServe(":8002", r))
-}
-
-func getProfileHandler(c *gin.Context) {
-	// TODO: Implement get profile logic
-	c.JSON(http.StatusOK, gin.H{"message": "Get profile endpoint"})
-}
-
-func updateProfileHandler(c *gin.Context) {
-	// TODO: Implement update profile logic
-	c.JSON(http.StatusOK, gin.H{"message": "Update profile endpoint"})
-}
-
-func deleteProfileHandler(c *gin.Context) {
-	// TODO: Implement delete profile logic
-	c.JSON(http.StatusOK, gin.H{"message": "Delete profile endpoint"})
-}
-
-func searchUsersHandler(c *gin.Context) {
-	// TODO: Implement search users logic
-	c.JSON(http.StatusOK, gin.H{"message": "Search users endpoint"})
-}
-
-func uploadPhotoHandler(c *gin.Context) {
-	// TODO: Implement upload photo logic
-	c.JSON(http.StatusOK, gin.H{"message": "Upload photo endpoint"})
 }

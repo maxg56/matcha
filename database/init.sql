@@ -21,7 +21,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     birth_date DATE NOT NULL,
     -- age INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM AGE(birth_date))) STORED, -- cause PostgreSQL does not support GENERATED ALWAYS AS for DATE types
-    age INT
+    age INT,
     height INT, -- previously 'size'
 
     alcohol_consumption VARCHAR(9) CHECK (alcohol_consumption IN ('yes','sometimes','no')),
@@ -178,18 +178,32 @@ EXECUTE FUNCTION update_updated_at_column();
 -- ====================
 -- TRIGGER : Mise à jour automatique de age
 -- ====================
--- CREATE OR REPLACE FUNCTION set_user_age()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     NEW.age := DATE_PART('year', AGE(CURRENT_DATE, NEW.birth_date));
---     RETURN NEW;
--- END;
--- $$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION update_users_age()
+RETURNS void AS $$
+BEGIN
+    UPDATE users
+    SET age = DATE_PART('year', AGE(CURRENT_DATE, birth_date))
+    WHERE birth_date IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql;
 
--- CREATE TRIGGER trg_set_user_age
--- BEFORE INSERT ON users
--- FOR EACH ROW
--- EXECUTE FUNCTION set_user_age();
+-- ====================
+-- TRIGGER : Calcul d'âge individuel lors INSERT/UPDATE
+-- ====================
+CREATE OR REPLACE FUNCTION set_user_age()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.age := DATE_PART('year', AGE(CURRENT_DATE, NEW.birth_date));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_user_age
+BEFORE INSERT OR UPDATE ON users
+FOR EACH ROW
+WHEN (NEW.birth_date IS NOT NULL)
+EXECUTE FUNCTION set_user_age();
+
 
 
 
