@@ -23,6 +23,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-matcha}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
       - ./database:/docker-entrypoint-initdb.d
@@ -36,6 +38,7 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    
   redis:
     image: redis:7-alpine
     networks:
