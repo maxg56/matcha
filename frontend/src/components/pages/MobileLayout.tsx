@@ -8,7 +8,7 @@ export default function MobileLayout() {
 	const [tab, setTab] = useState("accueil");
 
 	return (
-		<div className="h-screen flex flex-col"> 
+		<div className="h-screen flex flex-col">
 			<div className="flex-1 p-4 overflow-auto">
 				{tab === "gallery" && <Gallery />}
 				{tab === "conversations" && <Conversation />}
