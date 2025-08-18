@@ -32,21 +32,19 @@ services:
       - DB
     restart: unless-stopped
 
-
-
   adminer:
     image: adminer
-    ports:
-      - "8081:8080"
     networks:
       - DB
+      - backend
     restart: unless-stopped
-
+    
   redis:
     image: redis:7-alpine
     networks:
       - DB
     restart: unless-stopped
+
 
   # Gateway for development
   gateway:
@@ -79,12 +77,12 @@ services:
       context: ./api/auth-service
       target: development
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: 6379
       GIN_MODE: debug
       JWT_SECRET: ${JWT_SECRET}
@@ -107,8 +105,8 @@ services:
       target: development
 
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
@@ -128,8 +126,8 @@ services:
   match-service:
     build: ./api/match-service
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
@@ -151,8 +149,8 @@ services:
       target: development
 
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
@@ -176,12 +174,12 @@ services:
     build:
       context: ./api/notify-service
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: 6379
       PORT: 8005
       FLASK_ENV: development
@@ -229,8 +227,8 @@ services:
   user-creation:
     build: ./user-creation
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASS: ${DB_PASSWORD:-password}

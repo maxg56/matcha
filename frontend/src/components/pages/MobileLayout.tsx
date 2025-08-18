@@ -65,6 +65,7 @@ export default function MobileLayout() {
 					}`}
 				>
 					<User className="h-5 w-5" />
+
 					<span className="text-xs">Profil</span>
 				</button>
 			</nav>

@@ -15,4 +15,9 @@ localhost:443, {$VITE_HOSTNAME}:443 {
   handle /api/* {
     reverse_proxy gateway:8080
   }
+
+  handle /adminer/* {
+    reverse_proxy adminer:8080
+  }
+
 }

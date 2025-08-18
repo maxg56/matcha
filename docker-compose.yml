@@ -20,7 +20,7 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ${DB_NAME:-matcha}
+      POSTGRES_DB: ${DB_NAME:}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
@@ -28,6 +28,13 @@ services:
       - ./database:/docker-entrypoint-initdb.d:ro
     networks:
       - DB
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    networks:
+      - DB
+      - backend
     restart: unless-stopped
 
   redis:
