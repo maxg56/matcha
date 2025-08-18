@@ -12,7 +12,7 @@ interface SettingItemProps {
 
 export function SettingItem({ icon, title, description, children, onClick, className }: SettingItemProps) {
   return (
-    <div
+    <div 
       className={cn(
         "flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors",
         onClick && "cursor-pointer",

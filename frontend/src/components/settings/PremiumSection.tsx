@@ -26,7 +26,7 @@ export function PremiumSection({ isPremium }: PremiumSectionProps) {
           </Button>
         </div>
       </div>
-
+      
       <SettingItem
         icon={<Zap className="h-4 w-4" />}
         title="Boost"

@@ -72,20 +72,20 @@ export default function MatchesPage() {
     console.log('Like clicked:', likeId);
     // TODO: Implement like reveal logic
   };
-
+  
   const handleOpenLikeModal = () => {
     setIsLikeModalOpen(true);
   };
-
+  
   const handleCloseLikeModal = () => {
     setIsLikeModalOpen(false);
   };
-
+  
   const handleLikeProfile = (profileId: string) => {
     console.log('Liked profile:', profileId);
     // TODO: Implement like logic
   };
-
+  
   const handlePassProfile = (profileId: string) => {
     console.log('Passed profile:', profileId);
     // TODO: Implement pass logic
@@ -103,7 +103,7 @@ export default function MatchesPage() {
               {mockLikes.length} personne{mockLikes.length > 1 ? 's' : ''} vous {mockLikes.length > 1 ? 'ont' : 'a'} liké{mockLikes.length > 1 ? 's' : ''}
             </p>
           </div>
-          <Button
+          <Button 
             onClick={handleOpenLikeModal}
             className="gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600"
           >
@@ -111,14 +111,14 @@ export default function MatchesPage() {
             Liker des profils
           </Button>
         </div>
-
+        
         {/* Grid des likes floutés */}
-        <BlurredLikesGrid
-          likes={mockLikes}
+        <BlurredLikesGrid 
+          likes={mockLikes} 
           onLikeClick={handleLikeClick}
         />
       </div>
-
+      
       {/* Modal pour liker de nouveaux profils */}
       <LikeProfileModal
         profiles={mockProfilesToLike}

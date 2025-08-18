@@ -31,7 +31,7 @@ export function ProfileStep({ formData, updateFormData }: ProfileStepProps) {
           />
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="location">Localisation</Label>
         <div className="relative">
@@ -45,7 +45,7 @@ export function ProfileStep({ formData, updateFormData }: ProfileStepProps) {
           />
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="occupation">Profession</Label>
         <div className="relative">
@@ -59,7 +59,7 @@ export function ProfileStep({ formData, updateFormData }: ProfileStepProps) {
           />
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="bio">Biographie</Label>
         <Textarea

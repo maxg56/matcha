@@ -11,7 +11,7 @@ export function useRegistration() {
   const [errors, setErrors] = useState<FieldValidationErrors>({});
 
   const updateField = useCallback(<K extends keyof RegistrationData>(
-    field: K,
+    field: K, 
     value: RegistrationData[K]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -29,7 +29,7 @@ export function useRegistration() {
 
   const validateStep = useCallback((step: number): boolean => {
     const newErrors: FieldValidationErrors = {};
-
+    
     switch (step) {
       case 1:
         if (!formData.username) newErrors.username = 'Pseudo requis';
@@ -47,7 +47,7 @@ export function useRegistration() {
         if (!formData.sexPref) newErrors.sexPref = 'Préférence requise';
         break;
     }
-
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
@@ -55,7 +55,7 @@ export function useRegistration() {
   const canContinue = useCallback((step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.username && formData.firstName && formData.lastName &&
+        return !!(formData.username && formData.firstName && formData.lastName && 
                  formData.email && formData.password && formData.confirmPassword &&
                  formData.password === formData.confirmPassword);
       case 2:

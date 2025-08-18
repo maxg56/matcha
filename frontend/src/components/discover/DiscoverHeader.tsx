@@ -19,20 +19,20 @@ export function DiscoverHeader({ onOpenFilters, onMoreOptions }: DiscoverHeaderP
             <p className="text-xs text-gray-500 dark:text-gray-400">Découvrez l'amour</p>
           </div>
         </div>
-
+        
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          <Button 
+            variant="outline" 
+            size="sm" 
             className="gap-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border-gray-200 dark:border-gray-600"
             onClick={onOpenFilters}
           >
             <Sliders className="h-4 w-4" />
             Filtres
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          <Button 
+            variant="ghost" 
+            size="sm" 
             className="hover:bg-gray-50 dark:hover:bg-gray-700"
             onClick={onMoreOptions}
           >

@@ -32,7 +32,7 @@ export default function InscriptionPage() {
 
   const renderStepContent = () => {
     const commonProps = { formData, errors, updateField };
-
+    
     switch (currentStep) {
       case 1:
         return <AccountStep {...commonProps} />;
@@ -68,10 +68,10 @@ export default function InscriptionPage() {
         </div>
       </div>
 
-      <ProgressBar
-        currentStep={currentStep}
-        totalSteps={registrationSteps.length}
-        steps={registrationSteps}
+      <ProgressBar 
+        currentStep={currentStep} 
+        totalSteps={registrationSteps.length} 
+        steps={registrationSteps} 
       />
 
       {/* Main Content */}

@@ -18,7 +18,7 @@ export function NoMoreProfiles({ onOpenFilters }: NoMoreProfilesProps) {
         <p className="text-gray-500 dark:text-gray-400 mb-6">
           Revenez plus tard pour voir de nouveaux profils
         </p>
-
+        
         <Button
           className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white shadow-lg"
           onClick={onOpenFilters}

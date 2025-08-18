@@ -12,9 +12,9 @@ interface ResponsiveLayoutProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
 }
 
-export function ResponsiveLayout({
-  children,
-  showNavigation = true,
+export function ResponsiveLayout({ 
+  children, 
+  showNavigation = true, 
   title,
   maxWidth = 'full'
 }: ResponsiveLayoutProps) {
@@ -24,7 +24,7 @@ export function ResponsiveLayout({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
+    
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -44,11 +44,11 @@ export function ResponsiveLayout({
     return (
       <div className="min-h-screen flex flex-col bg-background">
         {title && <TopBar title={title} />}
-
+        
         <main className="flex-1 overflow-hidden">
           {children}
         </main>
-
+        
         {showNavigation && <BottomNavigation />}
       </div>
     );
@@ -58,7 +58,7 @@ export function ResponsiveLayout({
   return (
     <div className="min-h-screen flex bg-background">
       {showNavigation && <SideNavigation />}
-
+      
       <div className="flex-1 flex flex-col">
         {title && (
           <header className="border-b border-border bg-background/80 backdrop-blur-md">
@@ -67,7 +67,7 @@ export function ResponsiveLayout({
             </div>
           </header>
         )}
-
+        
         <main className="flex-1 overflow-hidden">
           <div className={cn("mx-auto h-full", maxWidthClasses[maxWidth])}>
             {children}

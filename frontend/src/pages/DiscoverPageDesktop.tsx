@@ -3,11 +3,11 @@ import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Sliders,
-  Heart,
-  X,
-  MapPin,
+import { 
+  Sliders, 
+  Heart, 
+  X, 
+  MapPin, 
   Briefcase,
   GraduationCap,
   Camera,
@@ -84,7 +84,7 @@ export default function DiscoverPageDesktop() {
                   alt={currentProfile.name}
                   className="w-full h-full object-cover"
                 />
-
+                
                 {/* Image navigation */}
                 {currentProfile.images.length > 1 && (
                   <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2">
@@ -93,8 +93,8 @@ export default function DiscoverPageDesktop() {
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
                         className={`w-3 h-3 rounded-full transition-all ${
-                          index === selectedImageIndex
-                            ? 'bg-white shadow-lg'
+                          index === selectedImageIndex 
+                            ? 'bg-white shadow-lg' 
                             : 'bg-white/50 hover:bg-white/70'
                         }`}
                       />
@@ -104,7 +104,7 @@ export default function DiscoverPageDesktop() {
 
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
+                
                 {/* Quick info overlay */}
                 <div className="absolute bottom-6 left-6 right-6 text-white">
                   <h2 className="text-3xl font-bold mb-2">
@@ -127,7 +127,7 @@ export default function DiscoverPageDesktop() {
                 >
                   <X className="h-8 w-8" />
                 </Button>
-
+                
                 <Button
                   size="lg"
                   onClick={() => handleLike(currentProfile.id)}
@@ -178,17 +178,17 @@ export default function DiscoverPageDesktop() {
                 {/* Details */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-foreground">Informations</h4>
-
+                  
                   <div className="flex items-center gap-3 text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span className="text-foreground">{currentProfile.location}</span>
                   </div>
-
+                  
                   <div className="flex items-center gap-3 text-sm">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                     <span className="text-foreground">{currentProfile.occupation}</span>
                   </div>
-
+                  
                   <div className="flex items-center gap-3 text-sm">
                     <GraduationCap className="h-4 w-4 text-muted-foreground" />
                     <span className="text-foreground">{currentProfile.education}</span>
@@ -223,8 +223,8 @@ export default function DiscoverPageDesktop() {
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
                         className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                          index === selectedImageIndex
-                            ? 'border-primary shadow-lg'
+                          index === selectedImageIndex 
+                            ? 'border-primary shadow-lg' 
                             : 'border-transparent hover:border-primary/50'
                         }`}
                       >

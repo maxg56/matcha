@@ -24,9 +24,9 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
             {Math.round((currentStep / steps.length) * 100)}%
           </span>
         </div>
-
+        
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-          <div
+          <div 
             className="bg-gradient-to-r from-purple-500 to-violet-500 h-2 rounded-full transition-all duration-300"
             style={{ width: `${(currentStep / steps.length) * 100}%` }}
           />
@@ -37,15 +37,15 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
             const Icon = step.icon;
             const isCompleted = currentStep > step.id;
             const isCurrent = currentStep === step.id;
-
+            
             return (
               <div key={step.id} className="flex flex-col items-center">
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
-                  isCompleted
-                    ? "bg-green-500 text-white"
-                    : isCurrent
-                      ? "bg-purple-500 text-white"
+                  isCompleted 
+                    ? "bg-green-500 text-white" 
+                    : isCurrent 
+                      ? "bg-purple-500 text-white" 
                       : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                 )}>
                   {isCompleted ? (

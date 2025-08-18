@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Settings,
-  Edit3,
-  MapPin,
-  Briefcase,
+import { 
+  Settings, 
+  Edit3, 
+  MapPin, 
+  Briefcase, 
   GraduationCap,
   Heart,
   Eye,
@@ -65,18 +65,18 @@ export default function ProfilePage() {
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 mx-4 mt-4 rounded-t-2xl shadow-lg">
           <h2 className="text-lg font-semibold text-foreground">Mon Profil</h2>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <Button 
+              variant="outline" 
+              size="sm" 
               className="gap-2 bg-gray-50 dark:bg-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-gray-200 dark:border-gray-600"
               onClick={() => navigate('/edit-profile')}
             >
               <Edit3 className="h-4 w-4" />
               Modifier
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+            <Button 
+              variant="ghost" 
+              size="sm" 
               className="gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => navigate('/settings')}
             >
@@ -90,7 +90,7 @@ export default function ProfilePage() {
           <div className="p-4">
             {/* Profile images */}
             <div className="relative mx-auto max-w-sm md:max-w-md lg:max-w-lg">
-              <div
+              <div 
                 className="aspect-[3/4] rounded-3xl overflow-hidden bg-gray-50 dark:bg-gray-700 cursor-pointer group shadow-lg border border-gray-200 dark:border-gray-600"
               >
               <img
@@ -98,7 +98,7 @@ export default function ProfilePage() {
                 alt={mockUser.name}
                 className="w-full h-full object-cover transition-transform group-hover:scale-105"
               />
-
+              
               {/* Image indicators */}
               {mockUser.images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
@@ -110,15 +110,15 @@ export default function ProfilePage() {
                         setActiveImageIndex(index);
                       }}
                       className={`w-3 h-3 rounded-full transition-all ${
-                        index === activeImageIndex
-                          ? 'bg-white shadow-lg'
+                        index === activeImageIndex 
+                          ? 'bg-white shadow-lg' 
                           : 'bg-white/50'
                       }`}
                     />
                   ))}
                 </div>
               )}
-
+              
             </div>
           </div>
 
@@ -128,18 +128,18 @@ export default function ProfilePage() {
               <h1 className="text-2xl font-bold text-foreground mb-1">
                 {mockUser.name}, {mockUser.age}
               </h1>
-
+              
               <div className="space-y-2 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm">{mockUser.location}</span>
                 </div>
-
+                
                 <div className="flex items-center gap-2">
                   <Briefcase className="h-4 w-4" />
                   <span className="text-sm">{mockUser.occupation}</span>
                 </div>
-
+                
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
                   <span className="text-sm">{mockUser.education}</span>
@@ -184,7 +184,7 @@ export default function ProfilePage() {
                   <div className="text-2xl font-bold text-foreground">{mockUser.stats.matches}</div>
                   <div className="text-xs text-muted-foreground">Matches</div>
                 </div>
-
+                
                 <div className="text-center">
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-500 mx-auto mb-2 shadow-lg">
                     <Heart className="h-6 w-6 text-white fill-current" />
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                   <div className="text-2xl font-bold text-foreground">{mockUser.stats.likes}</div>
                   <div className="text-xs text-muted-foreground">Likes</div>
                 </div>
-
+                
                 <div className="text-center">
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-500 mx-auto mb-2 shadow-lg">
                     <Eye className="h-6 w-6 text-white" />

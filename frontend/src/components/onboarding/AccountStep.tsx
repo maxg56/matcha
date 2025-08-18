@@ -38,7 +38,7 @@ export function AccountStep({ formData, updateFormData }: AccountStepProps) {
           />
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <div className="relative">
@@ -53,7 +53,7 @@ export function AccountStep({ formData, updateFormData }: AccountStepProps) {
           />
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="password">Mot de passe</Label>
         <div className="relative">
@@ -68,7 +68,7 @@ export function AccountStep({ formData, updateFormData }: AccountStepProps) {
           />
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
         <div className="relative">

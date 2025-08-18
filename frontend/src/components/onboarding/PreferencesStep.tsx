@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 
 const INTERESTS = [
-  'Voyage', 'Photographie', 'Cuisine', 'Sport', 'Musique', 'Art',
+  'Voyage', 'Photographie', 'Cuisine', 'Sport', 'Musique', 'Art', 
   'Lecture', 'Cinéma', 'Technologie', 'Nature', 'Fitness', 'Danse',
   'Yoga', 'Gaming', 'Mode', 'Design', 'Écriture', 'Théâtre'
 ];
@@ -50,7 +50,7 @@ export function PreferencesStep({ formData, updateFormData, toggleInterest }: Pr
             })}
           </div>
         </div>
-
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Je cherche</Label>
@@ -68,7 +68,7 @@ export function PreferencesStep({ formData, updateFormData, toggleInterest }: Pr
               </SelectContent>
             </Select>
           </div>
-
+          
           <div className="space-y-2">
             <Label>Distance max: {formData.maxDistance}km</Label>
             <input

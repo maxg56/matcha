@@ -1,6 +1,6 @@
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { FiltersScreen } from '@/components/filters/FiltersScreen';
-import {
+import { 
   DiscoverHeader,
   ProfileCard,
   NoMoreProfiles

@@ -19,7 +19,7 @@ export function PhotosStep({ formData, updateFormData }: PhotosStepProps) {
           Ajoutez jusqu'à 6 photos pour montrer votre personnalité
         </p>
       </div>
-
+      
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, index) => (
           <div
@@ -39,7 +39,7 @@ export function PhotosStep({ formData, updateFormData }: PhotosStepProps) {
           </div>
         ))}
       </div>
-
+      
       <div className="text-center">
         <Button variant="outline" className="gap-2">
           <Upload className="h-4 w-4" />

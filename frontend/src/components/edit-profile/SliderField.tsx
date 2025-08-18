@@ -12,11 +12,11 @@ interface SliderFieldProps {
   onChange: (field: string, value: number) => void;
 }
 
-export function SliderField({
-  field,
-  label,
-  min,
-  max,
+export function SliderField({ 
+  field, 
+  label, 
+  min, 
+  max, 
   unit,
   step = 1,
   currentValue,

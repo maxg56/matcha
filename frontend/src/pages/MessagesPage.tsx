@@ -91,7 +91,7 @@ export default function MessagesPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
+    
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -119,14 +119,14 @@ export default function MessagesPage() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <ResponsiveLayout title="Messages" showNavigation={true}>
           <div className="p-4">
-            <NewMatchesSection
-              matches={newMatches}
-              onMatchClick={handleMatchClick}
+            <NewMatchesSection 
+              matches={newMatches} 
+              onMatchClick={handleMatchClick} 
               isMobile={true}
             />
-            <ConversationsList
-              matches={messagesMatches}
-              onMatchClick={handleMatchClick}
+            <ConversationsList 
+              matches={messagesMatches} 
+              onMatchClick={handleMatchClick} 
               onProfileClick={handleProfileClick}
               isMobile={true}
             />
@@ -141,18 +141,18 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <ResponsiveLayout title="Messages" showNavigation={true} maxWidth="full">
         <div className="flex h-full">
-          <NewMatchesSection
-            matches={newMatches}
-            onMatchClick={handleMatchClick}
+          <NewMatchesSection 
+            matches={newMatches} 
+            onMatchClick={handleMatchClick} 
             isMobile={false}
           />
-          <ConversationsList
-            matches={messagesMatches}
-            onMatchClick={handleMatchClick}
+          <ConversationsList 
+            matches={messagesMatches} 
+            onMatchClick={handleMatchClick} 
             isMobile={false}
           />
         </div>
-
+      
       {selectedProfile && (
         <ProfileModal
           profile={selectedProfile}
@@ -166,3 +166,4 @@ export default function MessagesPage() {
     </div>
   );
 }
+

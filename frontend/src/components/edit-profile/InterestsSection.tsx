@@ -8,11 +8,11 @@ interface InterestsSectionProps {
   onToggleTag: (tag: string) => void;
 }
 
-export function InterestsSection({
-  selectedTags,
-  availableTags,
-  editingSection,
-  onToggleTag
+export function InterestsSection({ 
+  selectedTags, 
+  availableTags, 
+  editingSection, 
+  onToggleTag 
 }: InterestsSectionProps) {
   return (
     <div className="p-4">
@@ -32,7 +32,7 @@ export function InterestsSection({
           </Badge>
         ))}
       </div>
-
+      
       {editingSection && (
         <>
           <h4 className="font-medium text-foreground mb-2">Ajouter des centres d'intérêt</h4>

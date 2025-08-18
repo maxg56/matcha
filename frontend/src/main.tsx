@@ -29,14 +29,14 @@ createRoot(document.getElementById('root')!).render(
             {/* Auth routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
-
+            
             {/* Legacy routes */}
             <Route path="/Accueil" element={<Accueil />} />
             <Route path="/ConversationPage" element={<ConversationPage />} />
-
+            
             {/* New inscription route */}
             <Route path="/inscription" element={<NewInscriptionPage />} />
-
+            
             {/* Main app routes */}
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/matches" element={<MatchesPage />} />
@@ -45,11 +45,11 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/edit-profile" element={<EditProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
-
+            
             {/* Demo routes */}
             <Route path="/demo" element={<ComponentsDemo />} />
             <Route path="/carousel-demo" element={<CarouselDemo />} />
-
+            
             {/* Default redirect to login for new users, discover for authenticated */}
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
@@ -58,3 +58,4 @@ createRoot(document.getElementById('root')!).render(
     </ThemeProvider>
   </StrictMode>,
 )
+

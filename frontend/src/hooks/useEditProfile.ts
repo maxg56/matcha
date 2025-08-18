@@ -9,24 +9,24 @@ interface UserProfile {
   birthDate: string;
   age: number;
   height: number;
-
+  
   // Physical attributes
   hairColor: string;
   skinColor: string;
   eyeColor: string;
-
+  
   // Lifestyle
   alcoholConsumption: string;
   smoking: string;
   cannabis: string;
   drugs: string;
   pets: string;
-
+  
   // Social & Activity
   socialActivityLevel: string;
   sportActivity: string;
   educationLevel: string;
-
+  
   // Personal info
   personalOpinion: string;
   bio: string;
@@ -39,14 +39,14 @@ interface UserProfile {
   childrenDetails: string;
   zodiacSign: string;
   politicalView: string;
-
+  
   // Profile settings
   gender: string;
   sexPref: string;
-
+  
   // Tags
   tags: string[];
-
+  
   // Profile
   avatar: string;
   photos: string[];

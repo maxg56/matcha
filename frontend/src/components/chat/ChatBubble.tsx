@@ -28,7 +28,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
         <p className="text-sm leading-relaxed whitespace-pre-wrap">
           {message.content}
         </p>
-
+        
         <div className={cn(
           "flex items-center justify-end gap-1 mt-1",
           message.isOwn ? "text-white/70" : "text-muted-foreground"
@@ -36,7 +36,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
           <span className="text-xs">
             {message.timestamp}
           </span>
-
+          
           {message.isOwn && message.status && (
             <div className="flex">
               <div className={cn(

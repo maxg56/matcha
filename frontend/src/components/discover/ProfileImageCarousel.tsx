@@ -9,11 +9,11 @@ interface ProfileImageCarouselProps {
   onImageChange: (index: number) => void;
 }
 
-export function ProfileImageCarousel({
-  images,
-  profileName,
-  currentIndex,
-  onImageChange
+export function ProfileImageCarousel({ 
+  images, 
+  profileName, 
+  currentIndex, 
+  onImageChange 
 }: ProfileImageCarouselProps) {
   const nextImage = () => {
     if (currentIndex < images.length - 1) {
@@ -35,7 +35,7 @@ export function ProfileImageCarousel({
         className="w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
+      
       {/* Navigation images */}
       {images.length > 1 && (
         <>
@@ -53,7 +53,7 @@ export function ProfileImageCarousel({
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-
+          
           {/* Indicateurs d'images */}
           <div className="absolute top-4 left-4 right-4 flex gap-1">
             {images.map((_, index) => (

@@ -31,10 +31,10 @@ export function BlurredLikeCard({ like, onClick, className }: BlurredLikeCardPro
         alt="Profil flouté"
         className="w-full h-full object-cover filter blur-md"
       />
-
+      
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
+      
       {/* Like indicator */}
       <div className="absolute top-3 left-3">
         <div className="flex items-center gap-1 bg-red-500/90 text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -42,14 +42,14 @@ export function BlurredLikeCard({ like, onClick, className }: BlurredLikeCardPro
           Like
         </div>
       </div>
-
+      
       {/* Lock icon center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="bg-black/50 backdrop-blur-sm rounded-full p-4 shadow-lg">
           <Lock className="h-8 w-8 text-white" />
         </div>
       </div>
-
+      
       {/* Bottom info */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
         <div className="flex items-center justify-between">

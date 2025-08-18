@@ -12,15 +12,15 @@ interface SliderProps {
   className?: string;
 }
 
-export function Slider({
-  value,
-  defaultValue = [50],
-  min = 0,
-  max = 100,
+export function Slider({ 
+  value, 
+  defaultValue = [50], 
+  min = 0, 
+  max = 100, 
   step = 1,
   onValueChange,
   disabled = false,
-  className
+  className 
 }: SliderProps) {
   const [sliderValue, setSliderValue] = useState(value || defaultValue);
 

@@ -28,11 +28,11 @@ interface ConversationsListProps {
   isMobile?: boolean;
 }
 
-export function ConversationsList({
-  matches,
-  onMatchClick,
-  onProfileClick,
-  isMobile = false
+export function ConversationsList({ 
+  matches, 
+  onMatchClick, 
+  onProfileClick, 
+  isMobile = false 
 }: ConversationsListProps) {
   if (isMobile) {
     return (
@@ -41,7 +41,7 @@ export function ConversationsList({
           <MessageCircle className="h-5 w-5 text-primary" />
           <h2 className="font-semibold text-foreground">Conversations</h2>
         </div>
-
+        
         <div className="space-y-3">
           {matches.map((match) => (
             <div
@@ -51,7 +51,7 @@ export function ConversationsList({
             >
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <button
+                  <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       onProfileClick?.(match);
@@ -76,13 +76,13 @@ export function ConversationsList({
                       {match.timestamp}
                     </span>
                   </div>
-
+                  
                   {match.lastMessage && (
                     <p className="text-sm text-muted-foreground truncate mb-2">
                       {match.lastMessage}
                     </p>
                   )}
-
+                  
                   <div className="flex gap-1">
                     {match.commonInterests.slice(0, 2).map((interest) => (
                       <Badge key={interest} variant="outline" className="text-xs glass">
@@ -108,7 +108,7 @@ export function ConversationsList({
             <h2 className="font-semibold text-foreground">Conversations</h2>
           </div>
         </div>
-
+        
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-3">
             {matches.map((match) => (
@@ -122,7 +122,7 @@ export function ConversationsList({
                     <AvatarImage src={match.image} alt={match.name} />
                     <AvatarFallback>{match.name[0]}</AvatarFallback>
                   </Avatar>
-
+                  
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-medium text-foreground truncate">
@@ -132,13 +132,13 @@ export function ConversationsList({
                         {match.timestamp}
                       </span>
                     </div>
-
+                    
                     {match.lastMessage && (
                       <p className="text-sm text-muted-foreground truncate">
                         {match.lastMessage}
                       </p>
                     )}
-
+                    
                     <div className="flex gap-1 mt-1">
                       {match.commonInterests.slice(0, 2).map((interest) => (
                         <Badge key={interest} variant="outline" className="text-xs">
@@ -147,7 +147,7 @@ export function ConversationsList({
                       ))}
                     </div>
                   </div>
-
+                  
                   {match.unread && (
                     <div className="w-3 h-3 bg-primary rounded-full shadow-lg" />
                   )}

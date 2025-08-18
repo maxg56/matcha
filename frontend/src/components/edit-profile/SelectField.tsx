@@ -10,9 +10,9 @@ interface SelectFieldProps {
   onChange: (field: string, value: string) => void;
 }
 
-export function SelectField({
-  field,
-  options,
+export function SelectField({ 
+  field, 
+  options, 
   label,
   currentValue,
   editable = true,
@@ -20,7 +20,7 @@ export function SelectField({
   onChange
 }: SelectFieldProps) {
   const currentOption = options.find(opt => opt.value === currentValue);
-
+  
   return (
     <div className="p-4 border-b border-border last:border-b-0">
       <div className="flex items-center justify-between mb-2">
@@ -32,7 +32,7 @@ export function SelectField({
           </div>
         )}
       </div>
-
+      
       {editable && editingSection && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {options.map(option => (
@@ -53,7 +53,7 @@ export function SelectField({
           ))}
         </div>
       )}
-
+      
       {(!editable || !editingSection) && currentOption && (
         <div className="flex items-center gap-2">
           <span className="text-lg">{currentOption.icon}</span>

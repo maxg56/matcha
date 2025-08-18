@@ -24,12 +24,12 @@ interface FullscreenProfileCardProps {
 export function FullscreenProfileCard({ profile, onLike, onPass, className }: FullscreenProfileCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
-
+  
   const handleLike = () => onLike?.(profile.id);
   const handlePass = () => onPass?.(profile.id);
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) =>
+    setCurrentImageIndex((prev) => 
       prev < profile.images.length - 1 ? prev + 1 : prev
     );
   };
@@ -65,8 +65,8 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
                 onClick={() => goToImage(index)}
                 className={cn(
                   "flex-1 h-1 rounded-full transition-all",
-                  index === currentImageIndex
-                    ? "bg-white"
+                  index === currentImageIndex 
+                    ? "bg-white" 
                     : "bg-white/40"
                 )}
               />
@@ -78,13 +78,13 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
         {profile.images.length > 1 && (
           <>
             {currentImageIndex > 0 && (
-              <div
+              <div 
                 className="absolute left-0 top-0 w-1/3 h-full cursor-pointer z-10"
                 onClick={prevImage}
               />
             )}
             {currentImageIndex < profile.images.length - 1 && (
-              <div
+              <div 
                 className="absolute right-0 top-0 w-1/3 h-full cursor-pointer z-10"
                 onClick={nextImage}
               />
@@ -106,7 +106,7 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
-
+            
             <button
               onClick={nextImage}
               disabled={currentImageIndex === profile.images.length - 1}
@@ -131,7 +131,7 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
           >
             <X className="h-6 w-6" />
           </Button>
-
+          
           <Button
             size="icon"
             variant="outline"
@@ -139,7 +139,7 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
           >
             <Star className="h-6 w-6" />
           </Button>
-
+          
           <Button
             size="icon"
             onClick={handleLike}
@@ -182,7 +182,7 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
                 </div>
               )}
             </div>
-
+            
             {/* Toggle details button */}
             <Button
               variant="ghost"
@@ -217,7 +217,7 @@ export function FullscreenProfileCard({ profile, onLike, onPass, className }: Fu
                   {profile.bio}
                 </p>
               )}
-
+              
               {/* Interests */}
               {profile.interests && profile.interests.length > 0 && (
                 <div className="flex flex-wrap gap-1">

@@ -11,9 +11,9 @@ export function PhotosSection({ photos }: PhotosSectionProps) {
       <div className="grid grid-cols-3 gap-3 mb-4">
         {photos.map((photo, index) => (
           <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-            <img
-              src={photo}
-              alt={`Photo ${index + 1}`}
+            <img 
+              src={photo} 
+              alt={`Photo ${index + 1}`} 
               className="w-full h-full object-cover"
             />
             {index === 0 && (
