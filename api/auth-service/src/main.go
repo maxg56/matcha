@@ -32,6 +32,7 @@ func main() {
 	{
 		auth := api.Group("/auth")
 		{
+			auth.POST("/check-availability", handlers.CheckAvailabilityHandler)
 			auth.POST("/register", handlers.RegisterHandler)
 			auth.POST("/login", handlers.LoginHandler)
 			auth.POST("/logout", handlers.LogoutHandler)
