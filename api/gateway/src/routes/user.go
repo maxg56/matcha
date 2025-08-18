@@ -8,20 +8,20 @@ import (
 
 // SetupUserRoutes configures user service routes
 func SetupUserRoutes(r *gin.Engine) {
-	user := r.Group("/api/users")
-	user.Use(middleware.JWTMiddleware()) // All user routes require authentication
+	user := r.Group("/api/v1/users")
 
-	// Profile management
+	// Public routes
 	user.GET("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
-	user.PUT("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
-	user.DELETE("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
-
-	// User search and discovery
-	user.GET("/search", proxy.ProxyRequest("user", "/api/v1/users/search"))
-
-	// Photo management
-	user.POST("/upload-photo", proxy.ProxyRequest("user", "/api/v1/users/upload-photo"))
-
 	// Health check endpoint
 	user.GET("/", proxy.ProxyRequest("user", "/health"))
+	user.GET("/health", proxy.ProxyRequest("user", "/health"))
+	// Protected routes (authentication required)
+	protected := user.Group("")
+	protected.Use(middleware.JWTMiddleware())
+	{
+		protected.POST("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
+		protected.PUT("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
+		protected.DELETE("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
+	}
+
 }
