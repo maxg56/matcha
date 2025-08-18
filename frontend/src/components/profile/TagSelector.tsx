@@ -23,12 +23,12 @@ export function TagSelector({
           {selectedTags.length}/{maxTags}
         </span>
       </div>
-      
+
       <div className="flex flex-wrap gap-2">
         {availableTags.map((tag) => {
           const isSelected = selectedTags.includes(tag);
           const canSelect = !isSelected && selectedTags.length < maxTags;
-          
+
           return (
             <Badge
               key={tag}
@@ -51,7 +51,7 @@ export function TagSelector({
           );
         })}
       </div>
-      
+
       {selectedTags.length === maxTags && (
         <p className="text-sm text-amber-600 dark:text-amber-400">
           Vous avez atteint le nombre maximum de tags ({maxTags})

@@ -54,7 +54,7 @@ export function MatchCard({ match, onClick, className }: MatchCardProps) {
             </span>
           )}
         </div>
-        
+
         {match.lastMessage && (
           <p className={cn(
             "text-sm text-muted-foreground truncate",

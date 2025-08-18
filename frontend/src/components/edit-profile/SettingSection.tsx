@@ -13,10 +13,10 @@ interface SettingSectionProps {
   onCancelEditing: () => void;
 }
 
-export function SettingSection({ 
-  title, 
-  icon, 
-  children, 
+export function SettingSection({
+  title,
+  icon,
+  children,
   sectionKey,
   editable = true,
   editingSection,

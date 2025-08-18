@@ -28,8 +28,8 @@ export function Switch({ checked = false, onCheckedChange, disabled = false, cla
       className={cn(
         "inline-flex h-6 w-11 items-center rounded-full transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-        isChecked 
-          ? "bg-primary" 
+        isChecked
+          ? "bg-primary"
           : "bg-muted",
         disabled && "opacity-50 cursor-not-allowed",
         className

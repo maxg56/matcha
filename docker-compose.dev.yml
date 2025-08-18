@@ -38,7 +38,7 @@ services:
       - DB
       - backend
     restart: unless-stopped
-    
+
   redis:
     image: redis:7-alpine
     networks:

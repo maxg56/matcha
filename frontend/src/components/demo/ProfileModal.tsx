@@ -28,7 +28,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
   if (!isOpen) return null;
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev < profile.images.length - 1 ? prev + 1 : prev
     );
   };
@@ -86,7 +86,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
               >
                 <ChevronLeft className="h-6 w-6" />
               </button>
-              
+
               <button
                 onClick={nextImage}
                 disabled={currentImageIndex === profile.images.length - 1}
@@ -110,8 +110,8 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
                   onClick={() => goToImage(index)}
                   className={cn(
                     "flex-1 h-1 rounded-full transition-all",
-                    index === currentImageIndex 
-                      ? "bg-white" 
+                    index === currentImageIndex
+                      ? "bg-white"
                       : "bg-white/40"
                   )}
                 />
@@ -129,7 +129,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
             <h2 className="text-2xl font-bold text-foreground mb-1">
               {profile.name}, {profile.age}
             </h2>
-            
+
             {profile.location && (
               <div className="flex items-center gap-1 text-muted-foreground mb-2">
                 <MapPin className="h-4 w-4" />
@@ -139,7 +139,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
                 </span>
               </div>
             )}
-            
+
             {profile.occupation && (
               <div className="flex items-center gap-1 text-muted-foreground mb-3">
                 <Briefcase className="h-4 w-4" />
@@ -156,7 +156,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
               </p>
             </div>
           )}
-          
+
           {profile.interests && profile.interests.length > 0 && (
             <div>
               <h3 className="font-semibold text-foreground mb-2">Centres d'intérêt</h3>
@@ -184,7 +184,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
             >
               <X className="h-6 w-6" />
             </Button>
-            
+
             <Button
               size="icon"
               variant="outline"
@@ -192,7 +192,7 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
             >
               <Star className="h-6 w-6" />
             </Button>
-            
+
             <Button
               size="icon"
               onClick={handleLike}

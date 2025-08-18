@@ -17,20 +17,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme) {
       return savedTheme;
     }
-    
+
     // Utiliser la préférence système
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
+
     // Supprimer l'ancienne classe
     root.classList.remove('light', 'dark');
-    
+
     // Ajouter la nouvelle classe
     root.classList.add(theme);
-    
+
     // Sauvegarder dans localStorage
     localStorage.setItem('matcha-theme', theme);
   }, [theme]);

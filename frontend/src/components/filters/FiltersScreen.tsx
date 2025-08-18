@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { 
-  X, 
-  Calendar, 
-  MapPin, 
-  Ruler, 
+import {
+  X,
+  Calendar,
+  MapPin,
+  Ruler,
   Heart,
   GraduationCap,
   Briefcase,
@@ -36,34 +36,34 @@ interface FilterState {
   distance: number;
   heightRange: [number, number];
   showMe: 'woman' | 'man' | 'both';
-  
+
   // Physical attributes
   hairColors: string[];
   eyeColors: string[];
   skinColors: string[];
-  
+
   // Lifestyle
   alcoholConsumption: string[];
   smoking: string[];
   cannabis: string[];
   drugs: string[];
   pets: string[];
-  
+
   // Social & Activity
   socialActivityLevel: string[];
   sportActivity: string[];
   educationLevel: string[];
-  
+
   // Personal
   religion: string[];
   relationshipType: string[];
   childrenStatus: string[];
   politicalView: string[];
-  
+
   // Location
   birthCity: string;
   currentCity: string;
-  
+
   // Tags
   tags: string[];
 }
@@ -176,7 +176,7 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
   };
 
   const toggleArrayFilter = <K extends keyof FilterState>(
-    key: K, 
+    key: K,
     value: string
   ) => {
     const currentArray = filters[key] as string[];
@@ -195,15 +195,15 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
     onClose();
   };
 
-  const FilterSection = ({ 
-    title, 
-    icon, 
-    children, 
-    sectionKey 
-  }: { 
-    title: string; 
-    icon: React.ReactNode; 
-    children: React.ReactNode; 
+  const FilterSection = ({
+    title,
+    icon,
+    children,
+    sectionKey
+  }: {
+    title: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
     sectionKey: string;
   }) => (
     <div className="mb-6">
@@ -224,7 +224,7 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
           </svg>
         </div>
       </button>
-      
+
       {activeSection === sectionKey && (
         <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg">
           {children}
@@ -233,13 +233,13 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
     </div>
   );
 
-  const MultiSelectFilter = ({ 
-    options, 
-    selectedValues, 
-    onToggle 
-  }: { 
-    options: Array<{value: string, label: string, icon: string}>; 
-    selectedValues: string[]; 
+  const MultiSelectFilter = ({
+    options,
+    selectedValues,
+    onToggle
+  }: {
+    options: Array<{value: string, label: string, icon: string}>;
+    selectedValues: string[];
     onToggle: (value: string) => void;
   }) => (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">

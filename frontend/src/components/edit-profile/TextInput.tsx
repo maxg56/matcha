@@ -8,9 +8,9 @@ interface TextInputProps {
   onChange: (field: string, value: string) => void;
 }
 
-export function TextInput({ 
-  field, 
-  label, 
+export function TextInput({
+  field,
+  label,
   placeholder,
   type = "text",
   currentValue,

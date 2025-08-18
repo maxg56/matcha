@@ -55,7 +55,7 @@ export default function CarouselDemo() {
   };
 
   const nextProfile = () => {
-    setCurrentProfileIndex((prev) => 
+    setCurrentProfileIndex((prev) =>
       prev < demoProfiles.length - 1 ? prev + 1 : 0
     );
   };
@@ -89,9 +89,9 @@ export default function CarouselDemo() {
                   <li>• <strong>Image plein écran</strong> : Photo prend tout l'espace sans bordures</li>
                   <li>• <strong>Boutons en bas</strong> : Actions sous l'image pour plus de clarté</li>
                 </ul>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowInstructions(false)}
                   className="mt-2 text-blue-600 hover:text-blue-700 p-0 h-auto"
                 >
@@ -112,12 +112,12 @@ export default function CarouselDemo() {
               {currentProfile.images.length} photo{currentProfile.images.length > 1 ? 's' : ''} disponible{currentProfile.images.length > 1 ? 's' : ''}
             </p>
           </div>
-          
+
           <div className="flex gap-2">
             {!showInstructions && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowInstructions(true)}
                 className="gap-2"
               >
@@ -125,9 +125,9 @@ export default function CarouselDemo() {
                 Aide
               </Button>
             )}
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={resetDemo}
               className="gap-2"
             >

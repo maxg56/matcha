@@ -22,13 +22,13 @@ J'ai commencé la refactorisation des pages de l'application Matcha en séparant
   - Formulaire de connexion avec validation
   - Gestion des icônes dynamiques (email/utilisateur)
   - Messages d'erreur intégrés
-  
+
 - **`LoginHeader`** : `/src/components/login/LoginHeader.tsx`
   - En-tête avec logo et titre de l'application
-  
+
 - **`LoginFooter`** : `/src/components/login/LoginFooter.tsx`
   - Liens vers conditions d'utilisation et politique de confidentialité
-  
+
 - **`SignupSection`** : `/src/components/login/SignupSection.tsx`
   - Section d'inscription avec séparateur et bouton
 
@@ -88,7 +88,7 @@ src/
 ├── hooks/
 │   ├── index.ts              # Export centralisé
 │   ├── useLogin.ts           ✅ Nouveau
-│   ├── useEditProfile.ts     ✅ Nouveau  
+│   ├── useEditProfile.ts     ✅ Nouveau
 │   ├── useForm.ts            ✅ Nouveau
 │   ├── useChat.ts            ✅ Nouveau
 │   ├── useDiscoverProfiles.ts (existant)
@@ -145,10 +145,10 @@ src/
 export function useFeatureName() {
   // État local
   const [state, setState] = useState();
-  
+
   // Logique métier
   const handleAction = () => { /* ... */ };
-  
+
   // API publique
   return {
     state,

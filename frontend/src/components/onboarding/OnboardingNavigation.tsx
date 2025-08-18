@@ -9,12 +9,12 @@ interface OnboardingNavigationProps {
   onComplete: () => void;
 }
 
-export function OnboardingNavigation({ 
-  currentStep, 
-  totalSteps, 
-  onPrevStep, 
-  onNextStep, 
-  onComplete 
+export function OnboardingNavigation({
+  currentStep,
+  totalSteps,
+  onPrevStep,
+  onNextStep,
+  onComplete
 }: OnboardingNavigationProps) {
   return (
     <div className="flex justify-between pt-6">
@@ -27,7 +27,7 @@ export function OnboardingNavigation({
         <ArrowLeft className="h-4 w-4" />
         Précédent
       </Button>
-      
+
       {currentStep < totalSteps ? (
         <Button onClick={onNextStep} className="gap-2">
           Suivant

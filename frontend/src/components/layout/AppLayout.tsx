@@ -12,11 +12,11 @@ export function AppLayout({ children, showNavigation = true, title }: AppLayoutP
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {title && <TopBar title={title} />}
-      
+
       <main className="flex-1 overflow-hidden">
         {children}
       </main>
-      
+
       {showNavigation && <BottomNavigation />}
     </div>
   );

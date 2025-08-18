@@ -17,7 +17,7 @@ export class ErrorHandler {
     if (error.response?.status === 400) {
       return this.createError('VALIDATION_ERROR', 'Données invalides', error.response.data);
     }
-    
+
     if (error.response?.status === 409) {
       return this.createError('USER_EXISTS', 'Un utilisateur avec cet email existe déjà');
     }

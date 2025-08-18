@@ -6,30 +6,30 @@ export interface RegistrationData {
   email: string;
   password: string;
   confirmPassword: string;
-  
+
   // Étape 2: Infos de base
   birthDate: string;
   gender: string;
   sexPref: string;
   height: number;
-  
+
   // Étape 3: Apparence
   hairColor: string;
   eyeColor: string;
   skinColor: string;
-  
+
   // Étape 4: Style de vie
   alcoholConsumption: string;
   smoking: string;
   cannabis: string;
   drugs: string;
   pets: string;
-  
+
   // Étape 5: Activité & Éducation
   socialActivityLevel: string;
   sportActivity: string;
   educationLevel: string;
-  
+
   // Étape 6: Infos personnelles
   bio: string;
   birthCity: string;
@@ -39,7 +39,7 @@ export interface RegistrationData {
   relationshipType: string;
   childrenStatus: string;
   politicalView: string;
-  
+
   // Étape 7: Centres d'intérêt
   tags: string[];
 }

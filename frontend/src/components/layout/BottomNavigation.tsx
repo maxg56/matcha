@@ -27,7 +27,7 @@ const navItems = [
 
 export function BottomNavigation() {
   const location = useLocation();
-  
+
   // Don't show navigation on auth pages
   const authPages = ['/login', '/onboarding', '/Accueil', '/InscriptionPage'];
   if (authPages.includes(location.pathname)) {
@@ -40,7 +40,7 @@ export function BottomNavigation() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
-          
+
           return (
             <Link
               key={item.href}
@@ -48,8 +48,8 @@ export function BottomNavigation() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-200",
                 "hover:bg-accent/50 active:scale-95",
-                isActive 
-                  ? "text-primary bg-primary/10" 
+                isActive
+                  ? "text-primary bg-primary/10"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >

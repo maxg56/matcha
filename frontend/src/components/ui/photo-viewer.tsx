@@ -126,7 +126,7 @@ export function ProfilePhotoViewer({
       "fixed inset-0 z-50 liquid-bg backdrop-blur-sm flex items-center justify-center",
       className
     )}>
-      <div 
+      <div
         ref={containerRef}
         className="relative w-full h-full max-w-4xl mx-auto flex flex-col"
         onTouchStart={handleTouchStart}
@@ -147,7 +147,7 @@ export function ProfilePhotoViewer({
               </>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             {/* Photo counter */}
             {photos.length > 1 && (
@@ -157,7 +157,7 @@ export function ProfilePhotoViewer({
                 </span>
               </div>
             )}
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -180,7 +180,7 @@ export function ProfilePhotoViewer({
             >
               <ChevronLeft className="h-8 w-8" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -237,7 +237,7 @@ export function ProfilePhotoViewer({
                   {profile.bio}
                 </p>
               )}
-              
+
               {profile.interests && profile.interests.length > 0 && (
                 <div className="flex flex-wrap gap-2 justify-center">
                   {profile.interests.slice(0, 4).map((interest) => (

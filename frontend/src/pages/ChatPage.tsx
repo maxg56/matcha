@@ -63,14 +63,14 @@ export default function ChatPage() {
     const newMessage = {
       id: Date.now().toString(),
       content,
-      timestamp: new Date().toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      timestamp: new Date().toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
       }),
       isOwn: true,
       status: 'sent' as const,
     };
-    
+
     setMessages(prev => [...prev, newMessage]);
   };
 
@@ -83,7 +83,7 @@ export default function ChatPage() {
       {/* Custom header */}
       <header className="sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-xl">
         <div className="flex items-center justify-between h-16 px-4">
-          <TopBar 
+          <TopBar
             title=""
             showBack={true}
             onBack={handleBack}
@@ -101,7 +101,7 @@ export default function ChatPage() {
               </div>
             }
           />
-          
+
           {/* Match info */}
           <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
             <div className="relative">

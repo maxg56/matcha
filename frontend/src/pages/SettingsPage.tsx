@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
-import { 
-  Bell, 
-  Shield, 
-  Eye, 
+import {
+  Bell,
+  Shield,
+  Eye,
   Trash2,
   LogOut,
   Globe,
@@ -23,7 +23,7 @@ const mockUser = {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  
+
   const [notifications, setNotifications] = useState({
     matches: true,
     messages: true,
@@ -63,7 +63,7 @@ export default function SettingsPage() {
             title="Notifications push"
             description="Recevoir des notifications sur votre appareil"
           >
-            <Switch 
+            <Switch
               checked={notifications.push}
               onCheckedChange={(checked) => setNotifications({...notifications, push: checked})}
             />
@@ -74,7 +74,7 @@ export default function SettingsPage() {
             title="Nouveaux likes"
             description="Être notifié quand quelqu'un vous like"
           >
-            <Switch 
+            <Switch
               checked={notifications.likes}
               onCheckedChange={(checked) => setNotifications({...notifications, likes: checked})}
             />
@@ -85,7 +85,7 @@ export default function SettingsPage() {
             title="Super Likes"
             description="Être notifié des Super Likes reçus"
           >
-            <Switch 
+            <Switch
               checked={notifications.superLikes}
               onCheckedChange={(checked) => setNotifications({...notifications, superLikes: checked})}
             />
@@ -96,7 +96,7 @@ export default function SettingsPage() {
             title="Messages"
             description="Nouvelles conversations et messages"
           >
-            <Switch 
+            <Switch
               checked={notifications.messages}
               onCheckedChange={(checked) => setNotifications({...notifications, messages: checked})}
             />
@@ -107,7 +107,7 @@ export default function SettingsPage() {
             title="Sons"
             description="Sons de notification"
           >
-            <Switch 
+            <Switch
               checked={notifications.sound}
               onCheckedChange={(checked) => setNotifications({...notifications, sound: checked})}
             />
@@ -118,7 +118,7 @@ export default function SettingsPage() {
             title="Vibrations"
             description="Vibrations pour les notifications"
           >
-            <Switch 
+            <Switch
               checked={notifications.vibration}
               onCheckedChange={(checked) => setNotifications({...notifications, vibration: checked})}
             />
@@ -129,7 +129,7 @@ export default function SettingsPage() {
             title="Notifications email"
             description="Recevoir des emails de notification"
           >
-            <Switch 
+            <Switch
               checked={notifications.email}
               onCheckedChange={(checked) => setNotifications({...notifications, email: checked})}
             />
@@ -143,7 +143,7 @@ export default function SettingsPage() {
             title="Statut en ligne"
             description="Montrer quand vous êtes en ligne"
           >
-            <Switch 
+            <Switch
               checked={privacy.onlineStatus}
               onCheckedChange={(checked) => setPrivacy({...privacy, onlineStatus: checked})}
             />
@@ -154,7 +154,7 @@ export default function SettingsPage() {
             title="Afficher mon âge"
             description="Visible sur votre profil"
           >
-            <Switch 
+            <Switch
               checked={privacy.showAge}
               onCheckedChange={(checked) => setPrivacy({...privacy, showAge: checked})}
             />
@@ -165,7 +165,7 @@ export default function SettingsPage() {
             title="Afficher la distance"
             description="Montrer votre distance approximative"
           >
-            <Switch 
+            <Switch
               checked={privacy.showDistance}
               onCheckedChange={(checked) => setPrivacy({...privacy, showDistance: checked})}
             />
@@ -176,7 +176,7 @@ export default function SettingsPage() {
             title="Accusés de lecture"
             description="Montrer quand vous avez lu les messages"
           >
-            <Switch 
+            <Switch
               checked={privacy.readReceipts}
               onCheckedChange={(checked) => setPrivacy({...privacy, readReceipts: checked})}
             />
@@ -204,7 +204,7 @@ export default function SettingsPage() {
             title="Mode sombre"
             description="Interface sombre pour vos yeux"
           >
-            <Switch 
+            <Switch
               checked={theme === 'dark'}
               onCheckedChange={toggleTheme}
             />
@@ -222,7 +222,7 @@ export default function SettingsPage() {
             title="Lecture automatique"
             description="Lire automatiquement les vidéos"
           >
-            <Switch 
+            <Switch
               checked={preferences.autoPlay}
               onCheckedChange={(checked) => setPreferences({...preferences, autoPlay: checked})}
             />

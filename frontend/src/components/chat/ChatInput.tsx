@@ -11,11 +11,11 @@ interface ChatInputProps {
   className?: string;
 }
 
-export function ChatInput({ 
-  onSendMessage, 
-  placeholder = "Tapez votre message...", 
-  disabled = false, 
-  className 
+export function ChatInput({
+  onSendMessage,
+  placeholder = "Tapez votre message...",
+  disabled = false,
+  className
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
 
@@ -67,7 +67,7 @@ export function ChatInput({
               maxHeight: '120px',
             }}
           />
-          
+
           <Button
             onClick={handleSend}
             disabled={!message.trim() || disabled}
@@ -75,8 +75,8 @@ export function ChatInput({
             className={cn(
               "absolute right-2 bottom-2 h-8 w-8 rounded-full",
               "transition-all duration-200 shadow-lg",
-              message.trim() 
-                ? "glass-purple hover:scale-110 scale-100" 
+              message.trim()
+                ? "glass-purple hover:scale-110 scale-100"
                 : "glass-light scale-75"
             )}
           >

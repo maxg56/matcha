@@ -88,7 +88,7 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
 
           {/* Image Section */}
           <div className="relative flex-1">
-            <div 
+            <div
               className="w-full h-full bg-muted cursor-pointer relative overflow-hidden"
               onClick={nextImage}
             >
@@ -97,7 +97,7 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
                 alt={currentProfile.name}
                 className="w-full h-full object-cover"
               />
-              
+
               {/* Image indicators */}
               {currentProfile.images && currentProfile.images.length > 1 && (
                 <div className="absolute top-3 left-3 right-3 flex gap-1">
@@ -115,7 +115,7 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
 
               {/* Previous image area */}
               {currentImageIndex > 0 && (
-                <div 
+                <div
                   className="absolute left-0 top-0 w-1/3 h-full cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -131,7 +131,7 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
                 <h2 className="text-2xl font-bold mb-1">
                   {currentProfile.name}, {currentProfile.age}
                 </h2>
-                
+
                 <div className="flex items-center gap-4 text-sm mb-3">
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
@@ -145,9 +145,9 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
 
                 <div className="flex flex-wrap gap-1 mb-4">
                   {currentProfile.interests.slice(0, 3).map((interest) => (
-                    <Badge 
-                      key={interest} 
-                      variant="secondary" 
+                    <Badge
+                      key={interest}
+                      variant="secondary"
                       className="bg-white/20 text-white border-white/30 text-xs"
                     >
                       {interest}
@@ -163,7 +163,7 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               {currentProfile.bio}
             </p>
-            
+
             {/* Additional info visible on mobile */}
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -172,9 +172,9 @@ export function LikeProfileModal({ profiles, isOpen, onClose, onLike, onPass }: 
               </div>
               <div className="flex flex-wrap gap-1">
                 {currentProfile.interests.map((interest) => (
-                  <Badge 
-                    key={interest} 
-                    variant="outline" 
+                  <Badge
+                    key={interest}
+                    variant="outline"
                     className="text-xs"
                   >
                     {interest}

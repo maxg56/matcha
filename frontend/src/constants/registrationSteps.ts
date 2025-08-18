@@ -1,11 +1,11 @@
-import { 
-  User, 
-  Calendar, 
-  Palette, 
-  Wine, 
-  Activity, 
-  Heart, 
-  Star 
+import {
+  User,
+  Calendar,
+  Palette,
+  Wine,
+  Activity,
+  Heart,
+  Star
 } from 'lucide-react';
 
 interface RegistrationStep {

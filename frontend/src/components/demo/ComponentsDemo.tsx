@@ -43,9 +43,9 @@ export default function ComponentsDemo() {
     const newMessage = {
       id: Date.now().toString(),
       content,
-      timestamp: new Date().toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      timestamp: new Date().toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
       }),
       isOwn: true,
       status: 'sent' as const,
@@ -114,7 +114,7 @@ export default function ComponentsDemo() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Carte de Profil</h2>
           <div className="max-w-sm mx-auto">
-            <ProfileCard 
+            <ProfileCard
               profile={demoProfile}
               onLike={() => console.log('Liked!')}
               onPass={() => console.log('Passed!')}
@@ -125,7 +125,7 @@ export default function ComponentsDemo() {
         {/* Match Card */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Carte de Match</h2>
-          <MatchCard 
+          <MatchCard
             match={demoMatch}
             onClick={() => console.log('Chat opened!')}
           />

@@ -23,7 +23,7 @@ export function useLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.login || !formData.password) {
       setError('Veuillez remplir tous les champs');
       return;
@@ -35,10 +35,10 @@ export function useLogin() {
     try {
       // TODO: API call for login
       console.log('Login attempt:', formData);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // For demo, navigate to discover
       navigate('/discover');
     } catch (err) {

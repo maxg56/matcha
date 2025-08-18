@@ -36,7 +36,7 @@ export function ProfileInfo({
           <span>{occupation}</span>
         </div>
       </div>
-      
+
       {/* Flèche pour voir plus */}
       <Button
         variant="outline"

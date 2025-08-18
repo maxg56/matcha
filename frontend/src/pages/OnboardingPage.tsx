@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
+import {
   OnboardingHeader,
   AccountStep,
   ProfileStep,
@@ -24,16 +24,16 @@ interface FormData {
   email: string;
   password: string;
   confirmPassword: string;
-  
+
   // Step 2
   dateOfBirth: string;
   location: string;
   occupation: string;
   bio: string;
-  
+
   // Step 3
   photos: string[];
-  
+
   // Step 4
   interests: string[];
   ageRange: [number, number];
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
                 {currentStep === 4 && 'Vos préférences'}
               </CardTitle>
             </CardHeader>
-            
+
             <CardContent className="space-y-6">
               {currentStep === 1 && (
                 <AccountStep formData={formData} updateFormData={updateFormData} />
@@ -117,9 +117,9 @@ export default function OnboardingPage() {
                 <PhotosStep formData={formData} updateFormData={updateFormData} />
               )}
               {currentStep === 4 && (
-                <PreferencesStep 
-                  formData={formData} 
-                  updateFormData={updateFormData} 
+                <PreferencesStep
+                  formData={formData}
+                  updateFormData={updateFormData}
                   toggleInterest={toggleInterest}
                 />
               )}

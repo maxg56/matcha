@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
   User,
   AlertCircle
 } from 'lucide-react';

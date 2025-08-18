@@ -39,7 +39,7 @@ export function NewMatchesSection({ matches, onMatchClick, isMobile = false }: N
         </div>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {matches.map((match) => (
-            <div 
+            <div
               key={match.id}
               className="flex-shrink-0 w-20 text-center cursor-pointer"
               onClick={() => onMatchClick(match.id)}
@@ -70,7 +70,7 @@ export function NewMatchesSection({ matches, onMatchClick, isMobile = false }: N
             {matches.length} nouvelle{matches.length > 1 ? 's' : ''} connexion{matches.length > 1 ? 's' : ''}
           </p>
         </div>
-        
+
         <div className="p-4 space-y-4">
           {matches.map((match) => (
             <div

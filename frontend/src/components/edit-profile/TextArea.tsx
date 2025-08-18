@@ -8,9 +8,9 @@ interface TextAreaProps {
   onChange: (field: string, value: string) => void;
 }
 
-export function TextArea({ 
-  field, 
-  label, 
+export function TextArea({
+  field,
+  label,
   placeholder,
   maxLength,
   currentValue,

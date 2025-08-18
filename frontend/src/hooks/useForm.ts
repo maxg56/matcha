@@ -45,7 +45,7 @@ export function useForm<T extends Record<string, any>>(
 
   const setValue = (name: keyof T, value: any) => {
     setValues(prev => ({ ...prev, [name]: value }));
-    
+
     // Validate on change if field was already touched
     if (touched[name]) {
       const error = validateField(name, value);
@@ -55,7 +55,7 @@ export function useForm<T extends Record<string, any>>(
 
   const setFieldTouched = (name: keyof T) => {
     setTouched(prev => ({ ...prev, [name]: true }));
-    
+
     // Validate on blur
     const error = validateField(name, values[name]);
     setErrors(prev => ({ ...prev, [name]: error }));
@@ -92,7 +92,7 @@ export function useForm<T extends Record<string, any>>(
 
   const getFieldProps = (name: keyof T) => ({
     value: values[name] || '',
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setValue(name, e.target.value),
     onBlur: () => setFieldTouched(name),
     error: touched[name] ? errors[name] : undefined,

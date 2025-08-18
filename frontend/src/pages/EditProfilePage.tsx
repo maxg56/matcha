@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
-import { 
-  User, 
+import {
+  User,
   Camera,
   Palette,
   Wine,
@@ -12,7 +12,7 @@ import {
   MapPin,
   Star
 } from 'lucide-react';
-import { 
+import {
   SettingSection,
   SelectField,
   TextArea,
@@ -31,24 +31,24 @@ interface UserProfile {
   birthDate: string;
   age: number;
   height: number;
-  
+
   // Physical attributes
   hairColor: string;
   skinColor: string;
   eyeColor: string;
-  
+
   // Lifestyle
   alcoholConsumption: string;
   smoking: string;
   cannabis: string;
   drugs: string;
   pets: string;
-  
+
   // Social & Activity
   socialActivityLevel: string;
   sportActivity: string;
   educationLevel: string;
-  
+
   // Personal info
   personalOpinion: string;
   bio: string;
@@ -61,14 +61,14 @@ interface UserProfile {
   childrenDetails: string;
   zodiacSign: string;
   politicalView: string;
-  
+
   // Profile settings
   gender: string;
   sexPref: string;
-  
+
   // Tags
   tags: string[];
-  
+
   // Profile
   avatar: string;
   photos: string[];
@@ -297,9 +297,9 @@ export default function EditProfilePage() {
         )}
 
         {/* Photos */}
-        <SettingSection 
-          title="Photos" 
-          icon={<Camera className="h-5 w-5" />} 
+        <SettingSection
+          title="Photos"
+          icon={<Camera className="h-5 w-5" />}
           sectionKey="photos"
           editingSection={editingSection}
           onStartEditing={startEditing}
@@ -310,36 +310,36 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Basic Information */}
-        <SettingSection 
-          title="Informations de Base" 
-          icon={<User className="h-5 w-5" />} 
-          sectionKey="basic" 
+        <SettingSection
+          title="Informations de Base"
+          icon={<User className="h-5 w-5" />}
+          sectionKey="basic"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <TextInput 
-            field="firstName" 
-            label="Prénom" 
-            placeholder="Votre prénom" 
+          <TextInput
+            field="firstName"
+            label="Prénom"
+            placeholder="Votre prénom"
             currentValue={getCurrentValue('firstName') as string}
             editingSection={editingSection === 'basic'}
             onChange={updateField}
           />
-          <TextInput 
-            field="lastName" 
-            label="Nom" 
-            placeholder="Votre nom" 
+          <TextInput
+            field="lastName"
+            label="Nom"
+            placeholder="Votre nom"
             currentValue={getCurrentValue('lastName') as string}
             editingSection={editingSection === 'basic'}
             onChange={updateField}
           />
-          <TextInput 
-            field="username" 
-            label="Nom d'utilisateur" 
-            placeholder="@username" 
+          <TextInput
+            field="username"
+            label="Nom d'utilisateur"
+            placeholder="@username"
             currentValue={getCurrentValue('username') as string}
             editingSection={editingSection === 'basic'}
             onChange={updateField}
@@ -349,30 +349,30 @@ export default function EditProfilePage() {
             <p className="text-foreground">{new Date(user.birthDate).toLocaleDateString('fr-FR')} ({user.age} ans)</p>
             <p className="text-xs text-muted-foreground mt-1">L'âge ne peut pas être modifié</p>
           </div>
-          <SelectField 
-            field="gender" 
-            options={fieldOptions.gender} 
-            label="Genre" 
+          <SelectField
+            field="gender"
+            options={fieldOptions.gender}
+            label="Genre"
             currentValue={getCurrentValue('gender') as string}
             editable={true}
             editingSection={editingSection === 'basic'}
             onChange={updateField}
           />
-          <SelectField 
-            field="sexPref" 
-            options={fieldOptions.sexPref} 
-            label="Intéressé par" 
+          <SelectField
+            field="sexPref"
+            options={fieldOptions.sexPref}
+            label="Intéressé par"
             currentValue={getCurrentValue('sexPref') as string}
             editable={true}
             editingSection={editingSection === 'basic'}
             onChange={updateField}
           />
-          <SliderField 
-            field="height" 
-            label="Taille" 
-            min={140} 
-            max={220} 
-            unit="cm" 
+          <SliderField
+            field="height"
+            label="Taille"
+            min={140}
+            max={220}
+            unit="cm"
             currentValue={getCurrentValue('height') as number}
             editingSection={editingSection === 'basic'}
             onChange={updateField}
@@ -380,28 +380,28 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Bio */}
-        <SettingSection 
-          title="À propos de moi" 
-          icon={<Heart className="h-5 w-5" />} 
-          sectionKey="bio" 
+        <SettingSection
+          title="À propos de moi"
+          icon={<Heart className="h-5 w-5" />}
+          sectionKey="bio"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <TextArea 
-            field="bio" 
-            label="Bio" 
-            placeholder="Parlez-nous de vous..." 
+          <TextArea
+            field="bio"
+            label="Bio"
+            placeholder="Parlez-nous de vous..."
             maxLength={400}
             currentValue={getCurrentValue('bio') as string}
             editingSection={editingSection === 'bio'}
             onChange={updateField}
           />
-          <TextArea 
-            field="personalOpinion" 
-            label="Ma vision de la vie" 
+          <TextArea
+            field="personalOpinion"
+            label="Ma vision de la vie"
             placeholder="Votre philosophie, vos valeurs..."
             currentValue={getCurrentValue('personalOpinion') as string}
             editingSection={editingSection === 'bio'}
@@ -410,37 +410,37 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Physical Appearance */}
-        <SettingSection 
-          title="Apparence Physique" 
-          icon={<Palette className="h-5 w-5" />} 
-          sectionKey="appearance" 
+        <SettingSection
+          title="Apparence Physique"
+          icon={<Palette className="h-5 w-5" />}
+          sectionKey="appearance"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <SelectField 
-            field="hairColor" 
-            options={fieldOptions.hairColor} 
+          <SelectField
+            field="hairColor"
+            options={fieldOptions.hairColor}
             label="Couleur des cheveux"
             currentValue={getCurrentValue('hairColor') as string}
             editable={true}
             editingSection={editingSection === 'appearance'}
             onChange={updateField}
           />
-          <SelectField 
-            field="eyeColor" 
-            options={fieldOptions.eyeColor} 
+          <SelectField
+            field="eyeColor"
+            options={fieldOptions.eyeColor}
             label="Couleur des yeux"
             currentValue={getCurrentValue('eyeColor') as string}
             editable={true}
             editingSection={editingSection === 'appearance'}
             onChange={updateField}
           />
-          <SelectField 
-            field="skinColor" 
-            options={fieldOptions.skinColor} 
+          <SelectField
+            field="skinColor"
+            options={fieldOptions.skinColor}
             label="Couleur de peau"
             currentValue={getCurrentValue('skinColor') as string}
             editable={true}
@@ -450,55 +450,55 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Lifestyle */}
-        <SettingSection 
-          title="Style de Vie" 
-          icon={<Wine className="h-5 w-5" />} 
-          sectionKey="lifestyle" 
+        <SettingSection
+          title="Style de Vie"
+          icon={<Wine className="h-5 w-5" />}
+          sectionKey="lifestyle"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <SelectField 
-            field="alcoholConsumption" 
-            options={fieldOptions.alcoholConsumption} 
+          <SelectField
+            field="alcoholConsumption"
+            options={fieldOptions.alcoholConsumption}
             label="Consommation d'alcool"
             currentValue={getCurrentValue('alcoholConsumption') as string}
             editable={true}
             editingSection={editingSection === 'lifestyle'}
             onChange={updateField}
           />
-          <SelectField 
-            field="smoking" 
-            options={fieldOptions.smoking} 
+          <SelectField
+            field="smoking"
+            options={fieldOptions.smoking}
             label="Tabac"
             currentValue={getCurrentValue('smoking') as string}
             editable={true}
             editingSection={editingSection === 'lifestyle'}
             onChange={updateField}
           />
-          <SelectField 
-            field="cannabis" 
-            options={fieldOptions.cannabis} 
+          <SelectField
+            field="cannabis"
+            options={fieldOptions.cannabis}
             label="Cannabis"
             currentValue={getCurrentValue('cannabis') as string}
             editable={true}
             editingSection={editingSection === 'lifestyle'}
             onChange={updateField}
           />
-          <SelectField 
-            field="drugs" 
-            options={fieldOptions.drugs} 
+          <SelectField
+            field="drugs"
+            options={fieldOptions.drugs}
             label="Autres drogues"
             currentValue={getCurrentValue('drugs') as string}
             editable={true}
             editingSection={editingSection === 'lifestyle'}
             onChange={updateField}
           />
-          <SelectField 
-            field="pets" 
-            options={fieldOptions.pets} 
+          <SelectField
+            field="pets"
+            options={fieldOptions.pets}
             label="Animaux de compagnie"
             currentValue={getCurrentValue('pets') as string}
             editable={true}
@@ -508,37 +508,37 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Activity & Education */}
-        <SettingSection 
-          title="Activité & Éducation" 
-          icon={<Activity className="h-5 w-5" />} 
-          sectionKey="activity" 
+        <SettingSection
+          title="Activité & Éducation"
+          icon={<Activity className="h-5 w-5" />}
+          sectionKey="activity"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <SelectField 
-            field="socialActivityLevel" 
-            options={fieldOptions.activityLevel} 
+          <SelectField
+            field="socialActivityLevel"
+            options={fieldOptions.activityLevel}
             label="Niveau d'activité sociale"
             currentValue={getCurrentValue('socialActivityLevel') as string}
             editable={true}
             editingSection={editingSection === 'activity'}
             onChange={updateField}
           />
-          <SelectField 
-            field="sportActivity" 
-            options={fieldOptions.activityLevel} 
+          <SelectField
+            field="sportActivity"
+            options={fieldOptions.activityLevel}
             label="Activité sportive"
             currentValue={getCurrentValue('sportActivity') as string}
             editable={true}
             editingSection={editingSection === 'activity'}
             onChange={updateField}
           />
-          <SelectField 
-            field="educationLevel" 
-            options={fieldOptions.educationLevel} 
+          <SelectField
+            field="educationLevel"
+            options={fieldOptions.educationLevel}
             label="Niveau d'éducation"
             currentValue={getCurrentValue('educationLevel') as string}
             editable={true}
@@ -548,55 +548,55 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Personal Information */}
-        <SettingSection 
-          title="Informations Personnelles" 
-          icon={<Heart className="h-5 w-5" />} 
-          sectionKey="personal" 
+        <SettingSection
+          title="Informations Personnelles"
+          icon={<Heart className="h-5 w-5" />}
+          sectionKey="personal"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <SelectField 
-            field="religion" 
-            options={fieldOptions.religion} 
+          <SelectField
+            field="religion"
+            options={fieldOptions.religion}
             label="Religion"
             currentValue={getCurrentValue('religion') as string}
             editable={true}
             editingSection={editingSection === 'personal'}
             onChange={updateField}
           />
-          <SelectField 
-            field="relationshipType" 
-            options={fieldOptions.relationshipType} 
+          <SelectField
+            field="relationshipType"
+            options={fieldOptions.relationshipType}
             label="Type de relation recherchée"
             currentValue={getCurrentValue('relationshipType') as string}
             editable={true}
             editingSection={editingSection === 'personal'}
             onChange={updateField}
           />
-          <SelectField 
-            field="childrenStatus" 
-            options={fieldOptions.childrenStatus} 
+          <SelectField
+            field="childrenStatus"
+            options={fieldOptions.childrenStatus}
             label="Situation avec les enfants"
             currentValue={getCurrentValue('childrenStatus') as string}
             editable={true}
             editingSection={editingSection === 'personal'}
             onChange={updateField}
           />
-          <SelectField 
-            field="politicalView" 
-            options={fieldOptions.politicalView} 
+          <SelectField
+            field="politicalView"
+            options={fieldOptions.politicalView}
             label="Orientation politique"
             currentValue={getCurrentValue('politicalView') as string}
             editable={true}
             editingSection={editingSection === 'personal'}
             onChange={updateField}
           />
-          <TextInput 
-            field="zodiacSign" 
-            label="Signe du zodiaque" 
+          <TextInput
+            field="zodiacSign"
+            label="Signe du zodiaque"
             placeholder="Votre signe astrologique"
             currentValue={getCurrentValue('zodiacSign') as string}
             editingSection={editingSection === 'personal'}
@@ -605,35 +605,35 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Location & Career */}
-        <SettingSection 
-          title="Localisation & Carrière" 
-          icon={<MapPin className="h-5 w-5" />} 
-          sectionKey="location" 
+        <SettingSection
+          title="Localisation & Carrière"
+          icon={<MapPin className="h-5 w-5" />}
+          sectionKey="location"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}
           onSaveChanges={saveChanges}
           onCancelEditing={cancelEditing}
         >
-          <TextInput 
-            field="birthCity" 
-            label="Ville de naissance" 
+          <TextInput
+            field="birthCity"
+            label="Ville de naissance"
             placeholder="Où êtes-vous né(e) ?"
             currentValue={getCurrentValue('birthCity') as string}
             editingSection={editingSection === 'location'}
             onChange={updateField}
           />
-          <TextInput 
-            field="currentCity" 
-            label="Ville actuelle" 
+          <TextInput
+            field="currentCity"
+            label="Ville actuelle"
             placeholder="Où habitez-vous ?"
             currentValue={getCurrentValue('currentCity') as string}
             editingSection={editingSection === 'location'}
             onChange={updateField}
           />
-          <TextInput 
-            field="job" 
-            label="Profession" 
+          <TextInput
+            field="job"
+            label="Profession"
             placeholder="Votre métier"
             currentValue={getCurrentValue('job') as string}
             editingSection={editingSection === 'location'}
@@ -642,10 +642,10 @@ export default function EditProfilePage() {
         </SettingSection>
 
         {/* Tags/Interests */}
-        <SettingSection 
-          title="Centres d'intérêt" 
-          icon={<Star className="h-5 w-5" />} 
-          sectionKey="interests" 
+        <SettingSection
+          title="Centres d'intérêt"
+          icon={<Star className="h-5 w-5" />}
+          sectionKey="interests"
           editable
           editingSection={editingSection}
           onStartEditing={startEditing}

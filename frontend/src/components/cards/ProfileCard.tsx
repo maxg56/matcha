@@ -23,12 +23,12 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, onLike, onPass, className }: ProfileCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+
   const handleLike = () => onLike?.(profile.id);
   const handlePass = () => onPass?.(profile.id);
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => 
+    setCurrentImageIndex((prev) =>
       prev < profile.images.length - 1 ? prev + 1 : prev
     );
   };
@@ -69,7 +69,7 @@ export function ProfileCard({ profile, onLike, onPass, className }: ProfileCardP
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
-            
+
             <button
               onClick={nextImage}
               disabled={currentImageIndex === profile.images.length - 1}
@@ -93,18 +93,18 @@ export function ProfileCard({ profile, onLike, onPass, className }: ProfileCardP
                 onClick={() => goToImage(index)}
                 className={cn(
                   "flex-1 h-1 rounded-full transition-all",
-                  index === currentImageIndex 
-                    ? "bg-white" 
+                  index === currentImageIndex
+                    ? "bg-white"
                     : "bg-white/40"
                 )}
               />
             ))}
           </div>
         )}
-        
+
         {/* Gradient overlay for name only */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-        
+
         {/* Name overlay */}
         <div className="absolute bottom-4 left-4 right-4 text-white">
           <h3 className="text-2xl font-bold">
@@ -138,7 +138,7 @@ export function ProfileCard({ profile, onLike, onPass, className }: ProfileCardP
             {profile.bio}
           </p>
         )}
-        
+
         {/* Interests */}
         {profile.interests && profile.interests.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -172,7 +172,7 @@ export function ProfileCard({ profile, onLike, onPass, className }: ProfileCardP
           >
             <X className="h-6 w-6" />
           </Button>
-          
+
           <Button
             size="icon"
             variant="outline"
@@ -180,7 +180,7 @@ export function ProfileCard({ profile, onLike, onPass, className }: ProfileCardP
           >
             <Star className="h-6 w-6" />
           </Button>
-          
+
           <Button
             size="icon"
             onClick={handleLike}

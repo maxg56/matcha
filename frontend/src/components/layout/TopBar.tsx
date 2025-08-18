@@ -39,7 +39,7 @@ export function TopBar({ title, showBack = false, onBack, rightAction }: TopBarP
             {title}
           </h1>
         </div>
-        
+
         <div className="flex items-center">
           {rightAction || (
             <Button variant="ghost" size="sm" className="p-2 hover:bg-accent">

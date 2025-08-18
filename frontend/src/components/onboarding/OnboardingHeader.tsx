@@ -34,7 +34,7 @@ export function OnboardingHeader({ currentStep }: OnboardingHeaderProps) {
             const Icon = step.icon;
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
-            
+
             return (
               <div key={step.id} className="flex items-center flex-1">
                 <div className={cn(

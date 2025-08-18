@@ -92,7 +92,7 @@ export function PhotoManager({
               </div>
             </div>
           ))}
-          
+
           {/* Add Photo Button */}
           {photos.length < 8 && (
             <div>

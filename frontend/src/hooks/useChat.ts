@@ -28,10 +28,10 @@ export function useChat(matchId: string) {
     // Simulate loading chat data
     const loadChatData = async () => {
       setIsLoading(true);
-      
+
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Set mock data
       setMessages([
         {
@@ -96,9 +96,9 @@ export function useChat(matchId: string) {
     const tempMessage: Message = {
       id: Date.now().toString(),
       content: messageToSend,
-      timestamp: new Date().toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      timestamp: new Date().toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
       }),
       isOwn: true,
       status: 'sent',
@@ -109,14 +109,14 @@ export function useChat(matchId: string) {
     try {
       // TODO: Send message to API
       console.log('Sending message:', messageToSend);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Update message status
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === tempMessage.id 
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === tempMessage.id
             ? { ...msg, status: 'delivered' as const }
             : msg
         )
@@ -131,9 +131,9 @@ export function useChat(matchId: string) {
           const response: Message = {
             id: (Date.now() + 1).toString(),
             content: 'Intéressant ! 📸',
-            timestamp: new Date().toLocaleTimeString('fr-FR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
+            timestamp: new Date().toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit'
             }),
             isOwn: false,
             status: 'read',
