@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 
 	db "auth-service/src/conf"
 	models "auth-service/src/models"
@@ -105,21 +104,3 @@ func setNullString(field *sql.NullString, value *string) {
 	}
 }
 
-// createUserTags creates tags and user_tags associations
-func createUserTags(tx *gorm.DB, userID uint, tagNames []string) error {
-	for _, tagName := range tagNames {
-		var tag models.Tag
-		if err := tx.Where("name = ?", tagName).FirstOrCreate(&tag, models.Tag{Name: tagName}).Error; err != nil {
-			return fmt.Errorf("failed to create tag %s: %w", tagName, err)
-		}
-
-		userTag := models.UserTag{
-			UserID: userID,
-			TagID:  tag.ID,
-		}
-		if err := tx.Create(&userTag).Error; err != nil {
-			return fmt.Errorf("failed to create user_tag association: %w", err)
-		}
-	}
-	return nil
-}
