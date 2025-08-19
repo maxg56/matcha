@@ -14,7 +14,7 @@ import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import SettingsPage from './pages/SettingsPage';
 import EditProfilePage from './pages/EditProfilePage';
-import { AppLayout } from './components/layout/AppLayout';
+import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { RootRedirect } from './components/RootRedirect';
 
 createRoot(document.getElementById('root')!).render(
@@ -22,14 +22,14 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          
+          <div className="min-h-screen bg-background text-foreground">
             <Routes>
               {/* Auth routes */}
               <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
               <Route path="/inscription" element={<ProtectedRoute requireAuth={false}><InscriptionPage /></ProtectedRoute>} />
             
               {/* Main app routes */}
-              <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
                 <Route index element={<Navigate to="discover" replace />} />
                 <Route path="discover" element={<DiscoverPage />} />
                 <Route path="matches" element={<MatchesPage />} />
@@ -42,6 +42,7 @@ createRoot(document.getElementById('root')!).render(
               {/* Default redirect based on authentication status */}
               <Route path="/" element={<RootRedirect />} />
             </Routes>
+          </div>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

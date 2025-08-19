@@ -10,13 +10,15 @@ interface ResponsiveLayoutProps {
   showNavigation?: boolean;
   title?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  showAuthActions?: boolean;
 }
 
 export function ResponsiveLayout({ 
   children, 
   showNavigation = true, 
   title,
-  maxWidth = 'full'
+  maxWidth = 'full',
+  showAuthActions = false
 }: ResponsiveLayoutProps) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -40,13 +42,15 @@ export function ResponsiveLayout({
   };
 
   if (isMobile) {
-    // Mobile Layout
+    // Mobile Layout - Taille fixe viewport
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        {title && <TopBar title={title} />}
+      <div className="h-screen flex flex-col bg-background">
+        {title && <TopBar title={title} showAuthActions={showAuthActions} />}
         
-        <main className="flex-1 overflow-hidden">
-          {children}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="min-h-full">
+            {children}
+          </div>
         </main>
         
         {showNavigation && <BottomNavigation />}
@@ -54,22 +58,22 @@ export function ResponsiveLayout({
     );
   }
 
-  // Desktop Layout
+  // Desktop Layout - Taille fixe viewport
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="h-screen flex bg-background">
       {showNavigation && <SideNavigation />}
       
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {title && (
-          <header className="border-b border-border bg-background/80 backdrop-blur-md">
+          <header className="flex-shrink-0 border-b border-border bg-background/80 backdrop-blur-md">
             <div className={cn("mx-auto px-6 py-4", maxWidthClasses[maxWidth])}>
               <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             </div>
           </header>
         )}
         
-        <main className="flex-1 overflow-hidden">
-          <div className={cn("mx-auto h-full", maxWidthClasses[maxWidth])}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className={cn("mx-auto min-h-full", maxWidthClasses[maxWidth])}>
             {children}
           </div>
         </main>

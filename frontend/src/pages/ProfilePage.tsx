@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -56,11 +55,7 @@ export default function ProfilePage() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <ResponsiveLayout
-        maxWidth="lg"
-      >
-      <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col h-full overflow-y-auto">
         {/* Header with settings */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 mx-4 mt-4 rounded-t-2xl shadow-lg">
           <h2 className="text-lg font-semibold text-foreground">Mon Profil</h2>
@@ -204,9 +199,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-        </div>
       </div>
-      </ResponsiveLayout>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { 
@@ -277,12 +276,7 @@ export default function EditProfilePage() {
 
 
   return (
-    <ResponsiveLayout
-      title="Modifier mon profil"
-      showNavigation={true}
-      maxWidth="lg"
-    >
-      <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6">
         {/* Save Button */}
         {hasChanges && (
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border border-border rounded-xl p-4 mb-4">
@@ -659,7 +653,6 @@ export default function EditProfilePage() {
             onToggleTag={toggleTag}
           />
         </SettingSection>
-      </div>
-    </ResponsiveLayout>
+    </div>
   );
 }

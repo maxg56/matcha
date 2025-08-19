@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useReducer, useEffect, ReactNode } from 'react';
 import { authService } from '@/services/auth';
 
 interface AuthResponse {
@@ -83,7 +83,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-interface AuthContextType extends AuthState {
+export interface AuthContextType extends AuthState {
   login: (login: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -104,13 +104,6 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -199,7 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         throw new Error('Token invalid');
       }
-    } catch (error) {
+    } catch {
       // Token invalid, try to refresh
       try {
         const tokenResponse = await authService.refreshToken(refreshToken);
@@ -217,7 +210,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           throw new Error('New token invalid');
         }
-      } catch (refreshError) {
+      } catch {
         // Refresh failed, logout
         authService.clearTokens();
         dispatch({ type: 'AUTH_LOGOUT' });

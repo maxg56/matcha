@@ -1,4 +1,3 @@
-import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { FiltersScreen } from '@/components/filters/FiltersScreen';
 import { 
   DiscoverHeader,
@@ -58,31 +57,27 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <ResponsiveLayout showNavigation={true}>
-        <div className="flex flex-col h-full">
-          <DiscoverHeader
-            onOpenFilters={onOpenFilters}
-            onMoreOptions={handleMoreOptions}
+    <div className="flex flex-col h-full">
+      <DiscoverHeader
+        onOpenFilters={onOpenFilters}
+        onMoreOptions={handleMoreOptions}
+      />
+      {/* Main content - profil */}
+      <div className="flex-1 p-4">
+        {currentProfile ? (
+          <ProfileCard
+            profile={currentProfile}
+            onLike={actions.onLike}
+            onPass={actions.onPass}
+            onSuperLike={actions.onSuperLike}
+            onBoost={actions.onBoost}
+            onMessage={actions.onMessage}
+            onReport={actions.onReport}
           />
-          {/* Main content - profil */}
-          <div className="flex-1 p-4">
-            {currentProfile ? (
-              <ProfileCard
-                profile={currentProfile}
-                onLike={actions.onLike}
-                onPass={actions.onPass}
-                onSuperLike={actions.onSuperLike}
-                onBoost={actions.onBoost}
-                onMessage={actions.onMessage}
-                onReport={actions.onReport}
-              />
-            ) : (
-              <NoMoreProfiles onOpenFilters={onOpenFilters} />
-            )}
-          </div>
-        </div>
-      </ResponsiveLayout>
+        ) : (
+          <NoMoreProfiles onOpenFilters={onOpenFilters} />
+        )}
+      </div>
     </div>
   );
 }
