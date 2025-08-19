@@ -16,6 +16,7 @@ func SetupAuthRoutes(r *gin.Engine) {
 	auth.POST("/refresh", proxy.ProxyRequest("auth", "/api/v1/auth/refresh"))
 	auth.POST("/forgot-password", proxy.ProxyRequest("auth", "/api/v1/auth/forgot-password"))
 	auth.POST("/reset-password", proxy.ProxyRequest("auth", "/api/v1/auth/reset-password"))
+	auth.POST("/check-availability", proxy.ProxyRequest("auth", "/api/v1/auth/check-availability"))
 
 	// Protected routes (authentication required)
 	protected := auth.Group("")
