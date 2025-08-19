@@ -1,11 +1,19 @@
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
+}
+
+interface APIError {
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+  message?: string;
 }
 
 export class ErrorHandler {
-  static createError(code: string, message: string, details?: any): AppError {
+  static createError(code: string, message: string, details?: unknown): AppError {
     return {
       code,
       message,
@@ -13,7 +21,7 @@ export class ErrorHandler {
     };
   }
 
-  static handleRegistrationError(error: any): AppError {
+  static handleRegistrationError(error: APIError): AppError {
     if (error.response?.status === 400) {
       return this.createError('VALIDATION_ERROR', 'Données invalides', error.response.data);
     }
@@ -22,7 +30,7 @@ export class ErrorHandler {
       return this.createError('USER_EXISTS', 'Un utilisateur avec cet email existe déjà');
     }
 
-    if (error.response?.status >= 500) {
+    if (error.response?.status && error.response.status >= 500) {
       return this.createError('SERVER_ERROR', 'Erreur serveur, veuillez réessayer plus tard');
     }
 

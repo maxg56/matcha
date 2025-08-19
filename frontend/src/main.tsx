@@ -18,9 +18,8 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <BrowserRouter>
-      <NotificationButton />
+        <NotificationButton />
         <div className="min-h-screen bg-background text-foreground">
-          {/* <NotificationButton /> */}
           <Routes>
             {/* Auth routes */}
             <Route path="/login" element={<LoginPage />} />

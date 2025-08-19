@@ -14,6 +14,7 @@ import {
   Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { FilterState } from '@/types/filters';
 
 interface FiltersProps {
   onClose: () => void;
@@ -21,42 +22,6 @@ interface FiltersProps {
   initialFilters?: Partial<FilterState>;
 }
 
-interface FilterState {
-  ageRange: [number, number];
-  distance: number;
-  heightRange: [number, number];
-  showMe: 'woman' | 'man' | 'both';
-  
-  // Physical attributes
-  hairColors: string[];
-  eyeColors: string[];
-  skinColors: string[];
-  
-  // Lifestyle
-  alcoholConsumption: string[];
-  smoking: string[];
-  cannabis: string[];
-  drugs: string[];
-  pets: string[];
-  
-  // Social & Activity
-  socialActivityLevel: string[];
-  sportActivity: string[];
-  educationLevel: string[];
-  
-  // Personal
-  religion: string[];
-  relationshipType: string[];
-  childrenStatus: string[];
-  politicalView: string[];
-  
-  // Location
-  birthCity: string;
-  currentCity: string;
-  
-  // Tags
-  tags: string[];
-}
 
 const defaultFilters: FilterState = {
   ageRange: [18, 65],
@@ -283,7 +248,7 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
               {filterOptions.showMe.map(option => (
                 <button
                   key={option.value}
-                  onClick={() => updateFilter('showMe', option.value as any)}
+                  onClick={() => updateFilter('showMe', option.value as 'woman' | 'man' | 'both')}
                   className={cn(
                     "p-3 rounded-lg border text-sm font-medium transition-colors",
                     "flex flex-col items-center gap-1",

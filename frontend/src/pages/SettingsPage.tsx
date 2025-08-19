@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Switch } from '@/components/ui/switch';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme } from '@/hooks/useTheme';
 import { 
   Bell, 
   Shield, 

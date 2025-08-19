@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import type { FilterState } from '@/types/filters';
 
 export function useFilters() {
   const [showFilters, setShowFilters] = useState(false);
 
-  const handleFiltersChange = (filters: any) => {
+  const handleFiltersChange = (filters: FilterState) => {
     console.log('Filters applied:', filters);
     setShowFilters(false);
   };
