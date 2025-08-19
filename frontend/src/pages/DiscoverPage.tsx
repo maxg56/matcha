@@ -13,7 +13,6 @@ const mockProfiles = [
     age: 25,
     images: [
       'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop',
       'https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=400&h=600&fit=crop'
     ],
     bio: 'Passionnée de photographie et de voyages 📸✈️ J\'adore capturer des moments uniques et explorer de nouveaux horizons. Toujours à la recherche de la prochaine aventure !',
@@ -57,7 +56,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-full">
       <DiscoverHeader
         onOpenFilters={onOpenFilters}
         onMoreOptions={handleMoreOptions}

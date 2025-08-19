@@ -49,21 +49,6 @@ const mockMatches = [
     isNew: false,
   },
   {
-    id: '3',
-    name: 'Julie',
-    age: 24,
-    image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop',
-    images: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop'
-    ],
-    lastMessage: 'À bientôt pour un café ☕',
-    timestamp: 'Mar',
-    unread: false,
-    matchedAt: 'Il y a 2 jours',
-    commonInterests: ['Yoga', 'Art'],
-    isNew: false,
-  },
-  {
     id: '4',
     name: 'Camille',
     age: 26,
@@ -115,7 +100,7 @@ export default function MessagesPage() {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col min-h-full">
         {/* Nouveaux matchs en haut */}
         <div className="p-4 border-b border-border">
           <NewMatchesSection 
@@ -141,7 +126,7 @@ export default function MessagesPage() {
   // Desktop layout
   return (
     <>
-      <div className="flex h-full">
+      <div className="flex min-h-full">
         <NewMatchesSection 
           matches={newMatches} 
           onMatchClick={handleMatchClick} 

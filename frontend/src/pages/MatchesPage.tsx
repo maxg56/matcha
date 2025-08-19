@@ -16,11 +16,6 @@ const mockLikes = [
     timestamp: 'Il y a 5h',
   },
   {
-    id: '3',
-    image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop',
-    timestamp: 'Hier',
-  },
-  {
     id: '4',
     image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop',
     timestamp: 'Il y a 2j',

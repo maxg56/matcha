@@ -55,7 +55,7 @@ export default function ProfilePage() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col min-h-full">
         {/* Header with settings */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 mx-4 mt-4 rounded-t-2xl shadow-lg">
           <h2 className="text-lg font-semibold text-foreground">Mon Profil</h2>
