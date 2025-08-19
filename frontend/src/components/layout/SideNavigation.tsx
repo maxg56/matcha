@@ -8,22 +8,22 @@ const navItems = [
   {
     label: 'Découvrir',
     icon: Search,
-    href: '/discover',
+    href: '/app/discover',
   },
   {
     label: 'Likes',
     icon: Heart,
-    href: '/matches',
+    href: '/app/matches',
   },
   {
     label: 'Messages',
     icon: MessageCircle,
-    href: '/messages',
+    href: '/app/messages',
   },
   {
     label: 'Profil',
     icon: User,
-    href: '/profile',
+    href: '/app/profile',
   },
 ];
 
@@ -41,8 +41,9 @@ export function SideNavigation() {
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center">
-            <Heart className="h-7 w-7 text-primary-foreground fill-current" />
+          <div className="w-12 h-12 bg-white bg-primary rounded-2xl flex items-center justify-center">
+            <img src="/public/EmojiMatcha.png" 
+              className="h-12 w-12  text-primary-foreground fill-current" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Matcha</h1>
@@ -116,7 +117,7 @@ export function SideNavigation() {
 
       {/* Footer */}
       <div className="p-4 border-t border-border space-y-2">
-        <Link to="/settings">
+        <Link to="/app/settings">
           <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
             <Settings className="h-5 w-5" />
             Paramètres

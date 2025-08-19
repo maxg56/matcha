@@ -45,7 +45,7 @@ interface InterestsStepProps {
   toggleTag: (tag: string) => void;
 }
 
-export function InterestsStep({ formData, errors, toggleTag }: InterestsStepProps) {
+export function InterestsStep({ formData, toggleTag }: InterestsStepProps) {
   return (
     <div className="space-y-6">
       <TagSelector

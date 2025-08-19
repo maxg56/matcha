@@ -36,7 +36,7 @@ export function useLogin() {
 
     try {
       await login(formData.login, formData.password);
-      navigate('/discover');
+      navigate('/app/discover');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Identifiants incorrects';
       setError(errorMessage);

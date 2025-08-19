@@ -11,7 +11,7 @@ export function NotificationButton() {
     if (location.pathname === "/InscriptionPage") return null;
 
     const maxValue = notifications.length
-        ? Math.max(...notifications.map(([_, value]) => value))
+        ? Math.max(...notifications.map(([, value]) => value))
         : -1;
 
     let imgSrc = "ExtinctBrasero.png";

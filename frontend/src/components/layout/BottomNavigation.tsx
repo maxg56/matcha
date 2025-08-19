@@ -6,22 +6,22 @@ const navItems = [
   {
     label: 'Découvrir',
     icon: Search,
-    href: '/discover',
+    href: '/app/discover',
   },
   {
     label: 'Likes',
     icon: Heart,
-    href: '/matches',
+    href: '/app/matches',
   },
   {
     label: 'Messages',
     icon: MessageCircle,
-    href: '/messages',
+    href: '/app/messages',
   },
   {
     label: 'Profil',
     icon: User,
-    href: '/profile',
+    href: '/app/profile',
   },
 ];
 
