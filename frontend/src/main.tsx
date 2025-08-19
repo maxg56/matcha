@@ -28,22 +28,19 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
               <Route path="/inscription" element={<ProtectedRoute requireAuth={false}><InscriptionPage /></ProtectedRoute>} />
             
-            {/* Main app routes */}
-            <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="discover" replace />} />
-              <Route path="discover" element={<DiscoverPage />} />
-              <Route path="matches" element={<MatchesPage />} />
-              <Route path="messages" element={<MessagesPage />} />
-              <Route path="chat/:matchId" element={<ChatPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="edit-profile" element={<EditProfilePage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-
-
-            {/* Default redirect based on authentication status */}
-            <Route path="/" element={<RootRedirect />} />
-
+              {/* Main app routes */}
+              <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route index element={<Navigate to="discover" replace />} />
+                <Route path="discover" element={<DiscoverPage />} />
+                <Route path="matches" element={<MatchesPage />} />
+                <Route path="messages" element={<MessagesPage />} />
+                <Route path="chat/:matchId" element={<ChatPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="edit-profile" element={<EditProfilePage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+              {/* Default redirect based on authentication status */}
+              <Route path="/" element={<RootRedirect />} />
             </Routes>
         </BrowserRouter>
       </AuthProvider>
