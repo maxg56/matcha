@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import { ThemeProvider } from './contexts/ThemeContext'
-import NewInscriptionPage from './pages/InscriptionPage';
+import InscriptionPage from './pages/InscriptionPage';
 import DiscoverPage from './pages/DiscoverPage';
 import MatchesPage from './pages/MatchesPage';
 import MessagesPage from './pages/MessagesPage';
@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             {/* Auth routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/inscription" element={<NewInscriptionPage />} />
+            <Route path="/inscription" element={<InscriptionPage />} />
             
             {/* Main app routes */}
             <Route path="/discover" element={<DiscoverPage />} />
