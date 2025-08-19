@@ -51,17 +51,19 @@ export function ProfileCard({
   };
 
   return (
-    <div className="relative rounded-b-2xl overflow-hidden h-full flex flex-col">
+    <div className="relative rounded-2xl overflow-hidden h-full flex flex-col ">
       {/* Carousel d'images */}
+      <div className="bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950">
       <ProfileImageCarousel
         images={profile.images}
         profileName={profile.name}
         currentIndex={currentImageIndex}
         onImageChange={handleImageChange}
       />
+      </div>
 
       {/* Section infos et boutons */}
-      <div className="flex-1 bg-white dark:bg-gray-800 flex flex-col">
+      <div className="flex-1 bg-white dark:bg-gradient-to-b dark:from-emerald-950 dark:to-gray-900 flex flex-col">
         {/* Infos profil */}
         <ProfileInfo
           name={profile.name}

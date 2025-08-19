@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Heart, Sliders, MoreHorizontal } from 'lucide-react';
+import { Sliders, MoreHorizontal } from 'lucide-react';
 
 interface DiscoverHeaderProps {
   onOpenFilters: () => void;
@@ -11,8 +11,12 @@ export function DiscoverHeader({ onOpenFilters, onMoreOptions }: DiscoverHeaderP
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-xl">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center shadow-lg">
-            <Heart className="h-5 w-5 text-white fill-current" />
+          <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg">
+            <img
+              src="/public/EmojiMatcha.png"
+              alt="Heart Icon"
+              className="h-8 w-8 text-white fill-current"
+            />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">Matcha</h1>
