@@ -41,7 +41,7 @@ export function useLogin() {
       
       // For demo, navigate to discover
       navigate('/discover');
-    } catch (err) {
+    } catch {
       setError('Identifiants incorrects');
     } finally {
       setIsLoading(false);

@@ -2,16 +2,7 @@ import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface FormData {
-  photos: string[];
-}
-
-interface PhotosStepProps {
-  formData: Pick<FormData, 'photos'>;
-  updateFormData: (updates: Partial<FormData>) => void;
-}
-
-export function PhotosStep({ formData, updateFormData }: PhotosStepProps) {
+export function PhotosStep() {
   return (
     <div className="space-y-6">
       <div className="text-center">

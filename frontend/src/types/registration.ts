@@ -36,11 +36,6 @@ export interface FieldValidationErrors {
   [key: string]: string;
 }
 
-export interface FieldValidationErrors {
-  field: string;
-  message: string;
-}
-
 
 export const defaultRegistrationData: RegistrationData = {
   username: '',

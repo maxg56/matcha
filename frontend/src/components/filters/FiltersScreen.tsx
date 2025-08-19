@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
 import { 
   X, 
   Calendar, 
@@ -10,17 +8,9 @@ import {
   Ruler, 
   Heart,
   GraduationCap,
-  Briefcase,
   Church,
-  Baby,
   Palette,
-  Eye,
-  Activity,
-  Users,
   Wine,
-  Cigarette,
-  PillBottle,
-  Dog,
   Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
