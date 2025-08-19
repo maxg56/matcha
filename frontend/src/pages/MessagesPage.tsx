@@ -89,7 +89,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 925);
     };
     
     checkMobile();
