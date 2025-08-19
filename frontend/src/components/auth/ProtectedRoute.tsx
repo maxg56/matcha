@@ -33,7 +33,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!requireAuth && isAuthenticated) {
     // User is authenticated but trying to access auth pages (login, register)
     // Redirect to discover or the intended page
-    const from = location.state?.from?.pathname || '/discover';
+    const from = location.state?.from?.pathname || '/app/discover';
     return <Navigate to={from} replace />;
   }
 
