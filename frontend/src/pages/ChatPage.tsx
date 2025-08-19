@@ -74,7 +74,7 @@ export default function ChatPage() {
   };
 
   const handleBack = () => {
-    navigate('/messages');
+    navigate('/app/messages');
   };
 
   return (

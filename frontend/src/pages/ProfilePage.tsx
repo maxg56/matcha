@@ -69,7 +69,7 @@ export default function ProfilePage() {
               variant="outline" 
               size="sm" 
               className="gap-2 bg-gray-50 dark:bg-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-gray-200 dark:border-gray-600"
-              onClick={() => navigate('/edit-profile')}
+              onClick={() => navigate('/app/edit-profile')}
             >
               <Edit3 className="h-4 w-4" />
               Modifier
@@ -78,7 +78,7 @@ export default function ProfilePage() {
               variant="ghost" 
               size="sm" 
               className="gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/app/settings')}
             >
               <Settings className="h-4 w-4" />
               Paramètres

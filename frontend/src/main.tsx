@@ -26,13 +26,17 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/inscription" element={<InscriptionPage />} />
             
             {/* Main app routes */}
-            <Route path="/discover" element={<DiscoverPage />} />
-            <Route path="/matches" element={<MatchesPage />} />
-            <Route path="/messages" element={<MessagesPage />} />
-            <Route path="/chat/:matchId" element={<ChatPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/edit-profile" element={<EditProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/app/*">
+              <Route index element={<Navigate to="discover" replace />} />
+              <Route path="discover" element={<DiscoverPage />} />
+              <Route path="matches" element={<MatchesPage />} />
+              <Route path="messages" element={<MessagesPage />} />
+              <Route path="chat/:matchId" element={<ChatPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="edit-profile" element={<EditProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
+            
 
             {/* Default redirect to login for new users, discover for authenticated */}
             <Route path="/" element={<Navigate to="/login" replace />} />
