@@ -1,5 +1,5 @@
 -- ====================
--- RESET DES TABLES (ordre inverse des dépendances)
+-- RESET DES TABLES
 -- ====================
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS discussion CASCADE;
@@ -8,6 +8,26 @@ DROP TABLE IF EXISTS images CASCADE;
 DROP TABLE IF EXISTS user_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+-- ====================
+-- ENUMS
+-- ====================
+CREATE TYPE gender_enum AS ENUM ('man', 'woman', 'other');
+CREATE TYPE sex_pref_enum AS ENUM ('man', 'woman', 'both', 'other');
+
+CREATE TYPE yes_no_enum AS ENUM ('yes','no');
+CREATE TYPE yes_sometimes_no_enum AS ENUM ('yes','sometimes','no');
+
+CREATE TYPE activity_level_enum AS ENUM ('low','medium','high','other');
+CREATE TYPE education_level_enum AS ENUM ('high_school','bachelor','master','doctorate','other');
+CREATE TYPE religion_enum AS ENUM ('christianity','islam','hinduism','buddhism','atheism','other');
+CREATE TYPE relationship_type_enum AS ENUM ('friendship','short_term','long_term','life','other');
+CREATE TYPE children_status_enum AS ENUM ('yes','no','other');
+CREATE TYPE hair_color_enum AS ENUM ('black','brown','blonde','red','gray','white','other');
+CREATE TYPE skin_color_enum AS ENUM ('white','black','brown','yellow','olive','other');
+CREATE TYPE eye_color_enum AS ENUM ('brown','blue','green','hazel','gray','other');
+CREATE TYPE political_view_enum AS ENUM ('left','center','right','apolitical','other');
+CREATE TYPE relation_value_enum AS ENUM ('like', 'pass', 'block');
 
 -- ====================
 -- TABLE : users
@@ -20,49 +40,47 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     birth_date DATE NOT NULL,
-    -- age INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM AGE(birth_date))) STORED, -- cause PostgreSQL does not support GENERATED ALWAYS AS for DATE types
     age INT,
-    height INT, -- previously 'size'
+    height INT,
 
-    alcohol_consumption VARCHAR(9) CHECK (alcohol_consumption IN ('yes','sometimes','no')),
-    smoking VARCHAR(9) CHECK (smoking IN ('yes','sometimes','no')),
-    cannabis VARCHAR(9) CHECK (cannabis IN ('yes','sometimes','no')),
-    drugs VARCHAR(9) CHECK (drugs IN ('yes','sometimes','no')),
-    pets VARCHAR(3)  CHECK (pets IN ('yes','no')),
+    alcohol_consumption yes_sometimes_no_enum,
+    smoking yes_sometimes_no_enum,
+    cannabis yes_sometimes_no_enum,
+    drugs yes_sometimes_no_enum,
+    pets yes_no_enum,
 
-    social_activity_level VARCHAR(10) CHECK (social_activity_level IN ('low','medium','high','other')),
-    sport_activity VARCHAR(10) CHECK (sport_activity IN ('low','medium','high','other')),
-    education_level VARCHAR(20) CHECK (education_level IN ('high_school','bachelor','master','doctorate','other')),
+    social_activity_level activity_level_enum,
+    sport_activity activity_level_enum,
+    education_level education_level_enum,
 
     personal_opinion TEXT,
-    bio VARCHAR(400), -- limited to 400 characters
+    bio VARCHAR(400),
 
     birth_city VARCHAR(100),
     current_city VARCHAR(100),
     job VARCHAR(100),
-    religion VARCHAR(50) CHECK (religion IN ('christianity','islam','hinduism','buddhism','atheism','other')),
-    relationship_type VARCHAR(20) NOT NULL CHECK (relationship_type IN ('friendship','short_term','long_term','life','other')),
-    children_status VARCHAR(10) CHECK (children_status IN ('yes','no','other')), -- new: does user have children
-    children_details TEXT, -- optional: number/age of children
+    religion religion_enum,
+    relationship_type relationship_type_enum NOT NULL,
+    children_status children_status_enum,
+    children_details TEXT,
 
     zodiac_sign VARCHAR(50),
 
-    hair_color VARCHAR(20) CHECK (hair_color IN ('black','brown','blonde','red','gray','white','other')),
-    skin_color VARCHAR(20) CHECK (skin_color IN ('white','black','brown','yellow','olive','other')),
-    eye_color VARCHAR(20) CHECK (eye_color IN ('brown','blue','green','hazel','gray','other')),
+    hair_color hair_color_enum,
+    skin_color skin_color_enum,
+    eye_color eye_color_enum,
 
     fame INT DEFAULT 0,
-    gender VARCHAR(6) NOT NULL CHECK (gender IN ('woman', 'man', 'other')),
-    sex_pref VARCHAR(6) DEFAULT 'both' NOT NULL CHECK (sex_pref IN ('woman', 'man', 'both','other')),
+    gender gender_enum NOT NULL,
+    sex_pref sex_pref_enum DEFAULT 'both' NOT NULL,
 
-    political_view VARCHAR(20) CHECK (political_view IN ('left','center','right','apolitical','other')),
+    political_view political_view_enum,
 
     latitude NUMERIC(9,6),
     longitude NUMERIC(9,6),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 
 -- ====================
 -- TABLE : tags
@@ -105,8 +123,8 @@ CREATE TABLE relations (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    value_user1 VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (value_user1 IN ('like', 'pass', 'block')),
-    value_user2 VARCHAR(5) DEFAULT 'both' NOT NULL CHECK (value_user2 IN ('like', 'pass', 'block'))
+    value_user1 relation_value_enum DEFAULT 'pass' NOT NULL,
+    value_user2 relation_value_enum DEFAULT 'pass' NOT NULL
 );
 
 -- ====================
@@ -132,7 +150,7 @@ CREATE TABLE messages (
 );
 
 -- ====================
--- FONCTION & TRIGGER : Mise à jour du dernier message
+-- TRIGGERS
 -- ====================
 DROP TRIGGER IF EXISTS trg_update_last_message ON messages;
 DROP FUNCTION IF EXISTS update_last_message;
@@ -153,9 +171,7 @@ AFTER INSERT ON messages
 FOR EACH ROW
 EXECUTE FUNCTION update_last_message();
 
--- ====================
--- TRIGGER : Mise à jour automatique de updated_at
--- ====================
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -175,21 +191,6 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 
--- ====================
--- TRIGGER : Mise à jour automatique de age
--- ====================
-CREATE OR REPLACE FUNCTION update_users_age()
-RETURNS void AS $$
-BEGIN
-    UPDATE users
-    SET age = DATE_PART('year', AGE(CURRENT_DATE, birth_date))
-    WHERE birth_date IS NOT NULL;
-END;
-$$ LANGUAGE plpgsql;
-
--- ====================
--- TRIGGER : Calcul d'âge individuel lors INSERT/UPDATE
--- ====================
 CREATE OR REPLACE FUNCTION set_user_age()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -204,17 +205,13 @@ FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
 
-
-
-
 -- ====================
 -- INSERTS DE TEST
 -- ====================
-
 INSERT INTO tags (name) VALUES
 ('🌍 Voyage'),
 ('🍳 Cuisine'),
-('🚴🏻​ Sport'),
+('🚴🏻‍♂️ Sport'),
 ('🏋️ Fitness'),
 ('🎮 Jeux vidéo'),
 ('📚 Lecture'),
@@ -227,5 +224,5 @@ INSERT INTO tags (name) VALUES
 ('📷 Photographie'),
 ('🚀 Tech & innovation'),
 ('🍷 Gastronomie & vin'),
-('👨🏻‍💻​​ Code avec vim'),
+('👨🏻‍💻 Code avec vim'),
 ('⛰️ Randonnée & plein air');

@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import Accueil from './pages/Accueil';
 import NewInscriptionPage from './pages/InscriptionPage';
 import ConversationPage from './pages/ConversationPage';
@@ -22,39 +24,79 @@ import { NotificationButton } from './components/Notifications';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
         <div className="min-h-screen bg-background text-foreground">
           {/* <NotificationButton /> */}
           <Routes>
-            {/* Auth routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
+            {/* Auth routes - accessible only when not authenticated */}
+            <Route path="/login" element={
+              <ProtectedRoute requireAuth={false}>
+                <LoginPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/inscription" element={
+              <ProtectedRoute requireAuth={false}>
+                <NewInscriptionPage />
+              </ProtectedRoute>
+            } />
+            {/* <Route path="/onboarding" element={
+              <ProtectedRoute>
+                <OnboardingPage />
+              </ProtectedRoute>
+            } /> */}
             
+            
+            {/* Protected main app routes */}
+            <Route path="/discover" element={
+              <ProtectedRoute>
+                <DiscoverPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/matches" element={
+              <ProtectedRoute>
+                <MatchesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/chat/:matchId" element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/edit-profile" element={
+              <ProtectedRoute>
+                <EditProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
             {/* Legacy routes */}
             <Route path="/Accueil" element={<Accueil />} />
             <Route path="/ConversationPage" element={<ConversationPage />} />
             
-            {/* New inscription route */}
-            <Route path="/inscription" element={<NewInscriptionPage />} />
-            
-            {/* Main app routes */}
-            <Route path="/discover" element={<DiscoverPage />} />
-            <Route path="/matches" element={<MatchesPage />} />
-            <Route path="/messages" element={<MessagesPage />} />
-            <Route path="/chat/:matchId" element={<ChatPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/edit-profile" element={<EditProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            
             {/* Demo routes */}
             <Route path="/demo" element={<ComponentsDemo />} />
-            <Route path="/carousel-demo" element={<CarouselDemo />} />
+            <Route path="/carousel-demo" element={<CarouselDemo />} /> 
             
-            {/* Default redirect to login for new users, discover for authenticated */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Default redirect */}
+            <Route path="/" element={<Navigate to="/discover" replace />} />
           </Routes>
         </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
 )

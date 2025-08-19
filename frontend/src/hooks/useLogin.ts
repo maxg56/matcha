@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginFormData {
   login: string; // pseudo ou email
@@ -8,6 +9,7 @@ interface LoginFormData {
 
 export function useLogin() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     login: '',
     password: ''
@@ -33,16 +35,11 @@ export function useLogin() {
     setError('');
 
     try {
-      // TODO: API call for login
-      console.log('Login attempt:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo, navigate to discover
+      await login(formData.login, formData.password);
       navigate('/discover');
     } catch (err) {
-      setError('Identifiants incorrects');
+      const errorMessage = err instanceof Error ? err.message : 'Identifiants incorrects';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
