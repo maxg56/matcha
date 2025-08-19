@@ -23,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <BrowserRouter>
+      <NotificationButton />
         <div className="min-h-screen bg-background text-foreground">
           {/* <NotificationButton /> */}
           <Routes>

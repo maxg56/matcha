@@ -41,8 +41,9 @@ export function SideNavigation() {
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center">
-            <Heart className="h-7 w-7 text-primary-foreground fill-current" />
+          <div className="w-12 h-12 bg-white bg-primary rounded-2xl flex items-center justify-center">
+            <img src="/public/EmojiMatcha.png" 
+              className="h-12 w-12  text-primary-foreground fill-current" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Matcha</h1>

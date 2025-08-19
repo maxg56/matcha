@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ProfileImageCarouselProps {
@@ -9,64 +7,51 @@ interface ProfileImageCarouselProps {
   onImageChange: (index: number) => void;
 }
 
-export function ProfileImageCarousel({ 
-  images, 
-  profileName, 
-  currentIndex, 
-  onImageChange 
-}: ProfileImageCarouselProps) {
+export function ProfileImageCarousel({ images, profileName, currentIndex, onImageChange }: ProfileImageCarouselProps) {
   const nextImage = () => {
-    if (currentIndex < images.length - 1) {
-      onImageChange(currentIndex + 1);
-    }
+    onImageChange((currentIndex + 1) % images.length);
   };
 
   const prevImage = () => {
-    if (currentIndex > 0) {
-      onImageChange(currentIndex - 1);
-    }
+    onImageChange((currentIndex - 1 + images.length) % images.length);
   };
 
   return (
-    <div className="relative h-96 flex-shrink-0">
+    <div className="relative w-full h-[30rem] flex justify-center items-center overflow-hidden">
+      {/* Image de gauche */}
+      <img
+        src={images[(currentIndex - 1 + images.length) % images.length]}
+        alt={profileName}
+        className="hidden lg:block absolute left-60 w-48 h-48 object-cover rounded-full opacity-50 transform -translate-x-1/4"
+      />
+
+      {/* Image centrale */}
       <img
         src={images[currentIndex]}
         alt={profileName}
-        className="w-full h-full object-cover"
+        className="w-full h-full lg:w-full lg:h-full object-contain  shadow-xl z-10"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      
-      {/* Navigation images */}
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={prevImage}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 backdrop-blur-sm rounded-full p-2 text-white hover:bg-black/70 transition-colors"
-            disabled={currentIndex === 0}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={nextImage}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 backdrop-blur-sm rounded-full p-2 text-white hover:bg-black/70 transition-colors"
-            disabled={currentIndex === images.length - 1}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-          
-          {/* Indicateurs d'images */}
-          <div className="absolute top-4 left-4 right-4 flex gap-1">
-            {images.map((_, index) => (
-              <div
-                key={index}
-                className={`flex-1 h-1 rounded-full ${
-                  index === currentIndex ? 'bg-white' : 'bg-white/40'
-                }`}
-              />
-            ))}
-          </div>
-        </>
-      )}
+
+      {/* Image de droite */}
+      <img
+        src={images[(currentIndex + 1) % images.length]}
+        alt={profileName}
+        className="hidden lg:block absolute right-60 w-48 h-48 object-cover rounded-full opacity-50 transform translate-x-1/4"
+      />
+
+      {/* Boutons */}
+      <button
+        onClick={prevImage}
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-purple-500 backdrop-blur-sm rounded-full p-2 text-white hover:bg-black/70 transition-colors z-20"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <button
+        onClick={nextImage}
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-500 backdrop-blur-sm rounded-full p-2 text-white hover:bg-black/70 transition-colors z-20"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
     </div>
   );
 }
