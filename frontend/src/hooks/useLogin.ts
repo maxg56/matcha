@@ -20,7 +20,7 @@ export function useLogin() {
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (error) setError(''); // Clear error when user types
+    if (error) setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +35,7 @@ export function useLogin() {
     setError('');
 
     try {
-      // await login(formData.login, formData.password);
+      await login(formData.login, formData.password);
       navigate('/app/discover');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Identifiants incorrects';

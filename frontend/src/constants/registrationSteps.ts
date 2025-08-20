@@ -6,6 +6,8 @@ import {
   Activity, 
   Heart, 
   Star,
+  Mail,
+  Image,
   type LucideIcon
 } from 'lucide-react';
 
@@ -17,12 +19,14 @@ interface RegistrationStep {
 
 export const registrationSteps: RegistrationStep[] = [
   { id: 1, title: 'Compte', icon: User },
+  { id: 1.5, title: 'Vérification email', icon: Mail },
   { id: 2, title: 'Infos de base', icon: Calendar },
   { id: 3, title: 'Apparence', icon: Palette },
   { id: 4, title: 'Style de vie', icon: Wine },
   { id: 5, title: 'Activité', icon: Activity },
   { id: 6, title: 'Personnel', icon: Heart },
-  { id: 7, title: 'Intérêts', icon: Star }
+  { id: 7, title: 'Intérêts', icon: Star },
+  { id: 8, title: 'Upload', icon: Image }
 ];
 
 export const stepDescriptions = {
@@ -32,5 +36,6 @@ export const stepDescriptions = {
   4: "Partagez votre style de vie",
   5: "Indiquez votre niveau d'activité et d'éducation",
   6: "Complétez votre profil personnel",
-  7: "Sélectionnez vos centres d'intérêt"
+  7: "Sélectionnez vos centres d'intérêt",
+  8: "Téléchargez vos photos"
 };
