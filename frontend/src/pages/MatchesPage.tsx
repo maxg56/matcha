@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { BlurredLikesGrid } from '@/components/cards/BlurredLikeCard';
 import { Button } from '@/components/ui/button';
-import { LikeProfileModal } from '@/components/demo/LikeProfileModal';
 
 const mockLikes = [
   {
@@ -31,64 +28,15 @@ const mockLikes = [
   },
 ];
 
-const mockProfilesToLike = [
-  {
-    id: 'like1',
-    name: 'Marie',
-    age: 26,
-    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=300&fit=crop',
-    images: [
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop',
-    ],
-    bio: 'Passionnée de musique et de danse. J\'adore découvrir de nouveaux artistes et bouger sur des rythmes entraînants !',
-    location: 'Paris',
-    occupation: 'Musicienne',
-    interests: ['Musique', 'Danse', 'Concerts', 'Voyage'],
-    distance: 3,
-  },
-  {
-    id: 'like2',
-    name: 'Léa',
-    age: 23,
-    image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=300&fit=crop',
-    images: [
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop',
-    ],
-    bio: 'Artiste peintre en herbe, j\'aime capturer la beauté du monde à travers mes pinceaux et mes couleurs.',
-    location: 'Lyon',
-    occupation: 'Artiste',
-    interests: ['Art', 'Peinture', 'Exposition', 'Nature'],
-    distance: 15,
-  },
-];
 
 export default function MatchesPage() {
-  const navigate = useNavigate();
-  const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
-
   const handleLikeClick = (likeId: string) => {
     console.log('Like clicked:', likeId);
     // TODO: Implement like reveal logic
   };
   
   const handleOpenLikeModal = () => {
-    setIsLikeModalOpen(true);
-  };
-  
-  const handleCloseLikeModal = () => {
-    setIsLikeModalOpen(false);
-  };
-  
-  const handleLikeProfile = (profileId: string) => {
-    console.log('Liked profile:', profileId);
-    // TODO: Implement like logic
-  };
-  
-  const handlePassProfile = (profileId: string) => {
-    console.log('Passed profile:', profileId);
-    // TODO: Implement pass logic
+    console.log('Open like modal - TODO: Implement');
   };
 
   return (
@@ -119,14 +67,7 @@ export default function MatchesPage() {
         />
       </div>
       
-      {/* Modal pour liker de nouveaux profils */}
-      <LikeProfileModal
-        profiles={mockProfilesToLike}
-        isOpen={isLikeModalOpen}
-        onClose={handleCloseLikeModal}
-        onLike={handleLikeProfile}
-        onPass={handlePassProfile}
-      />
+      {/* TODO: Implement modal pour liker de nouveaux profils */}
       </ResponsiveLayout>
     </div>
   );

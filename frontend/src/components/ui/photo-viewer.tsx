@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Heart, X as XIcon, Star, Zap, Crown } from 'lucide-react';
 import { Button } from './button';
 import { Badge } from './badge';
@@ -64,13 +64,13 @@ export function ProfilePhotoViewer({
     };
   }, [isOpen]);
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     setActiveIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
-  };
+  }, [photos.length]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     setActiveIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
-  };
+  }, [photos.length]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -96,26 +96,26 @@ export function ProfilePhotoViewer({
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (!isOpen) return;
-
-    switch (e.key) {
-      case 'Escape':
-        onClose();
-        break;
-      case 'ArrowLeft':
-        goToPrevious();
-        break;
-      case 'ArrowRight':
-        goToNext();
-        break;
-    }
-  };
-
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      switch (e.key) {
+        case 'Escape':
+          onClose();
+          break;
+        case 'ArrowLeft':
+          goToPrevious();
+          break;
+        case 'ArrowRight':
+          goToNext();
+          break;
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, onClose, goToPrevious, goToNext]);
 
   if (!isOpen) return null;
 

@@ -7,37 +7,37 @@ export function NotificationButton() {
     const [open, setOpen] = useState(false);
     const { notifications, clearNotifications, seen, setSeen } = Notification();
 
-    if (location.pathname === "/Accueil") return null;
-    if (location.pathname === "/InscriptionPage") return null;
+    if (location.pathname === "/login") return null;
+    if (location.pathname === "/inscription") return null;
 
     const maxValue = notifications.length
-        ? Math.max(...notifications.map(([_, value]) => value))
+        ? Math.max(...notifications.map(([, value]) => value))
         : -1;
 
     let imgSrc = "ExtinctBrasero.png";
 
     switch (maxValue) {
         case 0:
-            imgSrc = "BraseroGray.PNG";
+            imgSrc = "../BraseroGray.PNG";
             break;
         case 1:
-            imgSrc = "BraseroBlue.PNG";
+            imgSrc = "../BraseroBlue.PNG";
             break;
         case 2:
-            imgSrc = "BraseroPurple.PNG";
+            imgSrc = "../BraseroPurple.PNG";
             break;
         case 3:
-            imgSrc = "BraseroRed.PNG";
+            imgSrc = "../BraseroRed.PNG";
             break;
         case 4:
-            imgSrc = "BraseroGreen.PNG";
+            imgSrc = "../BraseroGreen.PNG";
             break;
         default:
-            imgSrc = "ExtinctBrasero.png";
+            imgSrc = "../ExtinctBrasero.png";
             break;
     }
 
-    if (seen) imgSrc = "ExtinctBrasero.png";
+    if (seen) imgSrc = "../ExtinctBrasero.png";
 
     const colorMap: { [key: number]: string } = {
         0: "bg-gray-500 text-white",

@@ -1,10 +1,10 @@
-import { Check } from 'lucide-react';
+import { Check, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RegistrationStep {
   id: number;
   title: string;
-  icon: any;
+  icon: LucideIcon;
 }
 
 interface ProgressBarProps {

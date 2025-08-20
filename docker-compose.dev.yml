@@ -5,7 +5,7 @@ services:
     environment:
       VITE_HOSTNAME: ${VITE_HOSTNAME:-localhost}
     volumes:
-      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./services/proxy/Caddyfile:/etc/caddy/Caddyfile:ro
     ports:
       - "8000:80"
       - "8443:443"
@@ -27,7 +27,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d
+      - ./services/database:/docker-entrypoint-initdb.d
     networks:
       - DB
     restart: unless-stopped
@@ -225,7 +225,7 @@ services:
     restart: unless-stopped
 
   user-creation:
-    build: ./user-creation
+    build: ./api/user-creation
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -236,8 +236,6 @@ services:
       - DB
     depends_on:
       - postgres
-    volumes:
-      - ./user-creation:/app
     restart: unless-stopped
 
 volumes:
