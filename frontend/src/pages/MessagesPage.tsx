@@ -98,7 +98,7 @@ export default function MessagesPage() {
   }, []);
 
   const handleMatchClick = (matchId: string) => {
-    navigate(`/chat/${matchId}`);
+    navigate(`/app/chat/${matchId}`);
   };
 
   const handleProfileClick = (match: typeof mockMatches[0]) => {

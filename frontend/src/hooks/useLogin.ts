@@ -40,8 +40,8 @@ export function useLogin() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // For demo, navigate to discover
-      navigate('/discover');
-    } catch (err) {
+      navigate('/app/discover');
+    } catch {
       setError('Identifiants incorrects');
     } finally {
       setIsLoading(false);

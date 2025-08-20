@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { TopBar } from '@/components/layout/TopBar';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
@@ -46,7 +46,6 @@ const mockMatch = {
 };
 
 export default function ChatPage() {
-  const { } = useParams(); // matchId unused for now
   const navigate = useNavigate();
   const [messages, setMessages] = useState(mockMessages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -75,7 +74,7 @@ export default function ChatPage() {
   };
 
   const handleBack = () => {
-    navigate('/messages');
+    navigate('/app/messages');
   };
 
   return (

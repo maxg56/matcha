@@ -8,22 +8,22 @@ const navItems = [
   {
     label: 'Découvrir',
     icon: Search,
-    href: '/discover',
+    href: '/app/discover',
   },
   {
     label: 'Likes',
     icon: Heart,
-    href: '/matches',
+    href: '/app/matches',
   },
   {
     label: 'Messages',
     icon: MessageCircle,
-    href: '/messages',
+    href: '/app/messages',
   },
   {
     label: 'Profil',
     icon: User,
-    href: '/profile',
+    href: '/app/profile',
   },
 ];
 
@@ -117,7 +117,7 @@ export function SideNavigation() {
 
       {/* Footer */}
       <div className="p-4 border-t border-border space-y-2">
-        <Link to="/settings">
+        <Link to="/app/settings">
           <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
             <Settings className="h-5 w-5" />
             Paramètres

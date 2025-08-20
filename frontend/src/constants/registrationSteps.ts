@@ -5,13 +5,14 @@ import {
   Wine, 
   Activity, 
   Heart, 
-  Star 
+  Star,
+  type LucideIcon
 } from 'lucide-react';
 
 interface RegistrationStep {
   id: number;
   title: string;
-  icon: any;
+  icon: LucideIcon;
 }
 
 export const registrationSteps: RegistrationStep[] = [

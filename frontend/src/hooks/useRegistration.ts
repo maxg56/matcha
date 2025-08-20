@@ -80,7 +80,7 @@ export function useRegistration() {
     try {
       console.log('Registration data:', formData);
       await new Promise(resolve => setTimeout(resolve, 2000));
-      navigate('/discover');
+      navigate('/app/discover');
     } catch (err) {
       console.error('Registration failed:', err);
     } finally {
