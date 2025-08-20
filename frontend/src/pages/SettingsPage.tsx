@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/hooks/useTheme';
 import { 
@@ -49,13 +48,7 @@ export default function SettingsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <ResponsiveLayout
-        title="Paramètres"
-        showNavigation={true}
-        maxWidth="lg"
-      >
-        <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6">
         {/* Notifications */}
         <SettingSection title="Notifications">
           <SettingItem
@@ -279,8 +272,6 @@ export default function SettingsPage() {
           <p>Matcha v1.0.0</p>
           <p className="mt-1">© 2025 Matcha. Tous droits réservés.</p>
         </div>
-        </div>
-      </ResponsiveLayout>
     </div>
   );
 }

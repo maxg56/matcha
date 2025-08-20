@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { useNavigate } from 'react-router-dom';
 import { ProfileModal } from '@/components/demo/ProfileModal';
 import { NewMatchesSection, ConversationsList } from '@/components/messages';
@@ -47,21 +46,6 @@ const mockMatches = [
     unread: false,
     matchedAt: 'Hier',
     commonInterests: ['Design', 'Café'],
-    isNew: false,
-  },
-  {
-    id: '3',
-    name: 'Julie',
-    age: 24,
-    image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop',
-    images: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop'
-    ],
-    lastMessage: 'À bientôt pour un café ☕',
-    timestamp: 'Mar',
-    unread: false,
-    matchedAt: 'Il y a 2 jours',
-    commonInterests: ['Yoga', 'Art'],
     isNew: false,
   },
   {
@@ -114,10 +98,9 @@ export default function MessagesPage() {
   const newMatches = mockMatches.filter(m => !m.lastMessage);
   const messagesMatches = mockMatches.filter(m => m.lastMessage);
 
-if (isMobile) {
-  return (
-    <ResponsiveLayout title="Messages" showNavigation={true}>
-      <div className="flex flex-col h-full">
+  if (isMobile) {
+    return (
+      <div className="flex flex-col min-h-full">
         {/* Nouveaux matchs en haut */}
         <div className="p-4 border-b border-border">
           <NewMatchesSection 
@@ -137,28 +120,26 @@ if (isMobile) {
           />
         </div>
       </div>
-    </ResponsiveLayout>
-  );
-}
-
+    );
+  }
 
   // Desktop layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <ResponsiveLayout title="Messages" showNavigation={true} maxWidth="full">
-        <div className="flex h-full">
-          <NewMatchesSection 
-            matches={newMatches} 
-            onMatchClick={handleMatchClick} 
-            isMobile={false}
-          />
-          <ConversationsList 
-            matches={messagesMatches} 
-            onMatchClick={handleMatchClick} 
-            isMobile={false}
-          />
-        </div>
-      
+    <>
+      <div className="flex min-h-full">
+        <NewMatchesSection 
+          matches={newMatches} 
+          onMatchClick={handleMatchClick} 
+          isMobile={false}
+        />
+        <ConversationsList 
+          matches={messagesMatches} 
+          onMatchClick={handleMatchClick} 
+          onProfileClick={handleProfileClick}
+          isMobile={false}
+        />
+      </div>
+    
       {selectedProfile && (
         <ProfileModal
           profile={selectedProfile}
@@ -168,8 +149,7 @@ if (isMobile) {
           onPass={(id) => console.log('Passed:', id)}
         />
       )}
-      </ResponsiveLayout>
-    </div>
+    </>
   );
 }
 

@@ -35,7 +35,7 @@ export function BottomNavigation() {
   }
 
   return (
-    <nav className="sticky bottom-0 z-50 bg-card/80 backdrop-blur-md border-t border-border">
+    <nav className="flex-shrink-0 z-50 bg-card/80 backdrop-blur-md border-t border-border">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;

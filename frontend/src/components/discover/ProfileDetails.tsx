@@ -22,7 +22,7 @@ export function ProfileDetails({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-end">
+    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-end z-50">
       <div className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-6 max-h-[70%] overflow-y-auto">
         <div className="space-y-6">
           <div>

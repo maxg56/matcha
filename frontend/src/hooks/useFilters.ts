@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useFiltersStore } from '@/stores/filtersStore';
 import type { FilterState } from '@/types/filters';
 
 export function useFilters() {
-  const [showFilters, setShowFilters] = useState(false);
+  const {
+    showFilters,
+    setShowFilters,
+    applyFilters,
+    discardChanges,
+  } = useFiltersStore();
 
   const handleFiltersChange = (filters: FilterState) => {
     console.log('Filters applied:', filters);
-    setShowFilters(false);
+    applyFilters();
   };
 
   const handleOpenFilters = () => {
@@ -14,7 +19,7 @@ export function useFilters() {
   };
 
   const handleCloseFilters = () => {
-    setShowFilters(false);
+    discardChanges();
   };
 
   return {

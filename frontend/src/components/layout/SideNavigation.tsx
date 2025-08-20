@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Search, User, Settings, LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+
 
 const navItems = [
   {
@@ -27,17 +30,41 @@ const navItems = [
   },
 ];
 
-const mockUser = {
-  name: 'Alex',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-  initials: 'AL'
+type MockUser = {
+  name: string;
+  avatar: string;
+  initials: string;
 };
 
 export function SideNavigation() {
   const location = useLocation();
+  const { logout, user } = useAuth();
+  
+  const [mockUser, setMockUser] = useState<MockUser>({
+    name: 'Alex',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    initials: 'AL'
+  });
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      setMockUser({
+        name: user.username || 'Utilisateur',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+        initials: user.username ? user.username.substring(0, 2).toUpperCase() : 'U'
+      });
+    }
+  }, [user]);
   return (
-    <aside className="w-80 bg-card border-r border-border flex flex-col">
+    <aside className="w-80 h-full bg-card border-r border-border flex flex-col flex-shrink-0">
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-6">
@@ -67,7 +94,7 @@ export function SideNavigation() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
@@ -116,7 +143,7 @@ export function SideNavigation() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border space-y-2">
+      <div className="p-4 border-t border-border space-y-2 flex-shrink-0">
         <Link to="/app/settings">
           <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
             <Settings className="h-5 w-5" />
@@ -124,7 +151,11 @@ export function SideNavigation() {
           </Button>
         </Link>
         
-        <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleLogout}
+        >
           <LogOut className="h-5 w-5" />
           Déconnexion
         </Button>

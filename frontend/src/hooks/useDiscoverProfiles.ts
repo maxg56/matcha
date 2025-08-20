@@ -1,62 +1,57 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useDiscoverStore } from '@/stores/discoverStore';
 
-interface Profile {
-  id: string;
-  name: string;
-  age: number;
-  images: string[];
-  bio: string;
-  location: string;
-  occupation: string;
-  interests: string[];
-  distance: number;
-}
-
-export function useDiscoverProfiles(initialProfiles: Profile[]) {
-  const [profiles] = useState(initialProfiles);
-  const [currentIndex, setCurrentIndex] = useState(0);
+export function useDiscoverProfiles() {
+  const {
+    profiles,
+    currentIndex,
+    hasMoreProfiles,
+    isLoading,
+    error,
+    fetchProfiles,
+    likeProfile,
+    dislikeProfile,
+    superLikeProfile,
+    reportProfile,
+  } = useDiscoverStore();
 
   const currentProfile = profiles[currentIndex];
-  const hasMoreProfiles = currentIndex < profiles.length - 1;
 
-  const nextProfile = () => {
-    if (hasMoreProfiles) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      setCurrentIndex(0); // Reset pour la demo
+  useEffect(() => {
+    if (profiles.length === 0 && !isLoading) {
+      fetchProfiles();
     }
+  }, [profiles.length, isLoading, fetchProfiles]);
+
+  const handleLike = (id: number) => {
+    likeProfile(id);
   };
 
-  const handleLike = (id: string) => {
-    console.log('Liked:', id);
-    nextProfile();
+  const handlePass = (id: number) => {
+    dislikeProfile(id);
   };
 
-  const handlePass = (id: string) => {
-    console.log('Passed:', id);
-    nextProfile();
+  const handleSuperLike = (id: number) => {
+    superLikeProfile(id);
   };
 
-  const handleSuperLike = (id: string) => {
-    console.log('Super liked:', id);
-    nextProfile();
-  };
-
-  const handleBoost = (id: string) => {
+  const handleBoost = (id: number) => {
     console.log('Boosted:', id);
   };
 
-  const handleMessage = (id: string) => {
+  const handleMessage = (id: number) => {
     console.log('Message:', id);
   };
 
-  const handleReport = (id: string) => {
-    console.log('Report:', id);
+  const handleReport = (id: number, reason: string = 'inappropriate') => {
+    reportProfile(id, reason);
   };
 
   return {
     currentProfile,
     hasMoreProfiles,
+    isLoading,
+    error,
     actions: {
       onLike: handleLike,
       onPass: handlePass,

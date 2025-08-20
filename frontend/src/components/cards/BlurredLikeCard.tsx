@@ -21,7 +21,7 @@ export function BlurredLikeCard({ like, onClick, className }: BlurredLikeCardPro
       onClick={handleClick}
       className={cn(
         "relative aspect-[3/4] rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer",
-        "hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg",
+        "hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg max-w-sm mx-auto",
         className
       )}
     >
@@ -29,7 +29,7 @@ export function BlurredLikeCard({ like, onClick, className }: BlurredLikeCardPro
       <img
         src={like.image}
         alt="Profil flouté"
-        className="w-full h-full object-cover filter blur-md"
+        className="w-full h-full object-cover object-center filter blur-md"
       />
       
       {/* Overlay gradient */}
@@ -102,7 +102,7 @@ export function BlurredLikesGrid({ likes, onLikeClick, className }: BlurredLikes
   }
 
   return (
-    <div className={cn("grid grid-cols-2 gap-4", className)}>
+    <div className={cn("grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4", className)}>
       {likes.map((like) => (
         <BlurredLikeCard
           key={like.id}
