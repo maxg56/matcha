@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import { ThemeProvider } from './contexts/ThemeContext'
 import InscriptionPage from './pages/InscriptionPage';
-import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import DiscoverPage from './pages/DiscoverPage';
 import MatchesPage from './pages/MatchesPage';
@@ -20,8 +19,7 @@ import { RootRedirect } from './components/RootRedirect';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
+      <BrowserRouter>
           <div className="min-h-screen bg-background text-foreground">
             <Routes>
               {/* Auth routes */}
@@ -44,7 +42,6 @@ createRoot(document.getElementById('root')!).render(
             </Routes>
           </div>
         </BrowserRouter>
-      </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
 )
