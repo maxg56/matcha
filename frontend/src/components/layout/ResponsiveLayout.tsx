@@ -22,7 +22,7 @@ export function ResponsiveLayout({
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 925);
     };
     
     checkMobile();
