@@ -108,8 +108,8 @@ export function SideNavigation() {
                   "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200",
                   "hover:bg-accent/50 active:scale-[0.98]",
                   isActive 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-gray-800/100" 
-                    : "text-muted-foreground hover:text-foreground text-white"
+                    ? "bg-chart-5 text-primary-foreground shadow-lg shadow-primary/25 hover:bg-gray-800/100" 
+                    : "text-muted-foreground hover:text-secondary-foreground text-white"
                 )}
               >
                 <Icon className={cn(
