@@ -101,7 +101,6 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
             unit="ans"
             onValueChange={(value) => updateFilter('ageRange', value as [number, number])}
           />
-
           <RangeFilter
             title="Distance"
             icon={<MapPin className="h-4 w-4" />}
