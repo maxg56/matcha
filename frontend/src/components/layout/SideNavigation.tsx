@@ -68,7 +68,7 @@ export function SideNavigation() {
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-white bg-primary rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white bg-primary rounded-full flex items-center justify-center">
             <img src="/public/EmojiMatcha.png" 
               className="h-12 w-12  text-primary-foreground fill-current" />
           </div>
@@ -113,10 +113,10 @@ export function SideNavigation() {
                 )}
               >
                 <Icon className={cn(
-                  "h-5 w-5 transition-transform duration-200 text-white",
+                  "h-5 w-5 transition-transform duration-200 text-primary",
                   isActive && "scale-110"
                 )} />
-                <span className="font-medium text-white">{item.label}</span>
+                <span className="font-medium text-primary">{item.label}</span>
               </Link>
             );
           })}
