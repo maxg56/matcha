@@ -10,16 +10,34 @@ export function Notification() {
     const [seen, setSeen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const newNotif = `Nouvelle notification ${notifications.length + 1}`;
-            const newColor = randomInt(5);
-            setNotifications(prev => [...prev, [newNotif, newColor]]);
-            setSeen(false);
-        }, 5000);
+    const userId = "123"; // remplacer par l'ID réel de l'utilisateur
+    const evtSource = new EventSource(`http://localhost:8005/api/v1/notifications/stream/${userId}`);
 
-        return () => clearInterval(interval);
-    }, [notifications.length]);
+    useEffect(() => {
+        evtSource.onmessage = function (event) {
+            const notification = JSON.parse(event.data);
+            // Ici tu peux afficher la notif dans l'UI
+            setNotifications(prev => [...prev, [notification.message, notification.kind]]);
+            setSeen(false);
+            evtSource.close();
+            console.log("rgejreg")
+        };
+        return () => {
+            // evtSource.close();
+        };
+        
+    });
+
+    // useEffect(() => {
+    //     const interval = setInterval(() => {
+    //         const newNotif = `Nouvelle notification ${notifications.length + 1}`;
+    //         const newColor = randomInt(5);
+    //         setNotifications(prev => [...prev, [newNotif, newColor]]);
+    //         setSeen(false);
+    //     }, 5000);
+
+    //     return () => clearInterval(interval);
+    // }, [notifications.length]);
 
     const clearNotifications = () => {
         setNotifications([]);
