@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Search, User, Settings, LogOut } from 'lucide-react';
+import { Heart, MessageCircle, Search, User, Settings, LogOut, Map } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,6 +27,11 @@ const navItems = [
     label: 'Profil',
     icon: User,
     href: '/app/profile',
+  },
+  {
+    label: 'Map',
+    icon: Map,
+    href: '/app/map',
   },
 ];
 
