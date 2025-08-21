@@ -14,7 +14,7 @@ export function NotificationButton() {
         ? Math.max(...notifications.map(([, value]) => value))
         : -1;
 
-    let imgSrc = "ExtinctBrasero.png";
+    let imgSrc = "../ExtinctBrasero.png";
 
     switch (maxValue) {
         case 0:
@@ -40,11 +40,11 @@ export function NotificationButton() {
     if (seen) imgSrc = "../ExtinctBrasero.png";
 
     const colorMap: { [key: number]: string } = {
-        0: "bg-gray-500 text-white",
-        1: "bg-blue-500 text-white",
-        2: "bg-purple-500 text-white",
-        3: "bg-red-500 text-white",
-        4: "bg-green-500 text-white",
+        0: "bg-gray-900 text-white",
+        1: "bg-blue-900 text-white",
+        2: "bg-purple-900 text-white",
+        3: "bg-red-900 text-white",
+        4: "bg-green-900 text-white",
         "-1": "text-gray-800",
     };
 
@@ -59,14 +59,14 @@ export function NotificationButton() {
     };
 
     return (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-500 ">
             <button onClick={handleClick} className="focus:outline-none">
                 <img src={imgSrc} alt="Notifications" className="w-12 h-12" />
             </button>
 
             {open && (
                 <div>
-                    <div className="h-48 mt-2 w-64 overflow-y-auto bg-white shadow-lg rounded-lg p-4">
+                    <div className="h-48 mt-2 w-64 overflow-y-auto bg-white shadow-lg rounded-lg p-4 bg-gradient-to-b from-gray-800 to-gray-900">
                         {notifications.length === 0 ? (
                             <p className="text-gray-500">Pas de notifications</p>
                         ) : (
@@ -81,7 +81,7 @@ export function NotificationButton() {
                     </div>
                     <div className="text-right">
                         <button
-                            className="bg-amber-200 ml-auto rounded"
+                            className="bg-amber-200 ml-auto rounded text-black"
                             onClick={clearNotifications}
                         >
                             clear all

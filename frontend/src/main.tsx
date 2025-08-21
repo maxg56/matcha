@@ -15,11 +15,13 @@ import SettingsPage from './pages/SettingsPage';
 import EditProfilePage from './pages/EditProfilePage';
 import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { RootRedirect } from './components/RootRedirect';
+import { NotificationButton } from './components/Notifications'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <BrowserRouter>
+        <NotificationButton />
           <div className="min-h-screen bg-background text-foreground">
             <Routes>
               {/* Auth routes */}

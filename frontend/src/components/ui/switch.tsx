@@ -31,7 +31,7 @@ export function Switch({ checked = false, onCheckedChange, disabled = false, cla
         isChecked 
           ? "bg-primary" 
           : "bg-muted",
-        disabled && "opacity-50 cursor-not-allowed",
+        disabled && "opacity-50 bg-gray-200 cursor-not-allowed",
         className
       )}
     >
