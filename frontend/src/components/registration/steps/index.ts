@@ -5,6 +5,5 @@ export { LifestyleStep } from './LifestyleStep';
 export { ActivityStep } from './ActivityStep';
 export { PersonalStep } from './PersonalStep';
 export { InterestsStep } from './InterestsStep';
-export { CompleteRegistrationStep } from './CompleteRegistrationStep';
 export { EmailVerificationStep } from './EmailVerificationStep';
 export { ImageUploadStep } from './ImageUploadStep';

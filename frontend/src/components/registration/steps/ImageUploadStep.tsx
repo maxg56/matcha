@@ -15,8 +15,6 @@ export const ImageUploadStep: React.FC = () => {
   const {
     isLoading,
     errors,
-    uploadImages,
-    prevStep,
   } = useRegistrationStore();
 
   const [images, setImages] = useState<ImagePreview[]>([]);
@@ -61,24 +59,11 @@ export const ImageUploadStep: React.FC = () => {
     });
   };
 
-  const handleUploadImages = async () => {
-    try {
-      // TODO: Implement actual image upload to media service
-      // For now, we'll just simulate the upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      await uploadImages();
-    } catch (error) {
-      console.error('Image upload failed:', error);
-    }
-  };
-
   const handleSkip = () => {
     // Skip image upload and go directly to the app
     window.location.href = '/app/discover';
   };
 
-  const canContinue = images.length >= 1; // At least 1 image required
   const canAddMore = images.length < maxImages;
 
   return (
@@ -172,32 +157,16 @@ export const ImageUploadStep: React.FC = () => {
           {images.length}/{maxImages} photos ajoutées
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-between space-x-2">
+        {/* Skip Option */}
+        <div className="text-center">
           <Button
             variant="outline"
-            onClick={prevStep}
+            onClick={handleSkip}
             disabled={isLoading}
+            className="mx-auto"
           >
-            Retour
+            Passer pour maintenant et finaliser mon profil
           </Button>
-
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              onClick={handleSkip}
-              disabled={isLoading}
-            >
-              Passer pour maintenant
-            </Button>
-
-            <Button
-              onClick={handleUploadImages}
-              disabled={!canContinue || isLoading}
-            >
-              {isLoading ? 'Téléchargement...' : 'Finaliser mon profil'}
-            </Button>
-          </div>
         </div>
 
         {images.length === 0 && (

@@ -1,41 +1,5 @@
 import { InputField } from '../InputField';
-
-interface RegistrationData {
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  birthDate: string;
-  gender: string;
-  sexPref: string;
-  height: number;
-  hairColor: string;
-  eyeColor: string;
-  skinColor: string;
-  alcoholConsumption: string;
-  smoking: string;
-  cannabis: string;
-  drugs: string;
-  pets: string;
-  socialActivityLevel: string;
-  sportActivity: string;
-  educationLevel: string;
-  bio: string;
-  birthCity: string;
-  currentCity: string;
-  job: string;
-  religion: string;
-  relationshipType: string;
-  childrenStatus: string;
-  politicalView: string;
-  tags: string[];
-}
-
-interface FieldValidationErrors {
-  [key: string]: string;
-}
+import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 
 interface AccountStepProps {
   formData: RegistrationData;

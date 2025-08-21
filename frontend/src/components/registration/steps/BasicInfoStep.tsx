@@ -2,43 +2,7 @@ import { InputField } from '../InputField';
 import { SelectField } from '../SelectField';
 import { HeightSlider } from '../HeightSlider';
 import { fieldOptions } from '@/types/registration';
-
-interface RegistrationData {
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  birthDate: string;
-  gender: string;
-  sexPref: string;
-  height: number;
-  hairColor: string;
-  eyeColor: string;
-  skinColor: string;
-  alcoholConsumption: string;
-  smoking: string;
-  cannabis: string;
-  drugs: string;
-  pets: string;
-  socialActivityLevel: string;
-  sportActivity: string;
-  educationLevel: string;
-  bio: string;
-  birthCity: string;
-  currentCity: string;
-  job: string;
-  religion: string;
-  relationshipType: string;
-  childrenStatus: string;
-  politicalView: string;
-  tags: string[];
-}
-
-interface FieldValidationErrors {
-  [key: string]: string;
-}
+import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 
 interface BasicInfoStepProps {
   formData: RegistrationData;
@@ -71,6 +35,14 @@ export function BasicInfoStep({ formData, errors, updateField }: BasicInfoStepPr
         onChange={(value) => updateField('sexPref', value)}
         options={fieldOptions.sexPref}
         error={errors.sexPref}
+      />
+
+      <SelectField
+        label="Type de relation recherché"
+        value={formData.relationshipType}
+        onChange={(value) => updateField('relationshipType', value)}
+        options={fieldOptions.relationshipType}
+        error={errors.relationshipType}
       />
 
       <HeightSlider

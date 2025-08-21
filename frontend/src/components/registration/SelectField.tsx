@@ -1,16 +1,16 @@
 import { cn } from '@/lib/utils';
 
 interface FieldOption {
-  value: string;
-  label: string;
-  icon: string;
+  readonly value: string;
+  readonly label: string;
+  readonly icon: string;
 }
 
 interface SelectFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: FieldOption[];
+  options: readonly FieldOption[];
   columns?: number;
   error?: string;
   className?: string;

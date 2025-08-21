@@ -17,28 +17,10 @@ export const EmailVerificationStep: React.FC = () => {
     setEmailVerificationCode,
     sendEmailVerification,
     verifyEmail,
-    nextStep,
-    prevStep,
   } = useRegistrationStore();
 
   const [countdown, setCountdown] = useState(0);
   const [canResend, setCanResend] = useState(true);
-
-  useEffect(() => {
-    // Send initial verification email when component mounts
-    if (!isEmailVerified && canResend) {
-      handleSendVerification();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0) {
-      setCanResend(true);
-    }
-  }, [countdown]);
 
   const handleSendVerification = async () => {
     try {
@@ -50,6 +32,23 @@ export const EmailVerificationStep: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    // Send initial verification email when component mounts
+    if (!isEmailVerified && canResend) {
+      handleSendVerification();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCanResend(true);
+    }
+  }, [countdown]);
+
   const handleVerifyCode = async () => {
     if (!emailVerificationCode.trim()) return;
     
@@ -58,12 +57,6 @@ export const EmailVerificationStep: React.FC = () => {
       // If successful, the store will automatically move to step 3
     } catch (error) {
       console.error('Email verification failed:', error);
-    }
-  };
-
-  const handleNext = () => {
-    if (isEmailVerified) {
-      nextStep();
     }
   };
 
@@ -147,23 +140,6 @@ export const EmailVerificationStep: React.FC = () => {
             </AlertDescription>
           </Alert>
         )}
-
-        <div className="flex justify-between space-x-2">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={isLoading}
-          >
-            Retour
-          </Button>
-          
-          <Button
-            onClick={handleNext}
-            disabled={!isEmailVerified || isLoading}
-          >
-            Continuer
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

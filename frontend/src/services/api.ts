@@ -37,21 +37,62 @@ class ApiService {
     };
 
     try {
+      console.log(`Making request to: ${url}`, { config });
       const response = await fetch(url, config);
-      const data: ApiResponse<T> = await response.json();
+      
+      // Log response details
+      console.log(`Response status: ${response.status}`, {
+        ok: response.ok,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      // Get response text first to handle both JSON and non-JSON responses
+      const responseText = await response.text();
+      console.log('Raw response text:', responseText.substring(0, 500));
+
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response received:', {
+          status: response.status,
+          contentType,
+          body: responseText.substring(0, 500)
+        });
+        
+        const error: ApiError = new Error(
+          `Server returned ${contentType || 'unknown content type'} instead of JSON. Status: ${response.status}. Response: ${responseText.substring(0, 200)}`
+        );
+        error.status = response.status;
+        throw error;
+      }
+
+      let data: ApiResponse<T>;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        console.error('Raw response that failed to parse:', responseText.substring(0, 500));
+        
+        throw new Error(`Invalid JSON response from server. Status: ${response.status}. Response: ${responseText.substring(0, 200)}`);
+      }
 
       if (!response.ok) {
-        const error: ApiError = new Error(data.error || `HTTP ${response.status}`);
+        console.error('API error response:', data);
+        const error: ApiError = new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
         error.status = response.status;
         throw error;
       }
 
       if (!data.success) {
+        console.error('API business logic error:', data);
         throw new Error(data.error || 'API request failed');
       }
 
+      console.log('API request successful:', data);
       return data.data!;
     } catch (error) {
+      console.error('API request failed:', { url, error });
       if (error instanceof Error) {
         throw error;
       }
