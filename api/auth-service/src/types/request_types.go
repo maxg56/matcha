@@ -59,3 +59,14 @@ type AvailabilityResponse struct {
 	Message     string   `json:"message,omitempty"`
 	Suggestions []string `json:"suggestions,omitempty"`
 }
+
+// EmailVerificationRequest represents email verification request
+type EmailVerificationRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// VerifyEmailRequest represents email verification code request
+type VerifyEmailRequest struct {
+	Email            string `json:"email" binding:"required,email"`
+	VerificationCode string `json:"verification_code" binding:"required"`
+}

@@ -40,6 +40,8 @@ func main() {
 			auth.GET("/verify", handlers.VerifyTokenHandler)
 			auth.POST("/forgot-password", handlers.ForgotPasswordHandler)
 			auth.POST("/reset-password", handlers.ResetPasswordHandler)
+			auth.POST("/send-email-verification", handlers.SendEmailVerificationHandler)
+			auth.POST("/verify-email", handlers.VerifyEmailHandler)
 		}
 	}
 
