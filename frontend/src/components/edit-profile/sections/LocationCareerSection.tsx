@@ -42,7 +42,6 @@ export function LocationCareerSection({
 						const { latitude, longitude } = position.coords;
 
 						try {
-							// Appel à l'API Nominatim pour récupérer la ville
 							const response = await fetch(
 								`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
 							);
