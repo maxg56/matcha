@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useRegistrationStore } from '@/stores/registrationStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Mail, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -61,86 +60,94 @@ export const EmailVerificationStep: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
-          {isEmailVerified ? (
-            <CheckCircle className="w-12 h-12 text-green-500" />
-          ) : (
-            <Mail className="w-12 h-12 text-blue-500" />
-          )}
+    <div className="space-y-6">
+      {/* Simple header consistent with other steps */}
+      <div className="text-center space-y-4">
+        
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            {isEmailVerified 
+              ? "Votre email a été vérifié avec succès. Vous pouvez continuer." 
+              : (
+                  <>
+                    Nous avons envoyé un code de vérification à <br />
+                    <span className="font-medium text-purple-600">{formData.email}</span>
+                  </>
+                )
+            }
+          </p>
         </div>
-        <CardTitle>Vérification de l'email</CardTitle>
-        <CardDescription>
-          {isEmailVerified 
-            ? "Votre email a été vérifié avec succès !" 
-            : `Nous avons envoyé un code de vérification à ${formData.email}`
-          }
-        </CardDescription>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-4">
-        {!isEmailVerified && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="verification-code">Code de vérification</Label>
+      {!isEmailVerified && (
+        <div className="max-w-sm mx-auto space-y-6">
+          {/* Code input */}
+          <div className="space-y-3">
+            <Label htmlFor="verification-code" className="text-center block font-medium">
+              Code de vérification
+            </Label>
+            <div className="relative">
               <Input
                 id="verification-code"
                 type="text"
-                placeholder="Entrez le code à 6 chiffres"
+                placeholder="123456"
                 value={emailVerificationCode}
                 onChange={(e) => setEmailVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
-                className={errors.emailVerificationCode ? 'border-red-500' : ''}
+                className={`text-center text-lg font-mono tracking-wider ${
+                  errors.emailVerificationCode ? 'border-red-500' : ''
+                }`}
               />
-              {errors.emailVerificationCode && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    {errors.emailVerificationCode}
-                  </AlertDescription>
-                </Alert>
+              {emailVerificationCode.length === 6 && (
+                <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
               )}
             </div>
+            
+            {errors.emailVerificationCode && (
+              <Alert variant="destructive" className="text-sm">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {errors.emailVerificationCode}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
 
-            <div className="flex flex-col space-y-2">
-              <Button
-                onClick={handleVerifyCode}
-                disabled={isLoading || emailVerificationCode.length !== 6}
-                className="w-full"
-              >
-                {isLoading ? 'Vérification...' : 'Vérifier le code'}
-              </Button>
+          {/* Action buttons */}
+          <div className="space-y-3">
+            <Button
+              onClick={handleVerifyCode}
+              disabled={isLoading || emailVerificationCode.length !== 6}
+              className="w-full"
+            >
+              {isLoading ? 'Vérification...' : 'Vérifier le code'}
+            </Button>
 
-              <Button
-                variant="outline"
-                onClick={handleSendVerification}
-                disabled={!canResend || isLoading}
-                className="w-full"
-              >
-                {countdown > 0 
-                  ? `Renvoyer le code (${countdown}s)` 
-                  : 'Renvoyer le code'
-                }
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={handleSendVerification}
+              disabled={!canResend || isLoading}
+              className="w-full"
+            >
+              {countdown > 0 
+                ? `Renvoyer le code (${countdown}s)` 
+                : 'Renvoyer le code'
+              }
+            </Button>
+          </div>
+        </div>
+      )}
 
-            <div className="text-sm text-muted-foreground text-center">
-              <p>Vous n'avez pas reçu le code ?</p>
-              <p>Vérifiez votre dossier spam ou cliquez sur "Renvoyer le code"</p>
-            </div>
-          </>
-        )}
-
-        {isEmailVerified && (
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>
+      {isEmailVerified && (
+        <div className="max-w-sm mx-auto">
+          <Alert className="bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
               Email vérifié ! Vous pouvez maintenant continuer vers l'étape suivante.
             </AlertDescription>
           </Alert>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 };

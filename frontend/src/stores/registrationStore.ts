@@ -98,14 +98,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
             if (formData.password !== formData.confirmPassword) {
               newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
             }
-            break;
-          
-          case 2: // Email Verification
-            if (!emailVerificationCode.trim()) newErrors.emailVerificationCode = 'Code de vérification requis';
-            if (!isEmailVerified) newErrors.emailVerificationCode = 'Email non vérifié';
-            break;
-
-          case 3: // Basic Info Step
+            // Essential fields required by backend
             if (!formData.birthDate) newErrors.birthDate = 'Date de naissance requise';
             if (!formData.gender) newErrors.gender = 'Genre requis';
             if (!formData.sexPref) newErrors.sexPref = 'Préférence requise';
@@ -120,6 +113,15 @@ export const useRegistrationStore = create<RegistrationStore>()(
                 newErrors.birthDate = 'Vous devez avoir au moins 18 ans';
               }
             }
+            break;
+          
+          case 2: // Email Verification
+            if (!emailVerificationCode.trim()) newErrors.emailVerificationCode = 'Code de vérification requis';
+            if (!isEmailVerified) newErrors.emailVerificationCode = 'Email non vérifié';
+            break;
+
+          case 3: // Basic Info Step - now just height
+            // Height is optional, no validation needed
             break;
 
           case 4: // Appearance Step
@@ -181,19 +183,18 @@ export const useRegistrationStore = create<RegistrationStore>()(
               formData.password &&
               formData.confirmPassword &&
               formData.password === formData.confirmPassword &&
-              formData.password.length >= 8
-            );
-          
-          case 2: // Email verification
-            return isEmailVerified;
-          
-          case 3: // Basic Info Step
-            return !!(
+              formData.password.length >= 8 &&
               formData.birthDate &&
               formData.gender &&
               formData.sexPref &&
               formData.relationshipType
             );
+          
+          case 2: // Email verification
+            return isEmailVerified;
+          
+          case 3: // Basic Info Step - now just height
+            return true; // Height is optional, can always continue
 
           case 4: // Appearance Step
             return !!(
@@ -245,8 +246,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
       nextStep: () => {
         const { currentStep, validateStep, isAccountCreated } = get();
         if (validateStep(currentStep)) {
-          // If we're finishing step 3 (Basic Info) and account not created yet, create it
-          if (currentStep === 3 && !isAccountCreated) {
+          // If we're finishing step 1 (Account Info) and account not created yet, create it
+          if (currentStep === 1 && !isAccountCreated) {
             get().submitRegistration();
           } else {
             set({ currentStep: currentStep + 1 });
@@ -266,8 +267,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({ isSubmitting: true, isLoading: true });
         
         try {
-          if (currentStep === 3) {
-            // Step 3: Create account with all required backend fields
+          if (currentStep === 1) {
+            // Step 1: Create account with all required backend fields
             const basicPayload = {
               username: formData.username,
               email: formData.email,
@@ -277,10 +278,10 @@ export const useRegistrationStore = create<RegistrationStore>()(
               birth_date: formData.birthDate,
               gender: formData.gender,
               sex_pref: formData.sexPref,
-              relationship_type: formData.relationshipType || 'long_term' // Default value if not set yet
+              relationship_type: formData.relationshipType
             };
 
-            console.log('Creating account with required fields:', basicPayload);
+            console.log('Creating account after step 1 with basic fields:', basicPayload);
             await useAuthStore.getState().register(basicPayload);
             
             // Mark account as created and move to email verification

@@ -13,37 +13,12 @@ interface BasicInfoStepProps {
 export function BasicInfoStep({ formData, errors, updateField }: BasicInfoStepProps) {
   return (
     <div className="space-y-6">
-      <InputField
-        label="Date de naissance"
-        type="date"
-        value={formData.birthDate}
-        onChange={(value) => updateField('birthDate', value)}
-        error={errors.birthDate}
-      />
-
-      <SelectField
-        label="Genre"
-        value={formData.gender}
-        onChange={(value) => updateField('gender', value)}
-        options={fieldOptions.gender}
-        error={errors.gender}
-      />
-
-      <SelectField
-        label="Intéressé(e) par"
-        value={formData.sexPref}
-        onChange={(value) => updateField('sexPref', value)}
-        options={fieldOptions.sexPref}
-        error={errors.sexPref}
-      />
-
-      <SelectField
-        label="Type de relation recherché"
-        value={formData.relationshipType}
-        onChange={(value) => updateField('relationshipType', value)}
-        options={fieldOptions.relationshipType}
-        error={errors.relationshipType}
-      />
+      <div className="text-center space-y-2">
+        <h2 className="text-xl font-semibold">Informations complémentaires</h2>
+        <p className="text-sm text-gray-500">
+          Complétez votre profil avec quelques détails supplémentaires
+        </p>
+      </div>
 
       <HeightSlider
         label="Taille"
