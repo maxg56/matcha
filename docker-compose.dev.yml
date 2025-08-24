@@ -190,6 +190,8 @@ services:
       PORT: 8005
       FLASK_ENV: development
       FLASK_DEBUG: 1
+    ports:
+      - "8005:8005"
     volumes:
       - ./api/notify-service/src:/app/src:ro
     depends_on:

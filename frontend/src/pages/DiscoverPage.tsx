@@ -62,7 +62,7 @@ export default function DiscoverPage() {
         onMoreOptions={handleMoreOptions}
       />
       {/* Main content - profil */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
         {currentProfile ? (
           <ProfileCard
             profile={currentProfile}

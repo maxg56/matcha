@@ -1,27 +1,19 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { 
-  X, 
-  Calendar, 
-  MapPin, 
-  Ruler, 
-  Heart,
-  GraduationCap,
-  Church,
-  Palette,
-  Wine,
-  Star
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Calendar, MapPin, Ruler, Heart, GraduationCap, Church, Palette, Wine, Star } from 'lucide-react';
 import type { FilterState } from '@/types/filters';
+import { FilterHeader } from './FilterHeader';
+import { FilterSection } from './FilterSection';
+import { ShowMeFilter } from './ShowMeFilter';
+import { RangeFilter } from './RangeFilter';
+import { MultiSelectFilter } from './MultiSelectFilter';
+import { TagsFilter } from './TagsFilter';
+import { filterOptions } from './FilterOptions';
 
 interface FiltersProps {
   onClose: () => void;
   onApply: (filters: FilterState) => void;
   initialFilters?: Partial<FilterState>;
 }
-
 
 const defaultFilters: FilterState = {
   ageRange: [18, 65],
@@ -48,76 +40,6 @@ const defaultFilters: FilterState = {
   tags: []
 };
 
-const filterOptions = {
-  showMe: [
-    { value: 'woman', label: 'Femmes', icon: '👩' },
-    { value: 'man', label: 'Hommes', icon: '👨' },
-    { value: 'both', label: 'Tout le monde', icon: '👫' }
-  ],
-  hairColors: [
-    { value: 'black', label: 'Noirs', icon: '⚫' },
-    { value: 'brown', label: 'Bruns', icon: '🤎' },
-    { value: 'blonde', label: 'Blonds', icon: '🟡' },
-    { value: 'red', label: 'Roux', icon: '🔴' },
-    { value: 'gray', label: 'Gris', icon: '⚪' },
-    { value: 'white', label: 'Blancs', icon: '⚪' }
-  ],
-  eyeColors: [
-    { value: 'brown', label: 'Marron', icon: '🤎' },
-    { value: 'blue', label: 'Bleus', icon: '🔵' },
-    { value: 'green', label: 'Verts', icon: '🟢' },
-    { value: 'hazel', label: 'Noisette', icon: '🟤' },
-    { value: 'gray', label: 'Gris', icon: '⚪' },
-    { value: 'black', label: 'Noirs', icon: '⚫' }
-  ],
-  alcoholConsumption: [
-    { value: 'yes', label: 'Oui', icon: '🍷' },
-    { value: 'sometimes', label: 'Parfois', icon: '🥂' },
-    { value: 'no', label: 'Non', icon: '🚫' }
-  ],
-  smoking: [
-    { value: 'yes', label: 'Oui', icon: '🚬' },
-    { value: 'sometimes', label: 'Parfois', icon: '💨' },
-    { value: 'no', label: 'Non', icon: '🚭' }
-  ],
-  educationLevel: [
-    { value: 'high_school', label: 'Lycée', icon: '🎓' },
-    { value: 'bachelor', label: 'Licence', icon: '📜' },
-    { value: 'master', label: 'Master', icon: '🏆' },
-    { value: 'doctorate', label: 'Doctorat', icon: '👨‍🎓' }
-  ],
-  religion: [
-    { value: 'christianity', label: 'Christianisme', icon: '✝️' },
-    { value: 'islam', label: 'Islam', icon: '☪️' },
-    { value: 'hinduism', label: 'Hindouisme', icon: '🕉️' },
-    { value: 'buddhism', label: 'Bouddhisme', icon: '☸️' },
-    { value: 'atheism', label: 'Athéisme', icon: '🔬' }
-  ],
-  relationshipType: [
-    { value: 'friendship', label: 'Amitié', icon: '👫' },
-    { value: 'short_term', label: 'Court terme', icon: '💕' },
-    { value: 'long_term', label: 'Long terme', icon: '💖' },
-    { value: 'life', label: 'Vie', icon: '💍' }
-  ],
-  childrenStatus: [
-    { value: 'yes', label: 'Avec enfants', icon: '👶' },
-    { value: 'no', label: 'Sans enfants', icon: '🚫' }
-  ],
-  activityLevel: [
-    { value: 'low', label: 'Faible', icon: '🛋️' },
-    { value: 'medium', label: 'Modéré', icon: '🚶' },
-    { value: 'high', label: 'Élevé', icon: '🏃' }
-  ]
-};
-
-const availableTags = [
-  '🌍 Voyage', '🍳 Cuisine', '🚴 Sport', '🏋️ Fitness',
-  '🎮 Jeux vidéo', '📚 Lecture', '🎶 Musique', '🎨 Art & Créativité',
-  '🐶 Amoureux des animaux', '🌱 Écologie & nature', '🎥 Cinéma & séries',
-  '💃 Danse', '📷 Photographie', '🚀 Tech & innovation',
-  '🍷 Gastronomie & vin', '👨‍💻 Code avec vim', '⛰️ Randonnée & plein air'
-];
-
 export function FiltersScreen({ onClose, onApply, initialFilters = {} }: FiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
     ...defaultFilters,
@@ -130,10 +52,7 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const toggleArrayFilter = <K extends keyof FilterState>(
-    key: K, 
-    value: string
-  ) => {
+  const toggleArrayFilter = <K extends keyof FilterState>(key: K, value: string) => {
     const currentArray = filters[key] as string[];
     const newArray = currentArray.includes(value)
       ? currentArray.filter(item => item !== value)
@@ -150,174 +69,69 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
     onClose();
   };
 
-  const FilterSection = ({ 
-    title, 
-    icon, 
-    children, 
-    sectionKey 
-  }: { 
-    title: string; 
-    icon: React.ReactNode; 
-    children: React.ReactNode; 
-    sectionKey: string;
-  }) => (
-    <div className="mb-6">
-      <button
-        onClick={() => setActiveSection(activeSection === sectionKey ? null : sectionKey)}
-        className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg"
-      >
-        <div className="flex items-center gap-3">
-          <div className="text-primary">{icon}</div>
-          <h3 className="font-semibold text-foreground">{title}</h3>
-        </div>
-        <div className={cn(
-          "transition-transform duration-200",
-          activeSection === sectionKey ? "rotate-180" : "rotate-0"
-        )}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
-      
-      {activeSection === sectionKey && (
-        <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-
-  const MultiSelectFilter = ({ 
-    options, 
-    selectedValues, 
-    onToggle 
-  }: { 
-    options: Array<{value: string, label: string, icon: string}>; 
-    selectedValues: string[]; 
-    onToggle: (value: string) => void;
-  }) => (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-      {options.map(option => (
-        <button
-          key={option.value}
-          onClick={() => onToggle(option.value)}
-          className={cn(
-            "p-2 md:p-3 rounded-lg border text-xs md:text-sm font-medium transition-all duration-300",
-            "flex items-center gap-1 md:gap-2 justify-center shadow-lg",
-            selectedValues.includes(option.value)
-              ? "bg-purple-500 text-white border-purple-500"
-              : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-          )}
-        >
-          <span>{option.icon}</span>
-          <span>{option.label}</span>
-        </button>
-      ))}
-    </div>
-  );
+  const handleToggleSection = (sectionKey: string) => {
+    setActiveSection(activeSection === sectionKey ? null : sectionKey);
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10 shadow-xl">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-bold">Filtres</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={resetFilters} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600">
-            Réinitialiser
-          </Button>
-          <Button onClick={applyFilters} className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white shadow-lg">
-            Appliquer
-          </Button>
-        </div>
-      </div>
+    <div className="fixed pr-20 inset-0 z-50 bg-white dark:bg-gray-900 overflow">
+      <FilterHeader onClose={onClose} onReset={resetFilters} onApply={applyFilters} />
 
-      {/* Content */}
       <div className="p-4 pb-20 max-w-2xl mx-auto">
         {/* Basic Filters */}
-        <FilterSection title="Préférences de base" icon={<Heart className="h-5 w-5" />} sectionKey="basic">
-          {/* Show Me */}
-          <div className="mb-6">
-            <h4 className="font-medium mb-3">Qui souhaitez-vous voir ?</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {filterOptions.showMe.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => updateFilter('showMe', option.value as 'woman' | 'man' | 'both')}
-                  className={cn(
-                    "p-3 rounded-lg border text-sm font-medium transition-colors",
-                    "flex flex-col items-center gap-1",
-                    filters.showMe === option.value
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background border-border hover:bg-accent"
-                  )}
-                >
-                  <span className="text-lg">{option.icon}</span>
-                  <span>{option.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        <FilterSection 
+          title="Préférences de base" 
+          icon={<Heart className="h-5 w-5" />} 
+          sectionKey="basic"
+          activeSection={activeSection}
+          onToggleSection={handleToggleSection}
+        >
+          <ShowMeFilter
+            selectedValue={filters.showMe}
+            onValueChange={(value) => updateFilter('showMe', value)}
+          />
 
-          {/* Age Range */}
-          <div className="mb-6">
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Âge: {filters.ageRange[0]} - {filters.ageRange[1]} ans
-            </h4>
-            <div className="px-2">
-              <Slider
-                value={filters.ageRange}
-                min={18}
-                max={65}
-                step={1}
-                onValueChange={(value) => updateFilter('ageRange', value as [number, number])}
-              />
-            </div>
-          </div>
+          <RangeFilter
+            title="Âge"
+            icon={<Calendar className="h-4 w-4" />}
+            value={filters.ageRange}
+            min={18}
+            max={65}
+            step={1}
+            unit="ans"
+            onValueChange={(value) => updateFilter('ageRange', value as [number, number])}
+          />
+          <RangeFilter
+            title="Distance"
+            icon={<MapPin className="h-4 w-4" />}
+            value={filters.distance}
+            min={1}
+            max={100}
+            step={1}
+            unit="km"
+            onValueChange={(value) => updateFilter('distance', value as number)}
+          />
 
-          {/* Distance */}
-          <div className="mb-6">
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Distance: {filters.distance} km
-            </h4>
-            <div className="px-2">
-              <Slider
-                value={[filters.distance]}
-                min={1}
-                max={100}
-                step={1}
-                onValueChange={(value) => updateFilter('distance', value[0])}
-              />
-            </div>
-          </div>
-
-          {/* Height Range */}
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Ruler className="h-4 w-4" />
-              Taille: {filters.heightRange[0]} - {filters.heightRange[1]} cm
-            </h4>
-            <div className="px-2">
-              <Slider
-                value={filters.heightRange}
-                min={140}
-                max={220}
-                step={1}
-                onValueChange={(value) => updateFilter('heightRange', value as [number, number])}
-              />
-            </div>
-          </div>
+          <RangeFilter
+            title="Taille"
+            icon={<Ruler className="h-4 w-4" />}
+            value={filters.heightRange}
+            min={140}
+            max={220}
+            step={1}
+            unit="cm"
+            onValueChange={(value) => updateFilter('heightRange', value as [number, number])}
+          />
         </FilterSection>
 
         {/* Physical Attributes */}
-        <FilterSection title="Apparence physique" icon={<Palette className="h-5 w-5" />} sectionKey="physical">
+        <FilterSection 
+          title="Apparence physique" 
+          icon={<Palette className="h-5 w-5" />} 
+          sectionKey="physical"
+          activeSection={activeSection}
+          onToggleSection={handleToggleSection}
+        >
           <div className="space-y-6">
             <div>
               <h4 className="font-medium mb-3">Couleur des cheveux</h4>
@@ -336,11 +150,26 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
                 onToggle={(value) => toggleArrayFilter('eyeColors', value)}
               />
             </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Couleur de peau</h4>
+              <MultiSelectFilter
+                options={filterOptions.skinColors}
+                selectedValues={filters.skinColors}
+                onToggle={(value) => toggleArrayFilter('skinColors', value)}
+              />
+            </div>
           </div>
         </FilterSection>
 
         {/* Lifestyle */}
-        <FilterSection title="Style de vie" icon={<Wine className="h-5 w-5" />} sectionKey="lifestyle">
+        <FilterSection 
+          title="Style de vie" 
+          icon={<Wine className="h-5 w-5" />} 
+          sectionKey="lifestyle"
+          activeSection={activeSection}
+          onToggleSection={handleToggleSection}
+        >
           <div className="space-y-6">
             <div>
               <h4 className="font-medium mb-3">Consommation d'alcool</h4>
@@ -359,11 +188,62 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
                 onToggle={(value) => toggleArrayFilter('smoking', value)}
               />
             </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Cannabis</h4>
+              <MultiSelectFilter
+                options={filterOptions.cannabis}
+                selectedValues={filters.cannabis}
+                onToggle={(value) => toggleArrayFilter('cannabis', value)}
+              />
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Drogues</h4>
+              <MultiSelectFilter
+                options={filterOptions.drugs}
+                selectedValues={filters.drugs}
+                onToggle={(value) => toggleArrayFilter('drugs', value)}
+              />
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Animaux de compagnie</h4>
+              <MultiSelectFilter
+                options={filterOptions.pets}
+                selectedValues={filters.pets}
+                onToggle={(value) => toggleArrayFilter('pets', value)}
+              />
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Niveau d'activité sociale</h4>
+              <MultiSelectFilter
+                options={filterOptions.socialActivityLevel}
+                selectedValues={filters.socialActivityLevel}
+                onToggle={(value) => toggleArrayFilter('socialActivityLevel', value)}
+              />
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Activité sportive</h4>
+              <MultiSelectFilter
+                options={filterOptions.sportActivity}
+                selectedValues={filters.sportActivity}
+                onToggle={(value) => toggleArrayFilter('sportActivity', value)}
+              />
+            </div>
           </div>
         </FilterSection>
 
         {/* Education & Career */}
-        <FilterSection title="Éducation & Carrière" icon={<GraduationCap className="h-5 w-5" />} sectionKey="education">
+        <FilterSection 
+          title="Éducation & Carrière" 
+          icon={<GraduationCap className="h-5 w-5" />} 
+          sectionKey="education"
+          activeSection={activeSection}
+          onToggleSection={handleToggleSection}
+        >
           <div>
             <h4 className="font-medium mb-3">Niveau d'éducation</h4>
             <MultiSelectFilter
@@ -375,7 +255,13 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
         </FilterSection>
 
         {/* Personal Values */}
-        <FilterSection title="Valeurs personnelles" icon={<Church className="h-5 w-5" />} sectionKey="values">
+        <FilterSection 
+          title="Valeurs personnelles" 
+          icon={<Church className="h-5 w-5" />} 
+          sectionKey="values"
+          activeSection={activeSection}
+          onToggleSection={handleToggleSection}
+        >
           <div className="space-y-6">
             <div>
               <h4 className="font-medium mb-3">Religion</h4>
@@ -403,30 +289,30 @@ export function FiltersScreen({ onClose, onApply, initialFilters = {} }: Filters
                 onToggle={(value) => toggleArrayFilter('childrenStatus', value)}
               />
             </div>
+
+            <div>
+              <h4 className="font-medium mb-3">Opinion politique</h4>
+              <MultiSelectFilter
+                options={filterOptions.politicalView}
+                selectedValues={filters.politicalView}
+                onToggle={(value) => toggleArrayFilter('politicalView', value)}
+              />
+            </div>
           </div>
         </FilterSection>
 
         {/* Interests/Tags */}
-        <FilterSection title="Centres d'intérêt" icon={<Star className="h-5 w-5" />} sectionKey="interests">
-          <div>
-            <h4 className="font-medium mb-3">Tags</h4>
-            <div className="flex flex-wrap gap-2">
-              {availableTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => toggleArrayFilter('tags', tag)}
-                  className={cn(
-                    "px-3 py-2 rounded-full text-sm font-medium transition-colors",
-                    filters.tags.includes(tag)
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-accent"
-                  )}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
+        <FilterSection 
+          title="Centres d'intérêt" 
+          icon={<Star className="h-5 w-5" />} 
+          sectionKey="interests"
+          activeSection={activeSection}
+          onToggleSection={handleToggleSection}
+        >
+          <TagsFilter
+            selectedTags={filters.tags}
+            onToggle={(tag) => toggleArrayFilter('tags', tag)}
+          />
         </FilterSection>
       </div>
     </div>
