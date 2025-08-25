@@ -16,6 +16,10 @@ interface LoginFormProps {
   showPassword: boolean;
   isLoading: boolean;
   error: string;
+  fieldErrors?: {
+    login?: string;
+    password?: string;
+  };
   isFormValid: boolean;
   isEmail: (str: string) => boolean;
   onInputChange: (field: 'login' | 'password', value: string) => void;
@@ -29,6 +33,7 @@ export function LoginForm({
   showPassword,
   isLoading,
   error,
+  fieldErrors,
   isFormValid,
   isEmail,
   onInputChange,
@@ -44,7 +49,9 @@ export function LoginForm({
           Pseudo ou Email
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
+            fieldErrors?.login ? 'text-red-400' : 'text-gray-400'
+          }`}>
             {isEmail(formData.login) ? (
               <Mail className="h-5 w-5" />
             ) : (
@@ -55,11 +62,26 @@ export function LoginForm({
             type="text"
             value={formData.login}
             onChange={(e) => onInputChange('login', e.target.value)}
-            className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+            className={`w-full pl-11 py-3 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-200 ${
+              fieldErrors?.login
+                ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500 pr-11'
+                : 'border-gray-300 dark:border-gray-600 focus:ring-purple-500 focus:border-transparent pr-4'
+            }`}
             placeholder="votre.email@exemple.com ou @pseudo"
             autoComplete="username"
           />
+          {fieldErrors?.login && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          )}
         </div>
+        {fieldErrors?.login && (
+          <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-600 dark:text-red-400">{fieldErrors.login}</p>
+          </div>
+        )}
       </div>
 
       {/* Password Field */}
@@ -68,17 +90,28 @@ export function LoginForm({
           Mot de passe
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
+            fieldErrors?.password ? 'text-red-400' : 'text-gray-400'
+          }`}>
             <Lock className="h-5 w-5" />
           </div>
           <input
             type={showPassword ? 'text' : 'password'}
             value={formData.password}
             onChange={(e) => onInputChange('password', e.target.value)}
-            className="w-full pl-11 pr-11 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+            className={`w-full pl-11 py-3 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-200 ${
+              fieldErrors?.password
+                ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500 pr-20'
+                : 'border-gray-300 dark:border-gray-600 focus:ring-purple-500 focus:border-transparent pr-11'
+            }`}
             placeholder="Votre mot de passe"
             autoComplete="current-password"
           />
+          {fieldErrors?.password && (
+            <div className="absolute right-12 top-1/2 transform -translate-y-1/2 text-red-500">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          )}
           <button
             type="button"
             onClick={onTogglePassword}
@@ -91,6 +124,12 @@ export function LoginForm({
             )}
           </button>
         </div>
+        {fieldErrors?.password && (
+          <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-600 dark:text-red-400">{fieldErrors.password}</p>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}

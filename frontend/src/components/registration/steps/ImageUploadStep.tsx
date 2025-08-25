@@ -15,6 +15,7 @@ export const ImageUploadStep: React.FC = () => {
   const {
     isLoading,
     errors,
+    uploadImages,
   } = useRegistrationStore();
 
   const [images, setImages] = useState<ImagePreview[]>([]);
@@ -62,6 +63,20 @@ export const ImageUploadStep: React.FC = () => {
   const handleSkip = () => {
     // Skip image upload and go directly to the app
     window.location.href = '/app/discover';
+  };
+
+  const handleUpload = async () => {
+    if (images.length === 0) {
+      handleSkip();
+      return;
+    }
+
+    try {
+      const files = images.map(img => img.file);
+      await uploadImages(files);
+    } catch (error) {
+      console.error('Failed to upload images:', error);
+    }
   };
 
   const canAddMore = images.length < maxImages;
@@ -157,13 +172,29 @@ export const ImageUploadStep: React.FC = () => {
           {images.length}/{maxImages} photos ajoutées
         </div>
 
-        {/* Skip Option */}
-        <div className="text-center">
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center">
+          {images.length > 0 && (
+            <Button
+              onClick={handleUpload}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Téléchargement...
+                </>
+              ) : (
+                `Télécharger ${images.length} photo${images.length > 1 ? 's' : ''}`
+              )}
+            </Button>
+          )}
+          
           <Button
             variant="outline"
             onClick={handleSkip}
             disabled={isLoading}
-            className="mx-auto"
           >
             Passer pour maintenant et finaliser mon profil
           </Button>

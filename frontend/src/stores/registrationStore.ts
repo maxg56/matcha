@@ -443,12 +443,32 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
 
       // Image upload method
-      uploadImages: async () => {
+      uploadImages: async (files: File[]) => {
         set({ isLoading: true });
         
         try {
-          // TODO: Implement image upload logic
-          console.log('Images uploaded successfully');
+          const uploadPromises = files.map(async (file) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('/api/v1/media/upload', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+              },
+              body: formData,
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to upload ${file.name}`);
+            }
+            
+            const result = await response.json();
+            return result.data;
+          });
+          
+          const uploadResults = await Promise.all(uploadPromises);
+          console.log('Images uploaded successfully:', uploadResults);
           
           // Finalize registration by redirecting to app
           window.location.href = '/app/discover';

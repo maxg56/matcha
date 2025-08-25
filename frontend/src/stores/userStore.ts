@@ -116,9 +116,9 @@ export const useUserStore = create<UserStore>()(
         
         try {
           const formData = new FormData();
-          formData.append('image', file);
+          formData.append('file', file);
           
-          const response = await fetch('/media-service/upload', {
+          const response = await fetch('/api/v1/media/upload', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
@@ -133,8 +133,10 @@ export const useUserStore = create<UserStore>()(
           const result = await response.json();
           
           const currentProfile = useUserStore.getState().profile;
-          if (currentProfile) {
-            const updatedImages = [...currentProfile.images, result.data.image_url];
+          if (currentProfile && result.data) {
+            // Le service média retourne { data: { url: "...", filename: "..." } }
+            const imageUrl = result.data.url;
+            const updatedImages = [...currentProfile.images, imageUrl];
             set({
               profile: { ...currentProfile, images: updatedImages },
               isLoading: false,
@@ -154,7 +156,7 @@ export const useUserStore = create<UserStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          await apiService.delete(`/api/v1/media/images/${imageId}`);
+          await apiService.delete(`/api/v1/media/delete/${imageId}`);
           
           const currentProfile = useUserStore.getState().profile;
           if (currentProfile) {
