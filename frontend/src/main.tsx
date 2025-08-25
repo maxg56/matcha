@@ -28,7 +28,7 @@ createRoot(document.getElementById('root')!).render(
             <Routes>
               {/* Auth routes */}
               <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
-              <Route path="/inscription" element={<ProtectedRoute requireAuth={false}><InscriptionPage /></ProtectedRoute>} />
+              <Route path="/inscription" element={<InscriptionPage />} />
             
               {/* Main app routes */}
               <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
