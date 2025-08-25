@@ -27,7 +27,8 @@ export default function InscriptionPage() {
     toggleTag,
     canContinue,
     nextStep,
-    prevStep
+    prevStep,
+    completeRegistration
   } = useRegistration();
 
 
@@ -117,7 +118,7 @@ export default function InscriptionPage() {
                 </Button>
               ) : (
                 <Button
-                  onClick={() => window.location.href = '/app/discover'}
+                  onClick={completeRegistration}
                   disabled={isLoading}
                   className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
                 >

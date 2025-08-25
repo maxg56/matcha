@@ -4,6 +4,7 @@ import type { RegistrationData, FieldValidationErrors } from '@/types/registrati
 import { defaultRegistrationData } from '@/types/registration';
 import { useAuthStore } from './authStore';
 import { authService } from '@/services/auth';
+import { useUserStore } from './userStore';
 
 interface RegistrationState {
   formData: RegistrationData;
@@ -30,6 +31,7 @@ interface RegistrationActions {
   nextStep: () => void;
   prevStep: () => void;
   submitRegistration: () => Promise<void>;
+  completeRegistration: () => Promise<void>;
   resetForm: () => void;
   checkUsernameAvailability: (username: string) => Promise<boolean>;
   checkEmailAvailability: (email: string) => Promise<boolean>;
@@ -290,14 +292,66 @@ export const useRegistrationStore = create<RegistrationStore>()(
               currentStep: 2 
             });
             
-          } else {
-            // Final step: Complete registration
-            console.log('Registration completed, redirecting to app');
-            window.location.href = '/app/discover';
           }
           
         } catch (error) {
           console.error('Registration failed:', error);
+          throw error;
+        } finally {
+          set({ isSubmitting: false, isLoading: false });
+        }
+      },
+
+      completeRegistration: async () => {
+        const { formData, isAccountCreated } = get();
+        
+        if (!isAccountCreated) {
+          throw new Error('Account must be created first');
+        }
+        
+        set({ isSubmitting: true, isLoading: true });
+        
+        try {
+          // Create profile update payload with all additional information
+          const profileUpdatePayload = {
+            height: formData.height,
+            hair_color: formData.hairColor,
+            eye_color: formData.eyeColor,
+            skin_color: formData.skinColor,
+            alcohol_consumption: formData.alcoholConsumption,
+            smoking: formData.smoking,
+            cannabis: formData.cannabis,
+            drugs: formData.drugs,
+            pets: formData.pets,
+            social_activity_level: formData.socialActivityLevel,
+            sport_activity: formData.sportActivity,
+            education_level: formData.educationLevel,
+            bio: formData.bio,
+            birth_city: formData.birthCity,
+            current_city: formData.currentCity,
+            job: formData.job,
+            religion: formData.religion,
+            children_status: formData.childrenStatus,
+            political_view: formData.politicalView,
+            tags: formData.tags
+          };
+
+          console.log('Completing registration with profile data:', profileUpdatePayload);
+          
+          // Get the current user from auth store to get the user ID
+          const currentUser = useAuthStore.getState().user;
+          if (!currentUser?.id) {
+            throw new Error('User not found, please login again');
+          }
+          
+          // Use the userStore updateProfile method
+          await useUserStore.getState().updateProfile(profileUpdatePayload);
+          
+          // Redirect to app after successful profile completion
+          window.location.href = '/app/discover';
+          
+        } catch (error) {
+          console.error('Profile completion failed:', error);
           throw error;
         } finally {
           set({ isSubmitting: false, isLoading: false });
@@ -375,7 +429,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
           await authService.verifyEmail(formData.email, emailVerificationCode);
           set({ 
             isEmailVerified: true,
-            currentStep: 4, // Move to appearance step (continue profile)
+            currentStep: 3, // Move to basic info step (height)
             errors: {}
           });
           console.log('Email verified successfully');

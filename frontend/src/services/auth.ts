@@ -159,6 +159,9 @@ class AuthService {
   setTokens(accessToken: string, refreshToken: string): void {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    
+    // Also set access_token as cookie for EventSource authentication
+    document.cookie = `access_token=${accessToken}; path=/; max-age=3600; samesite=strict`;
   }
 
   getAccessToken(): string | null {
@@ -172,6 +175,9 @@ class AuthService {
   clearTokens(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    
+    // Also clear the cookie
+    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }
 
   isAuthenticated(): boolean {

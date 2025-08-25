@@ -17,6 +17,7 @@ export function useRegistration() {
     nextStep,
     prevStep,
     submitRegistration: storeSubmitRegistration,
+    completeRegistration,
     resetForm,
     checkUsernameAvailability,
     checkEmailAvailability,
@@ -25,7 +26,6 @@ export function useRegistration() {
   const submitRegistration = useCallback(async () => {
     try {
       await storeSubmitRegistration();
-      navigate('/app/discover');
     } catch (err) {
       console.error('Registration failed:', err);
       throw err;
@@ -45,6 +45,7 @@ export function useRegistration() {
     nextStep,
     prevStep,
     submitRegistration,
+    completeRegistration,
     resetForm,
     checkUsernameAvailability,
     checkEmailAvailability,
