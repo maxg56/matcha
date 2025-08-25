@@ -205,12 +205,19 @@ services:
   media-service:
     build: ./api/media-service
     environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha_dev}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8006
       FLASK_ENV: development
       FLASK_DEBUG: 1
     volumes:
       - media_uploads_dev:/app/uploads
       - ./api/media-service/src:/app/src:ro
+    depends_on:
+      - postgres
     networks:
       - DB
       - backend
@@ -260,6 +267,11 @@ volumes:
       device: ./volumes/redis
       o: bind
   media_uploads_dev:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/media_uploads
+      o: bind
   frontend_node_modules:
 
 networks:
