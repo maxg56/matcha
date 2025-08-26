@@ -7,6 +7,7 @@ import { authService } from '@/services/auth';
 import { useUserStore } from './userStore';
 import { ErrorHandler } from '@/utils/errorHandler';
 import { RegistrationValidator } from '@/utils/registrationValidator';
+import { attemptTokenRefresh } from '@/utils/smashNotifications';
 
 interface RegistrationState {
   formData: RegistrationData;
@@ -342,14 +343,59 @@ export const useRegistrationStore = create<RegistrationStore>()(
         } catch (error) {
           console.error('Profile completion failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la finalisation du profil';
-          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
+          
+          // Handle specific profile errors
+          let customGlobalError = '';
+          let customFieldErrors: FieldValidationErrors = {};
+          
+          if (errorMessage.includes('failed to update tags')) {
+            customGlobalError = 'Erreur lors de la mise à jour de vos centres d\'intérêt. Vous pouvez les modifier plus tard dans votre profil.';
+            customFieldErrors = { tags: 'Impossible de sauvegarder les tags pour le moment' };
+            
+            // Dispatch notification for tags error
+            const tagsErrorEvent = new CustomEvent('profile-completion-notification', {
+              detail: {
+                type: 'tags_error',
+                message: 'Erreur tags - vous pouvez continuer et les modifier plus tard',
+                error: 'tags_update_failed'
+              }
+            });
+            window.dispatchEvent(tagsErrorEvent);
+            
+          } else if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
+            customGlobalError = 'Session expirée. Veuillez vous reconnecter.';
+            
+            // Try token refresh
+            const refreshSuccess = await attemptTokenRefresh();
+            if (refreshSuccess) {
+              try {
+                // Retry profile completion
+                await get().completeRegistration();
+                return; // Success, exit
+              } catch (retryError) {
+                console.error('Retry profile completion failed:', retryError);
+              }
+            }
+            
+            // Redirect to login
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 3000);
+            
+          } else {
+            // Parse other errors normally
+            const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
+            customFieldErrors = fieldErrors;
+            customGlobalError = globalError;
+          }
           
           set({ 
-            errors: fieldErrors, 
-            globalError,
+            errors: customFieldErrors, 
+            globalError: customGlobalError,
             isSubmitting: false, 
             isLoading: false 
           });
+          
           throw error;
         }
       },
@@ -411,6 +457,78 @@ export const useRegistrationStore = create<RegistrationStore>()(
         } catch (error) {
           console.error('Image upload failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement des images';
+          
+          // Handle token expiration specifically
+          if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
+            console.log('Token expired, attempting refresh...');
+            
+            // Dispatch refresh attempt event
+            const refreshAttemptEvent = new CustomEvent('smash-upload-notification', {
+              detail: {
+                type: 'upload_progress',
+                message: 'Session expirée. Tentative de renouvellement...',
+                error: 'token_refresh_attempt',
+                imageCount: files.length
+              }
+            });
+            window.dispatchEvent(refreshAttemptEvent);
+            
+            // Try to refresh token
+            const refreshSuccess = await attemptTokenRefresh();
+            
+            if (refreshSuccess) {
+              // Token refreshed successfully, retry upload
+              console.log('Token refreshed successfully, retrying upload...');
+              
+              const retryEvent = new CustomEvent('smash-upload-notification', {
+                detail: {
+                  type: 'upload_progress',
+                  message: 'Session renouvelée. Reprise de l\'upload...',
+                  error: 'token_refreshed',
+                  imageCount: files.length
+                }
+              });
+              window.dispatchEvent(retryEvent);
+              
+              // Recursive call to retry upload with new token
+              try {
+                await get().uploadImages(files);
+                return; // Success, exit the catch block
+              } catch (retryError) {
+                console.error('Retry upload failed:', retryError);
+                // Fall through to handle as normal error
+              }
+            }
+            
+            // Token refresh failed or retry failed, proceed with logout
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            
+            // Dispatch specific token error event
+            const tokenErrorEvent = new CustomEvent('smash-upload-notification', {
+              detail: {
+                type: 'upload_error',
+                message: 'Session expirée. Redirection vers la connexion...',
+                error: 'token_expired',
+                imageCount: files.length
+              }
+            });
+            window.dispatchEvent(tokenErrorEvent);
+            
+            set({ 
+              errors: { images: 'Session expirée. Veuillez vous reconnecter.' },
+              globalError: 'Session expirée. Redirection en cours...',
+              isLoading: false 
+            });
+            
+            // Redirect to login after a brief delay
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 3000);
+            
+            throw new Error('token expired');
+          }
+          
           const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
           
           // Dispatch error event

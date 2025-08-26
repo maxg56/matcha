@@ -2,6 +2,7 @@ import React from 'react';
 import { CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Camera, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useProfileNotifications } from '@/hooks/useProfileNotifications';
 import { 
   ImageGrid, 
   ActionButtons, 
@@ -24,6 +25,9 @@ export const ImageUploadStep: React.FC = () => {
     handleUpload,
     openFileDialog,
   } = useImageUpload();
+  
+  // Hook to handle profile completion notifications
+  useProfileNotifications();
 
   return (
     <div className="space-y-6">
@@ -75,7 +79,7 @@ export const ImageUploadStep: React.FC = () => {
             onUpload={handleUpload}
             onSkip={handleSkip}
           />
-          {images.length === 0 && <EmptyState />}
+
         </CardContent>
     </div>
   );
