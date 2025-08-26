@@ -5,12 +5,15 @@ import { defaultRegistrationData } from '@/types/registration';
 import { useAuthStore } from './authStore';
 import { authService } from '@/services/auth';
 import { useUserStore } from './userStore';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { PasswordValidator } from '@/utils/passwordValidator';
 
 interface RegistrationState {
   formData: RegistrationData;
   currentStep: number;
   isLoading: boolean;
   errors: FieldValidationErrors;
+  globalError: string;
   isSubmitting: boolean;
   emailVerificationCode: string;
   isEmailVerified: boolean;
@@ -24,6 +27,8 @@ interface RegistrationActions {
   setCurrentStep: (step: number) => void;
   setErrors: (errors: FieldValidationErrors) => void;
   clearError: (field: string) => void;
+  setGlobalError: (error: string) => void;
+  clearGlobalError: () => void;
   setLoading: (loading: boolean) => void;
   setSubmitting: (submitting: boolean) => void;
   validateStep: (step: number) => boolean;
@@ -54,6 +59,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
       currentStep: 1,
       isLoading: false,
       errors: {},
+      globalError: '',
       isSubmitting: false,
       emailVerificationCode: '',
       isEmailVerified: false,
@@ -81,6 +87,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
       clearError: (field) => set(state => ({
         errors: { ...state.errors, [field]: '' }
       })),
+      setGlobalError: (globalError) => set({ globalError }),
+      clearGlobalError: () => set({ globalError: '' }),
       setLoading: (isLoading) => set({ isLoading }),
       setSubmitting: (isSubmitting) => set({ isSubmitting }),
 
@@ -94,17 +102,18 @@ export const useRegistrationStore = create<RegistrationStore>()(
             if (!formData.firstName) newErrors.firstName = 'Prénom requis';
             if (!formData.lastName) newErrors.lastName = 'Nom requis';
             if (!formData.email) newErrors.email = 'Email requis';
-            if (!formData.password) newErrors.password = 'Mot de passe requis';
-            if (formData.password.length < 8) newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+            if (!formData.password) {
+              newErrors.password = 'Mot de passe requis';
+            } else {
+              const passwordError = PasswordValidator.validateForRegistration(formData.password);
+              if (passwordError) newErrors.password = passwordError;
+            }
             if (!formData.confirmPassword) newErrors.confirmPassword = 'Confirmation du mot de passe requise';
             if (formData.password !== formData.confirmPassword) {
               newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
             }
             // Essential fields required by backend
             if (!formData.birthDate) newErrors.birthDate = 'Date de naissance requise';
-            if (!formData.gender) newErrors.gender = 'Genre requis';
-            if (!formData.sexPref) newErrors.sexPref = 'Préférence requise';
-            if (!formData.relationshipType) newErrors.relationshipType = 'Type de relation requis';
             
             // Validate age (must be at least 18)
             if (formData.birthDate) {
@@ -185,11 +194,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
               formData.password &&
               formData.confirmPassword &&
               formData.password === formData.confirmPassword &&
-              formData.password.length >= 8 &&
-              formData.birthDate &&
-              formData.gender &&
-              formData.sexPref &&
-              formData.relationshipType
+              PasswordValidator.validateForRegistration(formData.password) === undefined &&
+              formData.birthDate
             );
           
           case 2: // Email verification
@@ -278,9 +284,9 @@ export const useRegistrationStore = create<RegistrationStore>()(
               first_name: formData.firstName,
               last_name: formData.lastName,
               birth_date: formData.birthDate,
-              gender: formData.gender,
-              sex_pref: formData.sexPref,
-              relationship_type: formData.relationshipType
+              gender: formData.gender || 'other', // Valeur par défaut
+              sex_pref: formData.sexPref || 'both', // Valeur par défaut
+              relationship_type: formData.relationshipType || 'casual' // Valeur par défaut
             };
 
             console.log('Creating account after step 1 with basic fields:', basicPayload);
@@ -296,9 +302,16 @@ export const useRegistrationStore = create<RegistrationStore>()(
           
         } catch (error) {
           console.error('Registration failed:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'inscription';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+          
+          set({ 
+            errors: fieldErrors, 
+            globalError,
+            isSubmitting: false, 
+            isLoading: false 
+          });
           throw error;
-        } finally {
-          set({ isSubmitting: false, isLoading: false });
         }
       },
 
@@ -352,9 +365,16 @@ export const useRegistrationStore = create<RegistrationStore>()(
           
         } catch (error) {
           console.error('Profile completion failed:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la finalisation du profil';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
+          
+          set({ 
+            errors: fieldErrors, 
+            globalError,
+            isSubmitting: false, 
+            isLoading: false 
+          });
           throw error;
-        } finally {
-          set({ isSubmitting: false, isLoading: false });
         }
       },
 
@@ -364,6 +384,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
           currentStep: 1,
           isLoading: false,
           errors: {},
+          globalError: '',
           isSubmitting: false,
           emailVerificationCode: '',
           isEmailVerified: false,
@@ -414,10 +435,15 @@ export const useRegistrationStore = create<RegistrationStore>()(
           console.log('Email verification sent successfully');
         } catch (error) {
           console.error('Failed to send email verification:', error);
-          set({ errors: { emailVerificationCode: 'Erreur lors de l\'envoi du code de vérification' } });
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du code';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+          
+          set({ 
+            errors: { ...fieldErrors, emailVerificationCode: fieldErrors.emailVerificationCode || 'Erreur lors de l\'envoi du code de vérification' },
+            globalError,
+            isLoading: false 
+          });
           throw error;
-        } finally {
-          set({ isLoading: false });
         }
       },
 
@@ -435,10 +461,15 @@ export const useRegistrationStore = create<RegistrationStore>()(
           console.log('Email verified successfully');
         } catch (error) {
           console.error('Email verification failed:', error);
-          set({ errors: { emailVerificationCode: 'Code de vérification invalide' } });
+          const errorMessage = error instanceof Error ? error.message : 'Code de vérification invalide';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+          
+          set({ 
+            errors: { ...fieldErrors, emailVerificationCode: fieldErrors.emailVerificationCode || 'Code de vérification invalide' },
+            globalError,
+            isLoading: false 
+          });
           throw error;
-        } finally {
-          set({ isLoading: false });
         }
       },
 
@@ -474,10 +505,15 @@ export const useRegistrationStore = create<RegistrationStore>()(
           window.location.href = '/app/discover';
         } catch (error) {
           console.error('Image upload failed:', error);
-          set({ errors: { images: 'Erreur lors du téléchargement des images' } });
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement des images';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
+          
+          set({ 
+            errors: { ...fieldErrors, images: fieldErrors.images || 'Erreur lors du téléchargement des images' },
+            globalError,
+            isLoading: false 
+          });
           throw error;
-        } finally {
-          set({ isLoading: false });
         }
       },
     }),

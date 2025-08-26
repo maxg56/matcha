@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { PasswordValidator } from '@/utils/passwordValidator';
 
 interface LoginFormData {
   login: string; // pseudo ou email
@@ -34,9 +36,7 @@ export function useLogin() {
         }
         return undefined;
       case 'password':
-        if (!value.trim()) return 'Veuillez saisir votre mot de passe';
-        if (value.length < 6) return 'Le mot de passe doit contenir au moins 6 caractères';
-        return undefined;
+        return PasswordValidator.validateForLogin(value);
       default:
         return undefined;
     }
@@ -56,51 +56,6 @@ export function useLogin() {
     }));
   };
 
-  const parseServerError = (errorMessage: string) => {
-    const lowerError = errorMessage.toLowerCase();
-    
-    // Map common server errors to user-friendly messages with field targeting
-    if (lowerError.includes('user not found') || lowerError.includes('utilisateur introuvable')) {
-      return {
-        fieldErrors: { login: 'Cet utilisateur n\'existe pas' },
-        generalError: ''
-      };
-    }
-    
-    if (lowerError.includes('invalid password') || lowerError.includes('mot de passe incorrect')) {
-      return {
-        fieldErrors: { password: 'Mot de passe incorrect' },
-        generalError: ''
-      };
-    }
-    
-    if (lowerError.includes('invalid email format')) {
-      return {
-        fieldErrors: { login: 'Format d\'email invalide' },
-        generalError: ''
-      };
-    }
-    
-    if (lowerError.includes('account suspended') || lowerError.includes('compte suspendu')) {
-      return {
-        fieldErrors: {},
-        generalError: '⚠️ Votre compte a été suspendu. Contactez le support.'
-      };
-    }
-    
-    if (lowerError.includes('too many attempts')) {
-      return {
-        fieldErrors: {},
-        generalError: '🔒 Trop de tentatives de connexion. Attendez quelques minutes.'
-      };
-    }
-    
-    // Default error
-    return {
-      fieldErrors: {},
-      generalError: 'Identifiants incorrects. Vérifiez votre pseudo/email et mot de passe.'
-    };
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,10 +85,10 @@ export function useLogin() {
       navigate('/app/discover');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
-      const { fieldErrors: serverFieldErrors, generalError } = parseServerError(errorMessage);
+      const { fieldErrors: serverFieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'login');
       
       setFieldErrors(serverFieldErrors);
-      setError(generalError);
+      setError(globalError);
     } finally {
       setIsLoading(false);
     }

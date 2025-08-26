@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { FormErrors } from '@/components/ui/form-errors';
 import { Heart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRegistration } from '@/hooks/useRegistration';
@@ -23,12 +24,14 @@ export default function InscriptionPage() {
     currentStep,
     isLoading,
     errors,
+    globalError,
     updateField,
     toggleTag,
     canContinue,
     nextStep,
     prevStep,
-    completeRegistration
+    completeRegistration,
+    clearGlobalError
   } = useRegistration();
 
 

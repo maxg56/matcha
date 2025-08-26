@@ -9,6 +9,7 @@ export function useRegistration() {
     currentStep,
     isLoading,
     errors,
+    globalError,
     isSubmitting,
     updateField,
     toggleTag,
@@ -21,6 +22,7 @@ export function useRegistration() {
     resetForm,
     checkUsernameAvailability,
     checkEmailAvailability,
+    clearGlobalError,
   } = useRegistrationStore();
 
   const submitRegistration = useCallback(async () => {
@@ -37,6 +39,7 @@ export function useRegistration() {
     currentStep,
     isLoading,
     errors,
+    globalError,
     isSubmitting,
     updateField,
     toggleTag,
@@ -49,5 +52,6 @@ export function useRegistration() {
     resetForm,
     checkUsernameAvailability,
     checkEmailAvailability,
+    clearGlobalError,
   };
 }

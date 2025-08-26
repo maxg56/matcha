@@ -3,8 +3,9 @@ import { useRegistrationStore } from '@/stores/registrationStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Mail, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ErrorAlert, FieldError } from '@/components/ui/error-alert';
 
 export const EmailVerificationStep: React.FC = () => {
   const {
@@ -13,9 +14,11 @@ export const EmailVerificationStep: React.FC = () => {
     isEmailVerified,
     isLoading,
     errors,
+    globalError,
     setEmailVerificationCode,
     sendEmailVerification,
     verifyEmail,
+    clearGlobalError,
   } = useRegistrationStore();
 
   const [countdown, setCountdown] = useState(0);
@@ -28,6 +31,7 @@ export const EmailVerificationStep: React.FC = () => {
       setCanResend(false);
     } catch (error) {
       console.error('Failed to send verification email:', error);
+      // L'erreur est maintenant gérée automatiquement par le store
     }
   };
 
@@ -56,14 +60,23 @@ export const EmailVerificationStep: React.FC = () => {
       // If successful, the store will automatically move to step 3
     } catch (error) {
       console.error('Email verification failed:', error);
+      // L'erreur est maintenant gérée automatiquement par le store
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Affichage des erreurs globales */}
+      {globalError && (
+        <ErrorAlert 
+          error={globalError} 
+          onDismiss={clearGlobalError}
+          className="mb-4"
+        />
+      )}
+
       {/* Simple header consistent with other steps */}
       <div className="text-center space-y-4">
-        
         <div className="space-y-2">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             {isEmailVerified 
@@ -92,10 +105,15 @@ export const EmailVerificationStep: React.FC = () => {
                 type="text"
                 placeholder="123456"
                 value={emailVerificationCode}
-                onChange={(e) => setEmailVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) => {
+                  const cleanValue = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setEmailVerificationCode(cleanValue);
+                  // Clear global error when user starts typing
+                  if (globalError) clearGlobalError();
+                }}
                 maxLength={6}
                 className={`text-center text-lg font-mono tracking-wider ${
-                  errors.emailVerificationCode ? 'border-red-500' : ''
+                  errors.emailVerificationCode ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
                 }`}
               />
               {emailVerificationCode.length === 6 && (
@@ -103,14 +121,8 @@ export const EmailVerificationStep: React.FC = () => {
               )}
             </div>
             
-            {errors.emailVerificationCode && (
-              <Alert variant="destructive" className="text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {errors.emailVerificationCode}
-                </AlertDescription>
-              </Alert>
-            )}
+            {/* Erreur de champ spécifique */}
+            <FieldError error={errors.emailVerificationCode} />
           </div>
 
           {/* Action buttons */}
@@ -118,9 +130,16 @@ export const EmailVerificationStep: React.FC = () => {
             <Button
               onClick={handleVerifyCode}
               disabled={isLoading || emailVerificationCode.length !== 6}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 disabled:opacity-50"
             >
-              {isLoading ? 'Vérification...' : 'Vérifier le code'}
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Vérification...
+                </div>
+              ) : (
+                'Vérifier le code'
+              )}
             </Button>
 
             <Button
@@ -134,6 +153,12 @@ export const EmailVerificationStep: React.FC = () => {
                 : 'Renvoyer le code'
               }
             </Button>
+
+            {/* Message d'aide */}
+            <div className="text-xs text-center text-gray-500 dark:text-gray-400 space-y-1">
+              <p>Vérifiez vos spams si vous ne recevez pas l'email</p>
+              <p>Le code expire après 10 minutes</p>
+            </div>
           </div>
         </div>
       )}

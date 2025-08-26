@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { ErrorAlert, FieldError } from '@/components/ui/error-alert';
 import { 
   Eye, 
   EyeOff, 
@@ -76,12 +77,7 @@ export function LoginForm({
             </div>
           )}
         </div>
-        {fieldErrors?.login && (
-          <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-            <p className="text-sm text-red-600 dark:text-red-400">{fieldErrors.login}</p>
-          </div>
-        )}
+        <FieldError error={fieldErrors?.login} />
       </div>
 
       {/* Password Field */}
@@ -124,21 +120,11 @@ export function LoginForm({
             )}
           </button>
         </div>
-        {fieldErrors?.password && (
-          <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-            <p className="text-sm text-red-600 dark:text-red-400">{fieldErrors.password}</p>
-          </div>
-        )}
+        <FieldError error={fieldErrors?.password} />
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-          <AlertCircle className="h-4 w-4 text-red-500" />
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </div>
-      )}
+      {/* Global Error Message */}
+      <ErrorAlert error={error} className="rounded-xl" />
 
       {/* Forgot Password */}
       <div className="text-right">

@@ -14,8 +14,8 @@ export function HeightSlider({
   label,
   value,
   onChange,
-  min = 140,
-  max = 220,
+  min = 100,
+  max = 450,
   step = 1,
   className
 }: HeightSliderProps) {
