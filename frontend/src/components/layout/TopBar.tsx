@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft, MoreHorizontal, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/hooks/';
 import { NotificationButton } from '../Notifications';
 
 interface TopBarProps {

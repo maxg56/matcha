@@ -2,7 +2,7 @@ import React from 'react';
 import { CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Camera, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useProfileNotifications } from '@/hooks/useProfileNotifications';
+import { useProfileNotifications } from '@/hooks';
 import { 
   ImageGrid, 
   ActionButtons, 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks';
 import { 
   Bell, 
   Shield, 

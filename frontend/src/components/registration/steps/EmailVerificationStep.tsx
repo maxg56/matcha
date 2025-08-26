@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRegistrationStore } from '@/stores/registrationStore';
+import { useRegistration } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ export const EmailVerificationStep: React.FC = () => {
     sendEmailVerification,
     verifyEmail,
     clearGlobalError,
-  } = useRegistrationStore();
+  } = useRegistration();
 
   const [countdown, setCountdown] = useState(0);
   const [canResend, setCanResend] = useState(true);
@@ -36,10 +36,8 @@ export const EmailVerificationStep: React.FC = () => {
   };
 
   useEffect(() => {
-    // Send initial verification email when component mounts
-    if (!isEmailVerified && canResend) {
-      handleSendVerification();
-    }
+    // Ne pas envoyer automatiquement l'email au montage du composant
+    // L'email est maintenant envoyé automatiquement lors de la création du compte
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -83,7 +81,7 @@ export const EmailVerificationStep: React.FC = () => {
               ? "Votre email a été vérifié avec succès. Vous pouvez continuer." 
               : (
                   <>
-                    Nous avons envoyé un code de vérification à <br />
+                    Un code de vérification a été envoyé à <br />
                     <span className="font-medium text-purple-600">{formData.email}</span>
                   </>
                 )

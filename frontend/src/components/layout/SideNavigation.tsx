@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Search, User, Settings, LogOut, Map } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 

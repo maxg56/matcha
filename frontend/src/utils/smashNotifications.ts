@@ -1,4 +1,4 @@
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks';
 
 export interface SmashUploadStatus {
   type: 'upload_start' | 'upload_progress' | 'upload_success' | 'upload_error';

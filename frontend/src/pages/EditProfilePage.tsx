@@ -12,7 +12,7 @@ import {
 } from '@/components/edit-profile/sections';
 import { mockUser } from '@/data/UserProfileData';
 import { availableTags } from '@/data/EditProfileOptions';
-import { useEditProfile } from '@/hooks/useEditProfile';
+import { useEditProfile } from '@/hooks';
 
 export default function EditProfilePage() {
   const {

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Heart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useRegistration } from '@/hooks/useRegistration';
+import { useRegistration } from '@/hooks';
 import { ProgressBar } from '@/components/registration';
 import {
   AccountStep,

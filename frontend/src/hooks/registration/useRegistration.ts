@@ -11,6 +11,8 @@ export function useRegistration() {
     errors,
     globalError,
     isSubmitting,
+    emailVerificationCode,
+    isEmailVerified,
     updateField,
     toggleTag,
     validateCurrentStep,
@@ -18,11 +20,14 @@ export function useRegistration() {
     nextStep,
     prevStep,
     submitRegistration: storeSubmitRegistration,
-    completeRegistration,
+    completeRegistration: storeCompleteRegistration,
     resetForm,
     checkUsernameAvailability,
     checkEmailAvailability,
     clearGlobalError,
+    setEmailVerificationCode,
+    sendEmailVerification,
+    verifyEmail,
   } = useRegistrationStore();
 
   const submitRegistration = useCallback(async () => {
@@ -34,6 +39,15 @@ export function useRegistration() {
     }
   }, [storeSubmitRegistration, navigate]);
 
+  const completeRegistration = useCallback(async () => {
+    try {
+      await storeCompleteRegistration();
+    } catch (err) {
+      console.error('Profile completion failed:', err);
+      throw err;
+    }
+  }, [storeCompleteRegistration]);
+
   return {
     formData,
     currentStep,
@@ -41,6 +55,8 @@ export function useRegistration() {
     errors,
     globalError,
     isSubmitting,
+    emailVerificationCode,
+    isEmailVerified,
     updateField,
     toggleTag,
     validateCurrentStep,
@@ -53,5 +69,8 @@ export function useRegistration() {
     checkUsernameAvailability,
     checkEmailAvailability,
     clearGlobalError,
+    setEmailVerificationCode,
+    sendEmailVerification,
+    verifyEmail,
   };
 }

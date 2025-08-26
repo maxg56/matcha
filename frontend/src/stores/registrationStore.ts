@@ -3,6 +3,9 @@ import { devtools } from 'zustand/middleware';
 import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 import { defaultRegistrationData } from '@/types/registration';
 import { RegistrationValidator } from '@/utils/registrationValidator';
+import { authService } from '@/services/auth';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { useAuthStore } from './authStore';
 
 // === TYPES ===
 interface RegistrationState {
@@ -42,10 +45,16 @@ interface RegistrationActions {
   validateCurrentStep: () => boolean;
   canContinue: () => boolean;
   
-  // Email verification state
+  // Email verification
   setEmailVerificationCode: (code: string) => void;
   setEmailVerified: (verified: boolean) => void;
   setAccountCreated: (created: boolean) => void;
+  sendEmailVerification: () => Promise<void>;
+  verifyEmail: () => Promise<void>;
+
+  // Registration process
+  submitRegistration: () => Promise<void>;
+  completeRegistration: () => Promise<void>;
 }
 
 type RegistrationStore = RegistrationState & RegistrationActions;
@@ -101,12 +110,16 @@ export const useRegistrationStore = create<RegistrationStore>()(
       setCurrentStep: (currentStep) => set({ currentStep }),
       
       nextStep: () => {
-        const { currentStep, validateCurrentStep } = get();
+        const { currentStep, validateCurrentStep, isAccountCreated } = get();
         if (validateCurrentStep()) {
-          set({ 
-            globalError: '',
-            currentStep: currentStep + 1 
-          });
+          set({ globalError: '' });
+          
+          // Si on passe de l'étape 1 à l'étape 2 et que le compte n'est pas encore créé
+          if (currentStep === 1 && !isAccountCreated) {
+            get().submitRegistration();
+          } else {
+            set({ currentStep: currentStep + 1 });
+          }
         }
       },
 
@@ -157,6 +170,97 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
       setEmailVerified: (isEmailVerified: boolean) => set({ isEmailVerified }),
       setAccountCreated: (isAccountCreated: boolean) => set({ isAccountCreated }),
+
+      // === EMAIL VERIFICATION ACTIONS ===
+      sendEmailVerification: async () => {
+        const { formData } = get();
+        set({ isLoading: true, globalError: '' });
+        
+        try {
+          await authService.sendEmailVerification(formData.email);
+          set({ isLoading: false });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du code';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+          
+          set({ 
+            errors: { ...fieldErrors },
+            globalError: globalError || 'Erreur lors de l\'envoi du code de vérification',
+            isLoading: false 
+          });
+          throw error;
+        }
+      },
+
+      verifyEmail: async () => {
+        const { emailVerificationCode, formData } = get();
+        set({ isLoading: true, globalError: '' });
+        
+        try {
+          await authService.verifyEmail(formData.email, emailVerificationCode);
+          set({ 
+            isEmailVerified: true,
+            currentStep: 3,
+            errors: {},
+            isLoading: false
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Code de vérification invalide';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+          
+          set({ 
+            errors: { ...fieldErrors },
+            globalError: globalError || 'Code de vérification invalide',
+            isLoading: false 
+          });
+          throw error;
+        }
+      },
+
+      // === REGISTRATION PROCESS ===
+      submitRegistration: async () => {
+        const { formData, currentStep } = get();
+        set({ isSubmitting: true, isLoading: true, globalError: '' });
+        
+        try {
+          if (currentStep === 1) {
+            const basicPayload = RegistrationValidator.prepareAccountPayload(formData);
+            await useAuthStore.getState().register(basicPayload);
+            
+            // Envoyer automatiquement l'email de vérification après la création du compte
+            try {
+              await authService.sendEmailVerification(formData.email);
+            } catch (emailError) {
+              console.warn('Failed to send verification email automatically:', emailError);
+              // Continue même si l'email échoue, l'utilisateur pourra le redemander
+            }
+            
+            set({ 
+              isAccountCreated: true,
+              currentStep: 2,
+              isSubmitting: false,
+              isLoading: false
+            });
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'inscription';
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+          
+          set({ 
+            errors: fieldErrors, 
+            globalError,
+            isSubmitting: false, 
+            isLoading: false 
+          });
+          throw error;
+        }
+      },
+
+      completeRegistration: async () => {
+        // Cette fonction sera implémentée pour la finalisation du profil
+        // Pour l'instant, on redirige vers l'app
+        window.location.href = '/app/discover';
+      },
     }),
     { name: 'RegistrationStore' }
   )
