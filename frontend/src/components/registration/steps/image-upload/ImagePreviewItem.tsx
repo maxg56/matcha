@@ -10,7 +10,7 @@ interface ImagePreviewItemProps {
 
 export const ImagePreviewItem: React.FC<ImagePreviewItemProps> = React.memo(({ image, index, onRemove }) => (
   <div className="relative group">
-    <div className="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg border border-gray-200/60 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 hover:-rotate-1">
+    <div className="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 shadow-lg border border-gray-200/60 dark:border-gray-600/60 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 hover:-rotate-1">
       {/* Image with gradient overlay */}
       <div className="relative w-full h-full">
         <img
@@ -33,8 +33,8 @@ export const ImagePreviewItem: React.FC<ImagePreviewItemProps> = React.memo(({ i
         )}
         
         {/* Photo number indicator */}
-        <div className="absolute bottom-3 left-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/20">
-          <span className="text-sm font-bold text-gray-700">{index + 1}</span>
+        <div className="absolute bottom-3 left-3 w-8 h-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-white/20 dark:border-gray-600/20">
+          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{index + 1}</span>
         </div>
         
         {/* Delete button */}
@@ -47,11 +47,11 @@ export const ImagePreviewItem: React.FC<ImagePreviewItemProps> = React.memo(({ i
         </button>
         
         {/* Shimmer effect on hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 dark:via-gray-400/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
       </div>
     </div>
     
     {/* 3D shadow effect */}
-    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-600/10 to-blue-600/10 transform translate-y-2 translate-x-2 -z-10 transition-all duration-500 group-hover:translate-y-3 group-hover:translate-x-3 group-hover:opacity-40"></div>
+    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-600/10 to-blue-600/10 dark:from-purple-400/10 dark:to-blue-400/10 transform translate-y-2 translate-x-2 -z-10 transition-all duration-500 group-hover:translate-y-3 group-hover:translate-x-3 group-hover:opacity-40"></div>
   </div>
 ));

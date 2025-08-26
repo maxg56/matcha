@@ -65,7 +65,6 @@ interface RegistrationActions {
 }
 
 type RegistrationStore = RegistrationState & RegistrationActions;
-
 // === UTILITIES ===
 const createErrorState = (fieldErrors: FieldValidationErrors = {}, globalError = '', isLoading = false) => ({
   errors: fieldErrors,
@@ -353,6 +352,22 @@ export const useRegistrationStore = create<RegistrationStore>()(
           
           // Handle specific errors
           if (errorMessage.includes('failed to update tags')) {
+            // Try to update profile without tags first, then handle tags separately
+            try {
+              const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
+              const { tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
+              
+              await useUserStore.getState().updateProfile(payloadWithoutTags);
+              
+              // Profile updated successfully without tags, continue to discover page
+              window.location.href = '/app/discover';
+              
+              dispatchProfileEvent('tags_error', 'Profil créé avec succès ! Les centres d\'intérêt seront ajoutés plus tard.', 'tags_update_failed');
+              return;
+            } catch (retryError) {
+              console.error('Failed to update profile without tags:', retryError);
+            }
+            
             dispatchProfileEvent('tags_error', 'Erreur tags - vous pouvez continuer et les modifier plus tard', 'tags_update_failed');
             set(createErrorState(
               { tags: 'Impossible de sauvegarder les tags pour le moment' },
@@ -407,8 +422,6 @@ export const useRegistrationStore = create<RegistrationStore>()(
           });
           
           set({ isLoading: false });
-          window.location.href = '/app/profile/edit';
-          
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement des images';
           

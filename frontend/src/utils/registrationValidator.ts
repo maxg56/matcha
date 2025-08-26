@@ -195,6 +195,11 @@ export class RegistrationValidator {
    * Prépare les données pour la mise à jour du profil
    */
   static prepareProfilePayload(formData: RegistrationData) {
+    // Filter and clean tags to ensure they're valid strings
+    const cleanTags = formData.tags
+      .filter(tag => tag && typeof tag === 'string' && tag.trim().length > 0)
+      .map(tag => tag.trim());
+
     return {
       height: formData.height,
       hair_color: formData.hairColor,
@@ -215,7 +220,7 @@ export class RegistrationValidator {
       religion: formData.religion,
       children_status: formData.childrenStatus,
       political_view: formData.politicalView,
-      tags: formData.tags
+      tags: cleanTags
     };
   }
 }
