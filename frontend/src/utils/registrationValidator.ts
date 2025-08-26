@@ -187,7 +187,7 @@ export class RegistrationValidator {
       birth_date: formData.birthDate,
       gender: formData.gender || 'other',
       sex_pref: formData.sexPref || 'both',
-      relationship_type: formData.relationshipType || 'casual'
+      relationship_type: formData.relationshipType || 'short_term'
     };
   }
 
