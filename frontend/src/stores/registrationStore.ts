@@ -9,6 +9,7 @@ import { ErrorHandler } from '@/utils/errorHandler';
 import { RegistrationValidator } from '@/utils/registrationValidator';
 import { attemptTokenRefresh } from '@/utils/smashNotifications';
 
+// === TYPES ===
 interface RegistrationState {
   formData: RegistrationData;
   currentStep: number;
@@ -22,53 +23,138 @@ interface RegistrationState {
 }
 
 interface RegistrationActions {
-  // === GESTION DES DONNÉES ===
+  // Data management
   updateField: <K extends keyof RegistrationData>(field: K, value: RegistrationData[K]) => void;
   toggleTag: (tag: string) => void;
   resetForm: () => void;
   
-  // === NAVIGATION ===
+  // Navigation
   setCurrentStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   
-  // === GESTION DES ERREURS ===
+  // Error management
   setErrors: (errors: FieldValidationErrors) => void;
   clearError: (field: string) => void;
   setGlobalError: (error: string) => void;
   clearGlobalError: () => void;
   
-  // === ÉTATS DE CHARGEMENT ===
+  // Loading states
   setLoading: (loading: boolean) => void;
   setSubmitting: (submitting: boolean) => void;
   
-  // === VALIDATION ===
+  // Validation
   validateCurrentStep: () => boolean;
   canContinue: () => boolean;
   
-  // === VÉRIFICATIONS DE DISPONIBILITÉ ===
+  // Availability checks
   checkUsernameAvailability: (username: string) => Promise<boolean>;
   checkEmailAvailability: (email: string) => Promise<boolean>;
   
-  // === VÉRIFICATION EMAIL ===
+  // Email verification
   setEmailVerificationCode: (code: string) => void;
   sendEmailVerification: () => Promise<void>;
   verifyEmail: () => Promise<void>;
   
-  // === PROCESSUS D'INSCRIPTION ===
+  // Registration process
   submitRegistration: () => Promise<void>;
   completeRegistration: () => Promise<void>;
   
-  // === UPLOAD D'IMAGES ===
+  // Image upload
   uploadImages: (files: File[]) => Promise<void>;
 }
 
 type RegistrationStore = RegistrationState & RegistrationActions;
 
+// === UTILITIES ===
+const createErrorState = (fieldErrors: FieldValidationErrors = {}, globalError = '', isLoading = false) => ({
+  errors: fieldErrors,
+  globalError,
+  isLoading,
+  isSubmitting: false,
+});
+
+const dispatchUploadEvent = (type: string, message: string, extra: Record<string, any> = {}) => {
+  const event = new CustomEvent('smash-upload-notification', {
+    detail: { type, message, ...extra }
+  });
+  window.dispatchEvent(event);
+};
+
+const dispatchProfileEvent = (type: string, message: string, error?: string) => {
+  const event = new CustomEvent('profile-completion-notification', {
+    detail: { type, message, error }
+  });
+  window.dispatchEvent(event);
+};
+
+const handleTokenExpiration = async (retryFn: () => Promise<void>) => {
+  const refreshSuccess = await attemptTokenRefresh();
+  
+  if (refreshSuccess) {
+    try {
+      await retryFn();
+      return true;
+    } catch (retryError) {
+      console.error('Retry failed:', retryError);
+    }
+  }
+  
+  // Clear tokens and redirect to login
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  
+  setTimeout(() => {
+    window.location.href = '/login';
+  }, 3000);
+  
+  return false;
+};
+
+const handleAvailabilityCheck = async (
+  field: 'username' | 'email',
+  value: string,
+  checkFunction: (value: string) => Promise<{ available: boolean; message?: string }>,
+  set: (updater: (state: RegistrationStore) => Partial<RegistrationStore>) => void
+): Promise<boolean> => {
+  try {
+    const response = await checkFunction(value);
+    
+    if (!response.available) {
+      set(state => ({
+        errors: { 
+          ...state.errors, 
+          [field]: response.message || `Ce ${field === 'username' ? 'pseudo' : 'email'} n'est pas disponible` 
+        }
+      }));
+      return false;
+    }
+    
+    // Clear error if available
+    set(state => {
+      const { [field]: fieldError, ...restErrors } = state.errors;
+      return { errors: restErrors };
+    });
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : `Erreur lors de la vérification du ${field}`;
+    const { fieldErrors } = ErrorHandler.parseAPIError(errorMessage, 'registration');
+    
+    set(state => ({
+      errors: { 
+        ...state.errors, 
+        [field]: fieldErrors[field] || `Erreur lors de la vérification du ${field}` 
+      }
+    }));
+    return false;
+  }
+};
+
+// === STORE ===
 export const useRegistrationStore = create<RegistrationStore>()(
   devtools(
     (set, get) => ({
-      // === ÉTAT INITIAL ===
+      // === INITIAL STATE ===
       formData: defaultRegistrationData,
       currentStep: 1,
       isLoading: false,
@@ -79,12 +165,12 @@ export const useRegistrationStore = create<RegistrationStore>()(
       isEmailVerified: false,
       isAccountCreated: false,
 
-      // === GESTION DES DONNÉES ===
+      // === DATA MANAGEMENT ===
       updateField: <K extends keyof RegistrationData>(field: K, value: RegistrationData[K]) => {
         set(state => ({
           formData: { ...state.formData, [field]: value },
-          errors: { ...state.errors, [field]: '' }, // Clear field error
-          globalError: '' // Clear global error when user makes changes
+          errors: { ...state.errors, [field]: '' },
+          globalError: ''
         }));
       },
 
@@ -117,10 +203,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
       nextStep: () => {
         const { currentStep, validateCurrentStep, isAccountCreated } = get();
         if (validateCurrentStep()) {
-          // Clear any previous errors when moving to next step
           set({ globalError: '' });
           
-          // If we're finishing step 1 (Account Info) and account not created yet, create it
           if (currentStep === 1 && !isAccountCreated) {
             get().submitRegistration();
           } else {
@@ -133,11 +217,11 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set(state => ({ 
           currentStep: Math.max(state.currentStep - 1, 1),
           errors: {},
-          globalError: '' // Clear all errors when going back
+          globalError: ''
         }));
       },
 
-      // === GESTION DES ERREURS ===
+      // === ERROR MANAGEMENT ===
       setErrors: (errors) => set({ errors }),
       clearError: (field) => set(state => ({
         errors: { ...state.errors, [field]: '' }
@@ -145,7 +229,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
       setGlobalError: (globalError) => set({ globalError }),
       clearGlobalError: () => set({ globalError: '' }),
 
-      // === ÉTATS DE CHARGEMENT ===
+      // === LOADING STATES ===
       setLoading: (isLoading) => set({ isLoading }),
       setSubmitting: (isSubmitting) => set({ isSubmitting }),
 
@@ -163,63 +247,16 @@ export const useRegistrationStore = create<RegistrationStore>()(
         return RegistrationValidator.canContinueStep(currentStep, formData, isEmailVerified);
       },
 
-      // === VÉRIFICATIONS DE DISPONIBILITÉ ===
-      checkUsernameAvailability: async (username: string): Promise<boolean> => {
-        try {
-          const response = await authService.checkUsernameAvailability(username);
-          if (!response.available) {
-            set(state => ({
-              errors: { ...state.errors, username: response.message || 'Ce pseudo n\'est pas disponible' }
-            }));
-          } else {
-            // Clear username error if available
-            set(state => {
-              const { username, ...restErrors } = state.errors;
-              return { errors: restErrors };
-            });
-          }
-          return response.available;
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la vérification du pseudo';
-          const { fieldErrors } = ErrorHandler.parseAPIError(errorMessage, 'registration');
-          
-          set(state => ({
-            errors: { ...state.errors, username: fieldErrors.username || 'Erreur lors de la vérification du pseudo' }
-          }));
-          return false;
-        }
-      },
+      // === AVAILABILITY CHECKS ===
+      checkUsernameAvailability: (username: string) => 
+        handleAvailabilityCheck('username', username, authService.checkUsernameAvailability, set),
 
-      checkEmailAvailability: async (email: string): Promise<boolean> => {
-        try {
-          const response = await authService.checkEmailAvailability(email);
-          if (!response.available) {
-            set(state => ({
-              errors: { ...state.errors, email: response.message || 'Cet email n\'est pas disponible' }
-            }));
-          } else {
-            // Clear email error if available
-            set(state => {
-              const { email, ...restErrors } = state.errors;
-              return { errors: restErrors };
-            });
-          }
-          return response.available;
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la vérification de l\'email';
-          const { fieldErrors } = ErrorHandler.parseAPIError(errorMessage, 'registration');
-          
-          set(state => ({
-            errors: { ...state.errors, email: fieldErrors.email || 'Erreur lors de la vérification de l\'email' }
-          }));
-          return false;
-        }
-      },
+      checkEmailAvailability: (email: string) => 
+        handleAvailabilityCheck('email', email, authService.checkEmailAvailability, set),
 
-      // === VÉRIFICATION EMAIL ===
+      // === EMAIL VERIFICATION ===
       setEmailVerificationCode: (emailVerificationCode: string) => {
         set({ emailVerificationCode });
-        // Clear verification errors when typing
         if (emailVerificationCode.length > 0) {
           set(state => {
             const { emailVerificationCode, ...restErrors } = state.errors;
@@ -234,18 +271,12 @@ export const useRegistrationStore = create<RegistrationStore>()(
         
         try {
           await authService.sendEmailVerification(formData.email);
-          console.log('Email verification sent successfully');
           set({ isLoading: false });
         } catch (error) {
-          console.error('Failed to send email verification:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du code';
           const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
           
-          set({ 
-            errors: { ...fieldErrors },
-            globalError: globalError || 'Erreur lors de l\'envoi du code de vérification',
-            isLoading: false 
-          });
+          set(createErrorState(fieldErrors, globalError || 'Erreur lors de l\'envoi du code de vérification'));
           throw error;
         }
       },
@@ -258,39 +289,29 @@ export const useRegistrationStore = create<RegistrationStore>()(
           await authService.verifyEmail(formData.email, emailVerificationCode);
           set({ 
             isEmailVerified: true,
-            currentStep: 3, // Move to basic info step (height)
+            currentStep: 3,
             errors: {},
             isLoading: false
           });
-          console.log('Email verified successfully');
         } catch (error) {
-          console.error('Email verification failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Code de vérification invalide';
           const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
           
-          set({ 
-            errors: { ...fieldErrors },
-            globalError: globalError || 'Code de vérification invalide',
-            isLoading: false 
-          });
+          set(createErrorState(fieldErrors, globalError || 'Code de vérification invalide'));
           throw error;
         }
       },
 
-      // === PROCESSUS D'INSCRIPTION ===
+      // === REGISTRATION PROCESS ===
       submitRegistration: async () => {
         const { formData, currentStep } = get();
         set({ isSubmitting: true, isLoading: true, globalError: '' });
         
         try {
           if (currentStep === 1) {
-            // Step 1: Create account with all required backend fields
             const basicPayload = RegistrationValidator.prepareAccountPayload(formData);
-
-            console.log('Creating account after step 1 with basic fields:', basicPayload);
             await useAuthStore.getState().register(basicPayload);
             
-            // Mark account as created and move to email verification
             set({ 
               isAccountCreated: true,
               currentStep: 2,
@@ -299,16 +320,10 @@ export const useRegistrationStore = create<RegistrationStore>()(
             });
           }
         } catch (error) {
-          console.error('Registration failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'inscription';
           const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
           
-          set({ 
-            errors: fieldErrors, 
-            globalError,
-            isSubmitting: false, 
-            isLoading: false 
-          });
+          set({ ...createErrorState(fieldErrors, globalError) });
           throw error;
         }
       },
@@ -323,84 +338,41 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({ isSubmitting: true, isLoading: true, globalError: '' });
         
         try {
-          // Create profile update payload with all additional information
           const profileUpdatePayload = RegistrationValidator.prepareProfilePayload(formData);
-
-          console.log('Completing registration with profile data:', profileUpdatePayload);
-          
-          // Get the current user from auth store to get the user ID
           const currentUser = useAuthStore.getState().user;
+          
           if (!currentUser?.id) {
             throw new Error('User not found, please login again');
           }
           
-          // Use the userStore updateProfile method
           await useUserStore.getState().updateProfile(profileUpdatePayload);
-          
-          // Redirect to app after successful profile completion
           window.location.href = '/app/discover';
           
         } catch (error) {
-          console.error('Profile completion failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la finalisation du profil';
           
-          // Handle specific profile errors
-          let customGlobalError = '';
-          let customFieldErrors: FieldValidationErrors = {};
-          
+          // Handle specific errors
           if (errorMessage.includes('failed to update tags')) {
-            customGlobalError = 'Erreur lors de la mise à jour de vos centres d\'intérêt. Vous pouvez les modifier plus tard dans votre profil.';
-            customFieldErrors = { tags: 'Impossible de sauvegarder les tags pour le moment' };
-            
-            // Dispatch notification for tags error
-            const tagsErrorEvent = new CustomEvent('profile-completion-notification', {
-              detail: {
-                type: 'tags_error',
-                message: 'Erreur tags - vous pouvez continuer et les modifier plus tard',
-                error: 'tags_update_failed'
-              }
-            });
-            window.dispatchEvent(tagsErrorEvent);
-            
+            dispatchProfileEvent('tags_error', 'Erreur tags - vous pouvez continuer et les modifier plus tard', 'tags_update_failed');
+            set(createErrorState(
+              { tags: 'Impossible de sauvegarder les tags pour le moment' },
+              'Erreur lors de la mise à jour de vos centres d\'intérêt. Vous pouvez les modifier plus tard dans votre profil.'
+            ));
           } else if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
-            customGlobalError = 'Session expirée. Veuillez vous reconnecter.';
+            const success = await handleTokenExpiration(get().completeRegistration);
+            if (success) return;
             
-            // Try token refresh
-            const refreshSuccess = await attemptTokenRefresh();
-            if (refreshSuccess) {
-              try {
-                // Retry profile completion
-                await get().completeRegistration();
-                return; // Success, exit
-              } catch (retryError) {
-                console.error('Retry profile completion failed:', retryError);
-              }
-            }
-            
-            // Redirect to login
-            setTimeout(() => {
-              window.location.href = '/login';
-            }, 3000);
-            
+            set(createErrorState({}, 'Session expirée. Redirection en cours...'));
           } else {
-            // Parse other errors normally
             const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
-            customFieldErrors = fieldErrors;
-            customGlobalError = globalError;
+            set(createErrorState(fieldErrors, globalError));
           }
-          
-          set({ 
-            errors: customFieldErrors, 
-            globalError: customGlobalError,
-            isSubmitting: false, 
-            isLoading: false 
-          });
           
           throw error;
         }
       },
 
-      // === UPLOAD D'IMAGES ===
+      // === IMAGE UPLOAD ===
       uploadImages: async (files: File[]) => {
         set({ isLoading: true, globalError: '' });
         
@@ -409,22 +381,14 @@ export const useRegistrationStore = create<RegistrationStore>()(
             const formData = new FormData();
             formData.append('file', file);
             
-            // Dispatch progress event for individual file upload
-            const progressEvent = new CustomEvent('smash-upload-notification', {
-              detail: {
-                type: 'upload_progress',
-                message: `Upload en cours: ${index + 1}/${files.length} photos`,
-                imageCount: index + 1,
-                totalImages: files.length
-              }
+            dispatchUploadEvent('upload_progress', `Upload en cours: ${index + 1}/${files.length} photos`, {
+              imageCount: index + 1,
+              totalImages: files.length
             });
-            window.dispatchEvent(progressEvent);
             
             const response = await fetch('/api/v1/media/upload', {
               method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-              },
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
               body: formData,
             });
             
@@ -433,86 +397,52 @@ export const useRegistrationStore = create<RegistrationStore>()(
               throw new Error(`Failed to upload ${file.name}: ${errorText}`);
             }
             
-            const result = await response.json();
-            return result.data;
+            return (await response.json()).data;
           });
           
-          const uploadResults = await Promise.all(uploadPromises);
-          console.log('Images uploaded successfully:', uploadResults);
+          await Promise.all(uploadPromises);
           
-          // Dispatch success event
-          const successEvent = new CustomEvent('smash-upload-notification', {
-            detail: {
-              type: 'upload_success',
-              message: `${files.length} photos uploadées avec succès !`,
-              imageCount: files.length
-            }
+          dispatchUploadEvent('upload_success', `${files.length} photos uploadées avec succès !`, {
+            imageCount: files.length
           });
-          window.dispatchEvent(successEvent);
           
           set({ isLoading: false });
+          window.location.href = '/app/profile/edit';
           
-          // Finalize registration by redirecting to profile edit page
         } catch (error) {
-          console.error('Image upload failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement des images';
           
-          // Handle token expiration specifically
+          // Handle token expiration
           if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
-            console.log('Token expired, attempting refresh...');
-            
-            // Dispatch refresh attempt event
-            const refreshAttemptEvent = new CustomEvent('smash-upload-notification', {
-              detail: {
-                type: 'upload_progress',
-                message: 'Session expirée. Tentative de renouvellement...',
-                error: 'token_refresh_attempt',
-                imageCount: files.length
-              }
+            dispatchUploadEvent('upload_progress', 'Session expirée. Tentative de renouvellement...', {
+              error: 'token_refresh_attempt',
+              imageCount: files.length
             });
-            window.dispatchEvent(refreshAttemptEvent);
             
-            // Try to refresh token
             const refreshSuccess = await attemptTokenRefresh();
             
             if (refreshSuccess) {
-              // Token refreshed successfully, retry upload
-              console.log('Token refreshed successfully, retrying upload...');
-              
-              const retryEvent = new CustomEvent('smash-upload-notification', {
-                detail: {
-                  type: 'upload_progress',
-                  message: 'Session renouvelée. Reprise de l\'upload...',
-                  error: 'token_refreshed',
-                  imageCount: files.length
-                }
+              dispatchUploadEvent('upload_progress', 'Session renouvelée. Reprise de l\'upload...', {
+                error: 'token_refreshed',
+                imageCount: files.length
               });
-              window.dispatchEvent(retryEvent);
               
-              // Recursive call to retry upload with new token
               try {
                 await get().uploadImages(files);
-                return; // Success, exit the catch block
+                return;
               } catch (retryError) {
                 console.error('Retry upload failed:', retryError);
-                // Fall through to handle as normal error
               }
             }
             
-            // Token refresh failed or retry failed, proceed with logout
+            // Token refresh failed
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             
-            // Dispatch specific token error event
-            const tokenErrorEvent = new CustomEvent('smash-upload-notification', {
-              detail: {
-                type: 'upload_error',
-                message: 'Session expirée. Redirection vers la connexion...',
-                error: 'token_expired',
-                imageCount: files.length
-              }
+            dispatchUploadEvent('upload_error', 'Session expirée. Redirection vers la connexion...', {
+              error: 'token_expired',
+              imageCount: files.length
             });
-            window.dispatchEvent(tokenErrorEvent);
             
             set({ 
               errors: { images: 'Session expirée. Veuillez vous reconnecter.' },
@@ -520,7 +450,6 @@ export const useRegistrationStore = create<RegistrationStore>()(
               isLoading: false 
             });
             
-            // Redirect to login after a brief delay
             setTimeout(() => {
               window.location.href = '/login';
             }, 3000);
@@ -528,24 +457,20 @@ export const useRegistrationStore = create<RegistrationStore>()(
             throw new Error('token expired');
           }
           
+          // Handle other errors
           const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
           
-          // Dispatch error event
-          const errorEvent = new CustomEvent('smash-upload-notification', {
-            detail: {
-              type: 'upload_error',
-              message: errorMessage,
-              error: errorMessage,
-              imageCount: files.length
-            }
+          dispatchUploadEvent('upload_error', errorMessage, {
+            error: errorMessage,
+            imageCount: files.length
           });
-          window.dispatchEvent(errorEvent);
           
           set({ 
             errors: { ...fieldErrors, images: fieldErrors.images || 'Erreur lors du téléchargement des images' },
             globalError,
             isLoading: false 
           });
+          
           throw error;
         }
       },
