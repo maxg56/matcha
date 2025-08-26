@@ -1,7 +1,4 @@
-import { InputField } from '../InputField';
-import { SelectField } from '../SelectField';
 import { HeightSlider } from '../HeightSlider';
-import { fieldOptions } from '@/types/registration';
 import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 
 interface BasicInfoStepProps {

@@ -359,9 +359,20 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({ isLoading: true, globalError: '' });
         
         try {
-          const uploadPromises = files.map(async (file) => {
+          const uploadPromises = files.map(async (file, index) => {
             const formData = new FormData();
             formData.append('file', file);
+            
+            // Dispatch progress event for individual file upload
+            const progressEvent = new CustomEvent('smash-upload-notification', {
+              detail: {
+                type: 'upload_progress',
+                message: `Upload en cours: ${index + 1}/${files.length} photos`,
+                imageCount: index + 1,
+                totalImages: files.length
+              }
+            });
+            window.dispatchEvent(progressEvent);
             
             const response = await fetch('/api/v1/media/upload', {
               method: 'POST',
@@ -372,7 +383,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
             });
             
             if (!response.ok) {
-              throw new Error(`Failed to upload ${file.name}`);
+              const errorText = await response.text();
+              throw new Error(`Failed to upload ${file.name}: ${errorText}`);
             }
             
             const result = await response.json();
@@ -382,12 +394,35 @@ export const useRegistrationStore = create<RegistrationStore>()(
           const uploadResults = await Promise.all(uploadPromises);
           console.log('Images uploaded successfully:', uploadResults);
           
+          // Dispatch success event
+          const successEvent = new CustomEvent('smash-upload-notification', {
+            detail: {
+              type: 'upload_success',
+              message: `${files.length} photos uploadées avec succès !`,
+              imageCount: files.length
+            }
+          });
+          window.dispatchEvent(successEvent);
+          
+          set({ isLoading: false });
+          
           // Finalize registration by redirecting to app
           window.location.href = '/app/discover';
         } catch (error) {
           console.error('Image upload failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement des images';
           const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
+          
+          // Dispatch error event
+          const errorEvent = new CustomEvent('smash-upload-notification', {
+            detail: {
+              type: 'upload_error',
+              message: errorMessage,
+              error: errorMessage,
+              imageCount: files.length
+            }
+          });
+          window.dispatchEvent(errorEvent);
           
           set({ 
             errors: { ...fieldErrors, images: fieldErrors.images || 'Erreur lors du téléchargement des images' },
