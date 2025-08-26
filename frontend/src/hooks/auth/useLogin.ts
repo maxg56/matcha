@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from './useAuth';
 import { ErrorHandler } from '@/utils/errorHandler';
 import { PasswordValidator } from '@/utils/passwordValidator';
 
