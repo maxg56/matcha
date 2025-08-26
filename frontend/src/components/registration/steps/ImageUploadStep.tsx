@@ -7,7 +7,6 @@ import {
   ImageGrid, 
   ActionButtons, 
   PhotoGuidelines, 
-  EmptyState, 
   useImageUpload,
   MAX_IMAGES 
 } from './image-upload';
@@ -21,7 +20,6 @@ export const ImageUploadStep: React.FC = () => {
     canAddMore,
     handleFileSelect,
     handleRemoveImage,
-    handleSkip,
     handleUpload,
     openFileDialog,
   } = useImageUpload();
@@ -77,7 +75,6 @@ export const ImageUploadStep: React.FC = () => {
             images={images}
             isLoading={isLoading}
             onUpload={handleUpload}
-            onSkip={handleSkip}
           />
 
         </CardContent>

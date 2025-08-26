@@ -64,9 +64,7 @@ export const useImageUpload = () => {
     });
   }, [smashNotifier]);
 
-  const handleSkip = useCallback(() => {
-    window.location.href = '/app/discover';
-  }, []);
+
 
   const handleUpload = useCallback(async () => {
     if (images.length === 0) {
@@ -104,7 +102,6 @@ export const useImageUpload = () => {
     canAddMore: images.length < MAX_IMAGES,
     handleFileSelect,
     handleRemoveImage,
-    handleSkip,
     handleUpload,
     openFileDialog,
   };

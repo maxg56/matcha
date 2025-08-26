@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, AlertCircle } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 import type { ImagePreview } from './types';
 
 interface ActionButtonsProps {
@@ -21,18 +21,18 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       <Button
         onClick={onUpload}
         disabled={isLoading}
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-lg shadow-sm"
+        className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
       >
         {isLoading ? (
-          <div className="flex items-center gap-2">
+          <>
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Téléchargement...
-          </div>
+            Finalisation...
+          </>
         ) : (
-          <div className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            Continuer avec {images.length} photo{images.length > 1 ? 's' : ''}
-          </div>
+          <>
+            Finaliser mon profil
+            <Check className="h-4 w-4" />
+          </>
         )}
       </Button>
     )}

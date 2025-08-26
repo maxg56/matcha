@@ -452,8 +452,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
           
           set({ isLoading: false });
           
-          // Finalize registration by redirecting to app
-          window.location.href = '/app/discover';
+          // Finalize registration by redirecting to profile edit page
         } catch (error) {
           console.error('Image upload failed:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement des images';
