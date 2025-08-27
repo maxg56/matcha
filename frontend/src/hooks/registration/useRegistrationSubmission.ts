@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { ErrorHandler } from '@/utils/errorHandler';
@@ -8,6 +9,7 @@ import { useNotifications } from '../ui/useNotifications';
 import type { RegistrationData } from '@/types/registration';
 
 export const useRegistrationSubmission = () => {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { handleTokenExpiration } = useTokenRefresh();
   const { dispatchProfileEvent } = useNotifications();
@@ -52,7 +54,7 @@ export const useRegistrationSubmission = () => {
           
           await useUserStore.getState().updateProfile(payloadWithoutTags);
           
-          window.location.href = '/app/discover';
+          navigate('/app/discover');
           dispatchProfileEvent('tags_error', 'Profil créé avec succès ! Les centres d\'intérêt seront ajoutés plus tard.', 'tags_update_failed');
           return true;
         } catch (retryError) {

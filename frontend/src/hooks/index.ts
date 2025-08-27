@@ -13,6 +13,7 @@ export { useAvailabilityCheck } from './registration/useAvailabilityCheck';
 export { useEmailVerification } from './registration/useEmailVerification';
 export { useImageUpload } from './registration/useImageUpload';
 export { useRegistration } from './registration/useRegistration';
+export { useRegistrationLogic } from './registration/useRegistrationLogic';
 export { useRegistrationSubmission } from './registration/useRegistrationSubmission';
 export { useProfileUpdate } from './registration/useProfileUpdate';
 

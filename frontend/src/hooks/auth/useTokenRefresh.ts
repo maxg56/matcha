@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { attemptTokenRefresh } from '@/utils/smashNotifications';
 
 export const useTokenRefresh = () => {
+  const navigate = useNavigate();
+  
   const handleTokenExpiration = async (retryFn: () => Promise<void>) => {
     const refreshSuccess = await attemptTokenRefresh();
     
@@ -18,7 +21,7 @@ export const useTokenRefresh = () => {
     localStorage.removeItem('refreshToken');
     
     setTimeout(() => {
-      window.location.href = '/login';
+      navigate('/login');
     }, 3000);
     
     return false;

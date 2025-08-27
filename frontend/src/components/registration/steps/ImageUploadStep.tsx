@@ -16,9 +16,12 @@ export const ImageUploadStep: React.FC = () => {
     selectedImages: images,
     isLoading,
     errors,
-    addImages,
-    removeImage,
     completeRegistration
+  } = useRegistration();
+  
+  const {
+    addImages,
+    removeImage
   } = useRegistrationStore();
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);

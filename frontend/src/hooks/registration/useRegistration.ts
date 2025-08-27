@@ -1,10 +1,8 @@
-import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useRegistrationStore } from '@/stores/registrationStore';
-import { useImageUpload } from './useImageUpload';
+import { useRegistrationLogic } from './useRegistrationLogic';
 
 export function useRegistration() {
-  const navigate = useNavigate();
+  // État depuis le store
   const {
     formData,
     currentStep,
@@ -14,43 +12,28 @@ export function useRegistration() {
     isSubmitting,
     emailVerificationCode,
     isEmailVerified,
+    selectedImages,
     updateField,
     toggleTag,
+    resetForm,
+    clearGlobalError,
+    setEmailVerificationCode,
+  } = useRegistrationStore();
+  
+  // Logique métier depuis le hook dédié
+  const {
     validateCurrentStep,
     canContinue,
     nextStep,
     prevStep,
-    submitRegistration: storeSubmitRegistration,
-    completeRegistration: storeCompleteRegistration,
-    resetForm,
-    clearGlobalError,
-    setEmailVerificationCode,
     sendEmailVerification,
     verifyEmail,
-  } = useRegistrationStore();
-  const { handleUpload } = useImageUpload();
-
-  const submitRegistration = useCallback(async () => {
-    try {
-      await storeSubmitRegistration();
-    } catch (err) {
-      console.error('Registration failed:', err);
-      throw err;
-    }
-  }, [storeSubmitRegistration, navigate]);
-
-
-  const completeRegistration = useCallback(async () => {
-    try {
-      // Les images sont maintenant gérées directement dans le store
-      await storeCompleteRegistration();
-    } catch (err) {
-      console.error('Profile completion failed:', err);
-      throw err;
-    }
-  }, [storeCompleteRegistration]);
+    submitRegistration,
+    completeRegistration,
+  } = useRegistrationLogic();
 
   return {
+    // État
     formData,
     currentStep,
     isLoading,
@@ -59,18 +42,23 @@ export function useRegistration() {
     isSubmitting,
     emailVerificationCode,
     isEmailVerified,
+    selectedImages,
+    
+    // Actions d'état simple
     updateField,
     toggleTag,
+    resetForm,
+    clearGlobalError,
+    setEmailVerificationCode,
+    
+    // Logique métier
     validateCurrentStep,
     canContinue,
     nextStep,
     prevStep,
-    submitRegistration,
-    completeRegistration,
-    resetForm,
-    clearGlobalError,
-    setEmailVerificationCode,
     sendEmailVerification,
     verifyEmail,
+    submitRegistration,
+    completeRegistration,
   };
 }
