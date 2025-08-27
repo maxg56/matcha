@@ -16,7 +16,6 @@ export const ImageUploadStep: React.FC = () => {
     selectedImages: images,
     isLoading,
     errors,
-    completeRegistration
   } = useRegistration();
   
   const {
@@ -73,10 +72,6 @@ export const ImageUploadStep: React.FC = () => {
   }, []);
 
   // Fonction pour finaliser l'inscription avec les images du store
-  const handleCompleteRegistration = useCallback(async () => {
-    await completeRegistration();
-  }, [completeRegistration]);
-
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -128,12 +123,6 @@ export const ImageUploadStep: React.FC = () => {
             </span>
           )}
         </div>
-
-        <ActionButtons 
-          images={images}
-          isLoading={isLoading}
-          onUpload={handleCompleteRegistration}
-        />
       </CardContent>
     </div>
   );
