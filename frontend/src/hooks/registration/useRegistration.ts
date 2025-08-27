@@ -39,9 +39,10 @@ export function useRegistration() {
     }
   }, [storeSubmitRegistration, navigate]);
 
+
   const completeRegistration = useCallback(async () => {
     try {
-      await handleUpload();
+      // Les images sont maintenant gérées directement dans le store
       await storeCompleteRegistration();
     } catch (err) {
       console.error('Profile completion failed:', err);

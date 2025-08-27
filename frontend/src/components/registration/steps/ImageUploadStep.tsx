@@ -1,31 +1,78 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Camera, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useProfileNotifications } from '@/hooks';
+import { useProfileNotifications, useRegistration } from '@/hooks';
+import { useRegistrationStore } from '@/stores/registrationStore';
 import { 
   ImageGrid, 
   ActionButtons, 
   PhotoGuidelines, 
-  useImageUpload,
   MAX_IMAGES 
 } from './image-upload';
 
 export const ImageUploadStep: React.FC = () => {
   const {
-    images,
+    selectedImages: images,
     isLoading,
     errors,
-    fileInputRef,
-    canAddMore,
-    handleFileSelect,
-    handleRemoveImage,
-    handleUpload,
-    openFileDialog,
-  } = useImageUpload();
+    addImages,
+    removeImage,
+    completeRegistration
+  } = useRegistrationStore();
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   // Hook to handle profile completion notifications
   useProfileNotifications();
+
+  // Gestion de la sélection de fichiers
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newImages = [];
+    const remainingSlots = MAX_IMAGES - images.length;
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    
+    filesToProcess.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) {
+        return;
+      }
+      
+      const preview = URL.createObjectURL(file);
+      newImages.push({
+        file,
+        preview,
+        id: Math.random().toString(36).substring(7),
+      });
+    });
+
+    if (newImages.length > 0) {
+      addImages(newImages);
+    }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [images.length, addImages]);
+
+  const handleRemoveImage = useCallback((id: string) => {
+    removeImage(id);
+  }, [removeImage]);
+
+  const openFileDialog = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // Fonction pour finaliser l'inscription avec les images du store
+  const handleCompleteRegistration = useCallback(async () => {
+    await completeRegistration();
+  }, [completeRegistration]);
 
   return (
     <div className="space-y-6">
@@ -44,7 +91,7 @@ export const ImageUploadStep: React.FC = () => {
       <CardContent className="space-y-6">
         <ImageGrid 
           images={images}
-          canAddMore={canAddMore}
+          canAddMore={images.length < MAX_IMAGES}
           onRemoveImage={handleRemoveImage}
           onAddImage={openFileDialog}
         />
@@ -82,7 +129,7 @@ export const ImageUploadStep: React.FC = () => {
         <ActionButtons 
           images={images}
           isLoading={isLoading}
-          onUpload={handleUpload}
+          onUpload={handleCompleteRegistration}
         />
       </CardContent>
     </div>

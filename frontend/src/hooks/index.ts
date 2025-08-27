@@ -14,6 +14,7 @@ export { useEmailVerification } from './registration/useEmailVerification';
 export { useImageUpload } from './registration/useImageUpload';
 export { useRegistration } from './registration/useRegistration';
 export { useRegistrationSubmission } from './registration/useRegistrationSubmission';
+export { useProfileUpdate } from './registration/useProfileUpdate';
 
 // UI hooks
 export { useNotifications } from './ui/useNotifications';

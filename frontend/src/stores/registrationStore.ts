@@ -6,6 +6,8 @@ import { RegistrationValidator } from '@/utils/registrationValidator';
 import { authService } from '@/services/auth';
 import { ErrorHandler } from '@/utils/errorHandler';
 import { useAuthStore } from './authStore';
+import { useUserStore } from './userStore';
+import type { ImagePreview } from '@/components/registration/steps/image-upload/types';
 
 // === TYPES ===
 interface RegistrationState {
@@ -18,6 +20,7 @@ interface RegistrationState {
   emailVerificationCode: string;
   isEmailVerified: boolean;
   isAccountCreated: boolean;
+  selectedImages: ImagePreview[];
 }
 
 interface RegistrationActions {
@@ -52,6 +55,11 @@ interface RegistrationActions {
   sendEmailVerification: () => Promise<void>;
   verifyEmail: () => Promise<void>;
 
+  // Image management
+  addImages: (images: ImagePreview[]) => void;
+  removeImage: (imageId: string) => void;
+  clearImages: () => void;
+
   // Registration process
   submitRegistration: () => Promise<void>;
   completeRegistration: () => Promise<void>;
@@ -73,6 +81,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
       emailVerificationCode: '',
       isEmailVerified: false,
       isAccountCreated: false,
+      selectedImages: [],
 
       // === DATA MANAGEMENT ===
       updateField: <K extends keyof RegistrationData>(field: K, value: RegistrationData[K]) => {
@@ -93,6 +102,10 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
 
       resetForm: () => {
+        // Clean up image previews
+        const { selectedImages } = get();
+        selectedImages.forEach(img => URL.revokeObjectURL(img.preview));
+        
         set({
           formData: defaultRegistrationData,
           currentStep: 1,
@@ -103,6 +116,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
           emailVerificationCode: '',
           isEmailVerified: false,
           isAccountCreated: false,
+          selectedImages: [],
         });
       },
 
@@ -170,6 +184,31 @@ export const useRegistrationStore = create<RegistrationStore>()(
 
       setEmailVerified: (isEmailVerified: boolean) => set({ isEmailVerified }),
       setAccountCreated: (isAccountCreated: boolean) => set({ isAccountCreated }),
+
+      // === IMAGE MANAGEMENT ===
+      addImages: (newImages: ImagePreview[]) => {
+        set(state => ({
+          selectedImages: [...state.selectedImages, ...newImages]
+        }));
+      },
+
+      removeImage: (imageId: string) => {
+        set(state => {
+          const imageToRemove = state.selectedImages.find(img => img.id === imageId);
+          if (imageToRemove) {
+            URL.revokeObjectURL(imageToRemove.preview);
+          }
+          return {
+            selectedImages: state.selectedImages.filter(img => img.id !== imageId)
+          };
+        });
+      },
+
+      clearImages: () => {
+        const { selectedImages } = get();
+        selectedImages.forEach(img => URL.revokeObjectURL(img.preview));
+        set({ selectedImages: [] });
+      },
 
       // === EMAIL VERIFICATION ACTIONS ===
       sendEmailVerification: async () => {
@@ -257,9 +296,111 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
 
       completeRegistration: async () => {
-        // Cette fonction sera implémentée pour la finalisation du profil
-        // Pour l'instant, on redirige vers l'app
-        window.location.href = '/app/discover';
+        const { formData, isAccountCreated, selectedImages } = get();
+        
+        if (!isAccountCreated) {
+          throw new Error('Account must be created first');
+        }
+        
+        // Vérifier qu'au moins une image est présente (obligatoire)
+        if (selectedImages.length === 0) {
+          throw new Error('Au moins une image est requise pour finaliser votre profil');
+        }
+        
+        set({ isSubmitting: true, isLoading: true, globalError: '' });
+        
+        try {
+          // 1. Upload des images depuis le store
+          let imageUrls: string[] = [];
+          const uploadPromises = selectedImages.map(async (imagePreview) => {
+            const formData = new FormData();
+            formData.append('file', imagePreview.file);
+            
+            const response = await fetch('/api/v1/media/upload', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
+              body: formData,
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to upload image: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            return result.data.url;
+          });
+          
+          imageUrls = await Promise.all(uploadPromises);
+
+          // 2. Préparer les données de profil à partir du formulaire d'inscription
+          const profileUpdatePayload = RegistrationValidator.prepareProfilePayload(formData);
+          
+          // 3. Ajouter les URLs des images uploadées (obligatoires)
+          profileUpdatePayload.images = imageUrls;
+
+          // 4. Mettre à jour le profil utilisateur
+          const currentUser = useAuthStore.getState().user;
+          if (!currentUser?.id) {
+            throw new Error('User not found, please login again');
+          }
+
+          await useUserStore.getState().updateProfile(profileUpdatePayload);
+          
+          // 5. Succès - rediriger vers la page de découverte
+          set({ isSubmitting: false, isLoading: false });
+          window.location.href = '/app/discover';
+          
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la finalisation du profil';
+          
+          // Gestion des erreurs spécifiques
+          if (errorMessage.includes('failed to update tags')) {
+            // Try to update profile without tags first, then handle tags separately
+            try {
+              const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
+              const { tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
+              
+              await useUserStore.getState().updateProfile(payloadWithoutTags);
+              
+              // Profile updated successfully without tags, continue to discover page
+              window.location.href = '/app/discover';
+              return;
+            } catch (retryError) {
+              console.error('Failed to update profile without tags:', retryError);
+            }
+          } 
+          
+          if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
+            // Clear tokens and redirect to login
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            
+            set({ 
+              errors: { images: 'Session expirée. Veuillez vous reconnecter.' },
+              globalError: 'Session expirée. Redirection en cours...',
+              isLoading: false,
+              isSubmitting: false
+            });
+            
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 3000);
+            
+            throw new Error('token expired');
+          }
+          
+          // Autres erreurs
+          const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
+          
+          set({ 
+            errors: fieldErrors, 
+            globalError,
+            isSubmitting: false, 
+            isLoading: false 
+          });
+          
+          throw error;
+        }
       },
     }),
     { name: 'RegistrationStore' }

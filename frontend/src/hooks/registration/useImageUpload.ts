@@ -71,7 +71,7 @@ export const useImageUpload = () => {
 
 
 
-  const handleUpload = useCallback(async () => {
+  const handleUpload = useCallback(async (onComplete?: (files: File[]) => Promise<void>) => {
     if (images.length === 0) {
       smashNotifier.notifyCustom('warning', 'Aucune photo à uploader');
       return;
@@ -82,6 +82,19 @@ export const useImageUpload = () => {
     setErrors({});
     
     try {
+      // Utiliser la fonction de completion personnalisée si fournie
+      if (onComplete) {
+        await onComplete(files);
+        
+        dispatchUploadEvent('upload_success', `${files.length} photos uploadées avec succès !`, {
+          imageCount: files.length
+        });
+        
+        smashNotifier.notifyUploadSuccess(files.length);
+        return;
+      }
+
+      // Fallback vers l'ancien comportement si pas de fonction onComplete
       const uploadPromises = files.map(async (file, index) => {
         const formData = new FormData();
         formData.append('file', file);
