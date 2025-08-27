@@ -18,7 +18,7 @@ export function Notification() {
             return;
         }
 
-        const evtSource = new EventSource(`/api/notifications/stream/${user.id}`);
+        const evtSource = new EventSource(`/api/v1/notifications/stream/${user.id}`);
 
         evtSource.onmessage = function (event) {
             const notification = JSON.parse(event.data);

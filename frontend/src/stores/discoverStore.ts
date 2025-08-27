@@ -74,7 +74,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const profiles = await apiService.get<Profile[]>('/match-service/discover');
+          const profiles = await apiService.get<Profile[]>('/api/v1/matches/discover');
           
           set({
             profiles,
@@ -99,7 +99,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const matches = await apiService.get<Match[]>('/match-service/matches');
+          const matches = await apiService.get<Match[]>('/api/v1/matches');
           
           set({
             matches,
@@ -120,7 +120,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
       likeProfile: async (profileId: number) => {
         
         try {
-          const response = await apiService.post<{ is_match: boolean }>('/match-service/like', {
+          const response = await apiService.post<{ is_match: boolean }>('/api/v1/matches/like', {
             user_id: profileId,
             action: 'like'
           });
@@ -139,7 +139,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
 
       dislikeProfile: async (profileId: number) => {
         try {
-          await apiService.post('/match-service/like', {
+          await apiService.post('/api/v1/matches/like', {
             user_id: profileId,
             action: 'dislike'
           });
@@ -155,7 +155,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
       superLikeProfile: async (profileId: number) => {
         
         try {
-          const response = await apiService.post<{ is_match: boolean }>('/match-service/like', {
+          const response = await apiService.post<{ is_match: boolean }>('/api/v1/matches/like', {
             user_id: profileId,
             action: 'super_like'
           });
@@ -174,7 +174,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
 
       reportProfile: async (profileId: number, reason: string) => {
         try {
-          await apiService.post('/user-service/report', {
+          await apiService.post('/api/v1/users/report', {
             reported_user_id: profileId,
             reason
           });
