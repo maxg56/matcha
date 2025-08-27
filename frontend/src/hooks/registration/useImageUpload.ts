@@ -4,6 +4,7 @@ import { useNotifications } from '../ui/useNotifications';
 import { ErrorHandler } from '@/utils/errorHandler';
 import type { ImagePreview } from '../../components/registration/steps/image-upload/types';
 import { MAX_IMAGES } from '../../components/registration/steps/image-upload/types';
+import { useNavigate } from 'react-router-dom';
 
 export const useImageUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,6 +12,7 @@ export const useImageUpload = () => {
   const [images, setImages] = useState<ImagePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const smashNotifier = useSmashNotifications();
+  const navigate = useNavigate();
   const { dispatchUploadEvent } = useNotifications();
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,7 +151,7 @@ export const useImageUpload = () => {
         setErrors({ images: 'Session expirée. Veuillez vous reconnecter.' });
         
         setTimeout(() => {
-          window.location.href = '/login';
+          navigate('/login');
         }, 3000);
         
         throw new Error('token expired');

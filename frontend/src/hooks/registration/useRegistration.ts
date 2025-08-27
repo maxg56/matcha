@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRegistrationStore } from '@/stores/registrationStore';
+import { useImageUpload } from './useImageUpload';
 
 export function useRegistration() {
   const navigate = useNavigate();
@@ -22,13 +23,12 @@ export function useRegistration() {
     submitRegistration: storeSubmitRegistration,
     completeRegistration: storeCompleteRegistration,
     resetForm,
-    checkUsernameAvailability,
-    checkEmailAvailability,
     clearGlobalError,
     setEmailVerificationCode,
     sendEmailVerification,
     verifyEmail,
   } = useRegistrationStore();
+  const { handleUpload } = useImageUpload();
 
   const submitRegistration = useCallback(async () => {
     try {
@@ -41,6 +41,7 @@ export function useRegistration() {
 
   const completeRegistration = useCallback(async () => {
     try {
+      await handleUpload();
       await storeCompleteRegistration();
     } catch (err) {
       console.error('Profile completion failed:', err);
@@ -66,8 +67,6 @@ export function useRegistration() {
     submitRegistration,
     completeRegistration,
     resetForm,
-    checkUsernameAvailability,
-    checkEmailAvailability,
     clearGlobalError,
     setEmailVerificationCode,
     sendEmailVerification,
