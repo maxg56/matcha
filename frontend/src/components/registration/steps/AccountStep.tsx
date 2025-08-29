@@ -1,41 +1,7 @@
 import { InputField } from '../InputField';
-
-interface RegistrationData {
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  birthDate: string;
-  gender: string;
-  sexPref: string;
-  height: number;
-  hairColor: string;
-  eyeColor: string;
-  skinColor: string;
-  alcoholConsumption: string;
-  smoking: string;
-  cannabis: string;
-  drugs: string;
-  pets: string;
-  socialActivityLevel: string;
-  sportActivity: string;
-  educationLevel: string;
-  bio: string;
-  birthCity: string;
-  currentCity: string;
-  job: string;
-  religion: string;
-  relationshipType: string;
-  childrenStatus: string;
-  politicalView: string;
-  tags: string[];
-}
-
-interface FieldValidationErrors {
-  [key: string]: string;
-}
+import { SelectField } from '../SelectField';
+import { fieldOptions } from '@/types/registration';
+import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 
 interface AccountStepProps {
   formData: RegistrationData;
@@ -98,6 +64,44 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
         placeholder="Confirmez votre mot de passe"
         error={errors.confirmPassword}
       />
+
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-semibold mb-4">Informations de base</h3>
+        
+        <div className="space-y-4">
+          <InputField
+            label="Date de naissance"
+            type="date"
+            value={formData.birthDate}
+            onChange={(value) => updateField('birthDate', value)}
+            error={errors.birthDate}
+          />
+
+          <SelectField
+            label="Genre"
+            value={formData.gender}
+            onChange={(value) => updateField('gender', value)}
+            options={fieldOptions.gender}
+            error={errors.gender}
+          />
+
+          <SelectField
+            label="Intéressé(e) par"
+            value={formData.sexPref}
+            onChange={(value) => updateField('sexPref', value)}
+            options={fieldOptions.sexPref}
+            error={errors.sexPref}
+          />
+
+          <SelectField
+            label="Type de relation recherché"
+            value={formData.relationshipType}
+            onChange={(value) => updateField('relationshipType', value)}
+            options={fieldOptions.relationshipType}
+            error={errors.relationshipType}
+          />
+        </div>
+      </div>
     </div>
   );
 }

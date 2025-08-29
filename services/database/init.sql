@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS relations CASCADE;
 DROP TABLE IF EXISTS images CASCADE;
 DROP TABLE IF EXISTS user_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
+DROP TABLE IF EXISTS email_verifications CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ====================
@@ -38,8 +39,9 @@ CREATE TABLE users (
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    email_verified BOOLEAN DEFAULT FALSE,
     password_hash TEXT NOT NULL,
-    birth_date DATE NOT NULL,
+    birth_date DATE ,
     age INT,
     height INT,
 
@@ -60,7 +62,7 @@ CREATE TABLE users (
     current_city VARCHAR(100),
     job VARCHAR(100),
     religion religion_enum,
-    relationship_type relationship_type_enum NOT NULL,
+    relationship_type relationship_type_enum ,
     children_status children_status_enum,
     children_details TEXT,
 
@@ -81,6 +83,20 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ====================
+-- TABLE : email_verifications
+-- ====================
+CREATE TABLE email_verifications (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    verification_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_email_verifications_email ON email_verifications(email);
 
 -- ====================
 -- TABLE : tags
@@ -187,6 +203,11 @@ EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER trg_update_images_updated_at
 BEFORE UPDATE ON images
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trg_update_email_verifications_updated_at
+BEFORE UPDATE ON email_verifications
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 

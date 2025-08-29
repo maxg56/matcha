@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Notification } from "./../hooks/NotifImage";
+import { Notification } from "../hooks/ui/NotifImage";
 
 export function NotificationButton() {
     const location = useLocation();

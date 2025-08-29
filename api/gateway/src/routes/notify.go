@@ -13,6 +13,7 @@ func SetupNotifyRoutes(r *gin.Engine) {
 
 	// Notification retrieval
 	notify.GET("/list", proxy.ProxyRequest("notify", "/api/v1/notifications"))
+	notify.GET("/stream/:user_id", proxy.ProxyRequest("notify", "/api/v1/notifications/stream/:user_id"))
 
 	// Notification management
 	notify.PUT("/:id/read", proxy.ProxyRequest("notify", "/api/v1/notifications/:id/read"))

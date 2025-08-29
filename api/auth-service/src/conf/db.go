@@ -43,6 +43,7 @@ func ConnectDatabase() {
 		log.Println("Running DB AutoMigrate (AUTO_MIGRATE=true)")
 		if err := DB.AutoMigrate(
 			&models.Users{},
+			&models.EmailVerification{},
 			&models.Tag{},
 			&models.UserTag{},
 			&models.Image{},

@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks';
 
 export const RootRedirect: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();

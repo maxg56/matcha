@@ -86,7 +86,7 @@ export const useChatStore = create<ChatStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const conversations = await apiService.get<Conversation[]>('/chat-service/conversations');
+          const conversations = await apiService.get<Conversation[]>('/api/v1/chat/conversations');
           
           set({
             conversations,
@@ -108,7 +108,7 @@ export const useChatStore = create<ChatStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const messages = await apiService.get<Message[]>(`/chat-service/conversations/${conversationId}/messages`);
+          const messages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
           
           set({
             messages: messages.sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),
@@ -128,7 +128,7 @@ export const useChatStore = create<ChatStore>()(
 
       sendMessage: async (conversationId: number, content: string) => {
         try {
-          const message = await apiService.post<Message>(`/chat-service/conversations/${conversationId}/messages`, {
+          const message = await apiService.post<Message>(`/api/v1/chat/conversations/${conversationId}/messages`, {
             content,
           });
           
@@ -147,7 +147,7 @@ export const useChatStore = create<ChatStore>()(
 
       markAsRead: async (conversationId: number) => {
         try {
-          await apiService.put(`/chat-service/conversations/${conversationId}/read`);
+          await apiService.put(`/api/v1/chat/conversations/${conversationId}/read`);
           
           const conversations = get().conversations.map(conv => 
             conv.id === conversationId 

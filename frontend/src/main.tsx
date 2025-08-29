@@ -28,10 +28,10 @@ createRoot(document.getElementById('root')!).render(
             <Routes>
               {/* Auth routes */}
               <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
-              <Route path="/inscription" element={<ProtectedRoute requireAuth={false}><InscriptionPage /></ProtectedRoute>} />
+              <Route path="/inscription" element={<InscriptionPage />} />
             
               {/* Main app routes */}
-              <Route path="/app" element={<AuthenticatedLayout />}>
+              <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
                 <Route index element={<Navigate to="discover" replace />} />
                 <Route path="discover" element={<DiscoverPage />} />
                 <Route path="matches" element={<MatchesPage />} />

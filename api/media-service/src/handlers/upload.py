@@ -81,9 +81,8 @@ def upload_file():
         db.session.add(image_record)
         db.session.commit()
 
-        # Generate public URL
-        base_url = request.host_url.rstrip("/")
-        file_url = f"{base_url}/api/v1/media/get/{unique_filename}"
+        # Generate public URL - use relative path that will go through gateway
+        file_url = f"/api/v1/media/get/{unique_filename}"
 
         logger.info(f"File uploaded successfully: {unique_filename} for user {user_id}")
         return respond_success(

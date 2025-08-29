@@ -73,61 +73,61 @@ export const useDiscoverStore = create<DiscoverStore>()(
       fetchProfiles: async () => {
         set({ isLoading: true, error: null });
         
-        try {
-          const profiles = await apiService.get<Profile[]>('/match-service/discover');
+        // try {
+        //   const profiles = await apiService.get<Profile[]>('/api/v1/matches/discover');
           
-          set({
-            profiles,
-            currentIndex: 0,
-            hasMoreProfiles: profiles.length > 0,
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch profiles';
-          set({
-            profiles: [],
-            hasMoreProfiles: false,
-            isLoading: false,
-            error: errorMessage,
-          });
-          throw error;
-        }
+        //   set({
+        //     profiles,
+        //     currentIndex: 0,
+        //     hasMoreProfiles: profiles.length > 0,
+        //     isLoading: false,
+        //     error: null,
+        //   });
+        // } catch (error) {
+        //   const errorMessage = error instanceof Error ? error.message : 'Failed to fetch profiles';
+        //   set({
+        //     profiles: [],
+        //     hasMoreProfiles: false,
+        //     isLoading: false,
+        //     error: errorMessage,
+        //   });
+        //   throw error;
+        // }
       },
 
       fetchMatches: async () => {
         set({ isLoading: true, error: null });
         
-        try {
-          const matches = await apiService.get<Match[]>('/match-service/matches');
+        // try {
+        //   const matches = await apiService.get<Match[]>('/api/v1/matches');
           
-          set({
-            matches,
-            isLoading: false,
-            error: null,
-          });
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch matches';
-          set({
-            matches: [],
-            isLoading: false,
-            error: errorMessage,
-          });
-          throw error;
-        }
+        //   set({
+        //     matches,
+        //     isLoading: false,
+        //     error: null,
+        //   });
+        // } catch (error) {
+        //   const errorMessage = error instanceof Error ? error.message : 'Failed to fetch matches';
+        //   set({
+        //     matches: [],
+        //     isLoading: false,
+        //     error: errorMessage,
+        //   });
+        //   throw error;
+        // }
       },
 
       likeProfile: async (profileId: number) => {
         
         try {
-          const response = await apiService.post<{ is_match: boolean }>('/match-service/like', {
-            user_id: profileId,
-            action: 'like'
-          });
+          // const response = await apiService.post<{ is_match: boolean }>('/api/v1/matches/like', {
+          //   user_id: profileId,
+          //   action: 'like'
+          // });
           
-          if (response.is_match) {
-            await get().fetchMatches();
-          }
+          // if (response.is_match) {
+          //   await get().fetchMatches();
+          // }
           
           get().nextProfile();
         } catch (error) {
@@ -139,10 +139,10 @@ export const useDiscoverStore = create<DiscoverStore>()(
 
       dislikeProfile: async (profileId: number) => {
         try {
-          await apiService.post('/match-service/like', {
-            user_id: profileId,
-            action: 'dislike'
-          });
+          // await apiService.post('/api/v1/matches/like', {
+          //   user_id: profileId,
+          //   action: 'dislike'
+          // });
           
           get().nextProfile();
         } catch (error) {
@@ -155,7 +155,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
       superLikeProfile: async (profileId: number) => {
         
         try {
-          const response = await apiService.post<{ is_match: boolean }>('/match-service/like', {
+          const response = await apiService.post<{ is_match: boolean }>('/api/v1/matches/like', {
             user_id: profileId,
             action: 'super_like'
           });
@@ -174,10 +174,10 @@ export const useDiscoverStore = create<DiscoverStore>()(
 
       reportProfile: async (profileId: number, reason: string) => {
         try {
-          await apiService.post('/user-service/report', {
-            reported_user_id: profileId,
-            reason
-          });
+          // await apiService.post('/api/v1/users/report', {
+          //   reported_user_id: profileId,
+          //   reason
+          // });
           
           get().nextProfile();
         } catch (error) {

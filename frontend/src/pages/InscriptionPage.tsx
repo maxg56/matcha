@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Heart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useRegistration } from '@/hooks/useRegistration';
+import { useRegistration } from '@/hooks';
 import { ProgressBar } from '@/components/registration';
 import {
   AccountStep,
@@ -10,7 +10,9 @@ import {
   LifestyleStep,
   ActivityStep,
   PersonalStep,
-  InterestsStep
+  InterestsStep,
+  EmailVerificationStep,
+  ImageUploadStep
 } from '@/components/registration/steps';
 import { registrationSteps, stepDescriptions } from '@/constants/registrationSteps';
 
@@ -26,7 +28,7 @@ export default function InscriptionPage() {
     canContinue,
     nextStep,
     prevStep,
-    submitRegistration
+    completeRegistration,
   } = useRegistration();
 
 
@@ -37,21 +39,26 @@ export default function InscriptionPage() {
       case 1:
         return <AccountStep {...commonProps} />;
       case 2:
-        return <BasicInfoStep {...commonProps} />;
+        return <EmailVerificationStep />;
       case 3:
-        return <AppearanceStep {...commonProps} />;
+        return <BasicInfoStep {...commonProps} />;
       case 4:
+        return <AppearanceStep {...commonProps} />;
+      case 5 :
         return <LifestyleStep {...commonProps} />;
-      case 5:
-        return <ActivityStep {...commonProps} />;
       case 6:
+        return <ActivityStep {...commonProps} />;
+      case 7 :
         return <PersonalStep {...commonProps} />;
-      case 7:
+      case 8:
         return <InterestsStep formData={formData} errors={errors} toggleTag={toggleTag} />;
+      case 9:
+        return <ImageUploadStep />;
       default:
         return null;
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-violet-50 to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -103,26 +110,26 @@ export default function InscriptionPage() {
               {currentStep < registrationSteps.length ? (
                 <Button
                   onClick={nextStep}
-                  disabled={!canContinue(currentStep)}
+                  disabled={!canContinue() || isLoading}
                   className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white disabled:opacity-50"
                 >
-                  Suivant
+                  {currentStep === 1 ? 'Créer le compte' : 'Suivant'}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button
-                  onClick={submitRegistration}
+                  onClick={completeRegistration}
                   disabled={isLoading}
                   className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
                 >
                   {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Création...
+                      Finalisation...
                     </>
                   ) : (
                     <>
-                      Créer mon compte
+                      Finaliser mon profil
                       <Check className="h-4 w-4" />
                     </>
                   )}

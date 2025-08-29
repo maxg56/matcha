@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuthStore } from '@/stores/authStore';
 
 type NotificationEntry = [string, number];
 
@@ -9,11 +10,16 @@ export function Notification() {
 
     const [seen, setSeen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
-
-    const userId = "123"; // remplacer par l'ID réel de l'utilisateur
-    const evtSource = new EventSource(`http://localhost:8005/api/v1/notifications/stream/${userId}`);
+    const { user } = useAuthStore();
 
     useEffect(() => {
+        // Don't create EventSource if user is not authenticated
+        if (!user?.id) {
+            return;
+        }
+
+        const evtSource = new EventSource(`/api/v1/notifications/stream/${user.id}`);
+
         evtSource.onmessage = function (event) {
             const notification = JSON.parse(event.data);
             // Ici tu peux afficher la notif dans l'UI
@@ -22,11 +28,12 @@ export function Notification() {
             evtSource.close();
             console.log("rgejreg")
         };
+
         return () => {
-            // evtSource.close();
+            evtSource.close();
         };
         
-    });
+    }, [user?.id]);
 
     // useEffect(() => {
     //     const interval = setInterval(() => {

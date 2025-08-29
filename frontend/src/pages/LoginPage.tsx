@@ -12,6 +12,7 @@ export default function LoginPage() {
     showPassword,
     isLoading,
     error,
+    fieldErrors,
     isFormValid,
     isEmail,
     handleInputChange,
@@ -46,6 +47,7 @@ export default function LoginPage() {
               showPassword={showPassword}
               isLoading={isLoading}
               error={error}
+              fieldErrors={fieldErrors}
               isFormValid={isFormValid}
               isEmail={isEmail}
               onInputChange={handleInputChange}

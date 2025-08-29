@@ -14,7 +14,32 @@ export interface RegisterRequest {
   birth_date: string; // ISO date string
   gender: string;
   sex_pref: string;
+  // Additional required fields based on backend validation
+  relationship_type?: string;
+  height?: number;
+  hair_color?: string;
+  eye_color?: string;
+  skin_color?: string;
+  alcohol_consumption?: string;
+  smoking?: string;
+  cannabis?: string;
+  drugs?: string;
+  pets?: string;
+  social_activity_level?: string;
+  sport_activity?: string;
+  education_level?: string;
+  bio?: string;
+  birth_city?: string;
+  current_city?: string;
+  job?: string;
+  religion?: string;
+  children_status?: string;
+  political_view?: string;
+  tags?: string[];
+  images?: string[];
 }
+
+// Remove ExtendedRegisterRequest - all fields now in RegisterRequest
 
 export interface CheckAvailabilityRequest {
   username?: string;
@@ -66,12 +91,22 @@ export interface ResetPasswordRequest {
   password: string;
 }
 
+export interface EmailVerificationRequest {
+  email: string;
+}
+
+export interface EmailVerifyRequest {
+  email: string;
+  verification_code: string;
+}
+
 class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     return apiService.post<AuthResponse>('/api/v1/auth/login', credentials);
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
+    // Send all data in a single request to the backend
     return apiService.post<AuthResponse>('/api/v1/auth/register', userData);
   }
 
@@ -93,6 +128,14 @@ class AuthService {
     return apiService.post<AvailabilityResponse>('/api/v1/auth/check-availability', data);
   }
 
+  async checkUsernameAvailability(username: string): Promise<AvailabilityResponse> {
+    return this.checkAvailability({ username });
+  }
+
+  async checkEmailAvailability(email: string): Promise<AvailabilityResponse> {
+    return this.checkAvailability({ email });
+  }
+
   async forgotPassword(email: string): Promise<{ message: string }> {
     return apiService.post<{ message: string }>('/api/v1/auth/forgot-password', { email });
   }
@@ -101,10 +144,24 @@ class AuthService {
     return apiService.post<{ message: string }>('/api/v1/auth/reset-password', data);
   }
 
+  async sendEmailVerification(email: string): Promise<{ message: string }> {
+    return apiService.post<{ message: string }>('/api/v1/auth/send-email-verification', { email });
+  }
+
+  async verifyEmail(email: string, verification_code: string): Promise<{ message: string }> {
+    return apiService.post<{ message: string }>('/api/v1/auth/verify-email', { 
+      email, 
+      verification_code 
+    });
+  }
+
   // Token management helpers
   setTokens(accessToken: string, refreshToken: string): void {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    
+    // Also set access_token as cookie for EventSource authentication
+    document.cookie = `access_token=${accessToken}; path=/; max-age=3600; samesite=strict`;
   }
 
   getAccessToken(): string | null {
@@ -118,6 +175,9 @@ class AuthService {
   clearTokens(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    
+    // Also clear the cookie
+    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }
 
   isAuthenticated(): boolean {

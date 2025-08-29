@@ -4,8 +4,8 @@ Application configuration settings
 
 import os
 
-# Upload settings
-UPLOAD_FOLDER = "uploads"
+# Upload settings - use absolute path to match Docker volume mount
+UPLOAD_FOLDER = "/app/uploads"
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
 # Server settings

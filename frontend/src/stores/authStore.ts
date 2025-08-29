@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { authService } from '@/services/auth';
+import { authService, type RegisterRequest } from '@/services/auth';
 
 interface User {
   id: number;
@@ -19,7 +19,7 @@ interface AuthState {
 
 interface AuthActions {
   login: (login: string, password: string) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
+  register: (userData: RegisterData | RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   checkAuth: () => Promise<void>;
@@ -89,7 +89,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        register: async (userData: RegisterData) => {
+        register: async (userData: RegisterData | RegisterRequest) => {
           set({ isLoading: true, error: null });
           
           try {
