@@ -19,7 +19,7 @@ func NewMessagePublisher(connMgr types.ConnectionManager) types.MessagePublisher
 func (mp *messagePublisher) PublishMessage(message models.Message, participants []uint) error {
 	wsMessage := types.WebSocketMessage{
 		Type: types.MessageTypeChat,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"id":              message.ID,
 			"conversation_id": message.ConvID,
 			"sender_id":       message.SenderID,
@@ -51,7 +51,7 @@ func (mp *messagePublisher) PublishMessage(message models.Message, participants 
 	return nil
 }
 
-func (mp *messagePublisher) NotifyOnline(userIDs []uint, message interface{}) error {
+func (mp *messagePublisher) NotifyOnline(userIDs []uint, message any) error {
 	wsMessage := types.WebSocketMessage{
 		Type: types.MessageTypeOnline,
 		Data: message,
@@ -64,7 +64,7 @@ func (mp *messagePublisher) NotifyOnline(userIDs []uint, message interface{}) er
 func (mp *messagePublisher) NotifyTyping(conversationID, senderID uint, participants []uint, isTyping bool) error {
 	wsMessage := types.WebSocketMessage{
 		Type: types.MessageTypeTyping,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"conversation_id": conversationID,
 			"sender_id":       senderID,
 			"is_typing":       isTyping,
@@ -86,7 +86,7 @@ func (mp *messagePublisher) NotifyTyping(conversationID, senderID uint, particip
 func (mp *messagePublisher) NotifyMessageRead(conversationID, readerID uint, participants []uint) error {
 	wsMessage := types.WebSocketMessage{
 		Type: types.MessageTypeRead,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"conversation_id": conversationID,
 			"reader_id":       readerID,
 		},

@@ -27,12 +27,12 @@ func (w *wsConnection) Close() error {
 	return w.conn.Close()
 }
 
-func (w *wsConnection) SetReadDeadline(deadline interface{}) error {
+func (w *wsConnection) SetReadDeadline(deadline any) error {
 	// Type assertion would be needed here for proper implementation
 	return nil
 }
 
-func (w *wsConnection) SetWriteDeadline(deadline interface{}) error {
+func (w *wsConnection) SetWriteDeadline(deadline any) error {
 	// Type assertion would be needed here for proper implementation
 	return nil
 }
@@ -79,7 +79,7 @@ func (cm *connectionManager) GetConnection(userID uint) (types.WebSocketConnecti
 	return conn, exists
 }
 
-func (cm *connectionManager) BroadcastToUsers(userIDs []uint, message interface{}) error {
+func (cm *connectionManager) BroadcastToUsers(userIDs []uint, message any) error {
 	data, err := json.Marshal(message)
 	if err != nil {
 		return err

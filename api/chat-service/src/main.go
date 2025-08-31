@@ -11,6 +11,7 @@ import (
 	"chat-service/src/middleware"
 	"chat-service/src/repository"
 	"chat-service/src/services"
+	"chat-service/src/websocket"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,13 @@ func main() {
 	
 	// Initialize handlers
 	chatHandlers := handlers.NewChatHandlers(chatService)
+	
+	// Initialize WebSocket hub and start it
+	hub := websocket.NewHub(chatService)
+	go hub.Run()
+	
+	// Set global hub for WebSocket handler
+	handlers.SetGlobalHub(hub)
 
 	// Setup Gin router
 	r := gin.Default()

@@ -26,7 +26,7 @@ type ChatRepository interface {
 // MessagePublisher handles message broadcasting
 type MessagePublisher interface {
 	PublishMessage(message models.Message, participants []uint) error
-	NotifyOnline(userIDs []uint, message interface{}) error
+	NotifyOnline(userIDs []uint, message any) error
 }
 
 // ConnectionManager manages WebSocket connections
@@ -34,7 +34,7 @@ type ConnectionManager interface {
 	AddConnection(userID uint, conn WebSocketConnection) error
 	RemoveConnection(userID uint) error
 	GetConnection(userID uint) (WebSocketConnection, bool)
-	BroadcastToUsers(userIDs []uint, message interface{}) error
+	BroadcastToUsers(userIDs []uint, message any) error
 	IsUserOnline(userID uint) bool
 }
 
@@ -43,8 +43,8 @@ type WebSocketConnection interface {
 	WriteMessage(messageType int, data []byte) error
 	ReadMessage() (messageType int, data []byte, err error)
 	Close() error
-	SetReadDeadline(deadline interface{}) error
-	SetWriteDeadline(deadline interface{}) error
+	SetReadDeadline(deadline any) error
+	SetWriteDeadline(deadline any) error
 }
 
 // AuthService validates user authentication
@@ -85,7 +85,7 @@ type TokenClaims struct {
 // WebSocketMessage represents a WebSocket message
 type WebSocketMessage struct {
 	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Data any `json:"data"`
 }
 
 // MessageType constants

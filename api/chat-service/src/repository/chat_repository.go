@@ -90,7 +90,7 @@ func (r *chatRepository) UpdateLastMessage(conversationID uint, content string) 
 	now := time.Now()
 	return r.db.Model(&models.Discussion{}).
 		Where("id = ?", conversationID).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"last_message_content": content,
 			"last_message_at":      &now,
 		}).Error
