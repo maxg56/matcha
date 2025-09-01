@@ -9,7 +9,7 @@ const mockUsers = [
 
 export default function MapPage() {
   return (
-    <div className="min-h-screen bg-foreground text-primary">
+    <div className="min-h-screen text-foreground bg-white dark:bg-gray-800">
       <h1 className="text-xl font-bold mb-4">Carte des utilisateurs</h1>
       <UserMap users={mockUsers} />
     </div>
