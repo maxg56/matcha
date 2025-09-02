@@ -22,7 +22,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
         "max-w-[80%] px-4 py-2 rounded-3xl",
         "transform transition-all duration-200 hover:scale-[1.02]",
         message.isOwn
-          ? "glass-purple text-white rounded-br-lg shadow-lg"
+          ? "glass-purple text-primary rounded-br-lg shadow-lg"
           : "glass-card text-foreground rounded-bl-lg shadow-lg"
       )}>
         <p className="text-sm leading-relaxed whitespace-pre-wrap">

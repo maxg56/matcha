@@ -1,4 +1,3 @@
-// src/pages/Map.tsx
 import { UserMap } from "@/components/map/UserMap";
 
 const mockUsers = [
