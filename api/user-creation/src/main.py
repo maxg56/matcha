@@ -63,7 +63,7 @@ def random_point_in_circle():
 
 print("🔄 Création de 500 utilisateurs...")
 
-for _ in range(500):
+for i in range(500):
     gender = random.choice(genders)
     if gender == "woman":
         first_name = fake.first_name_female()
@@ -138,11 +138,12 @@ for _ in range(500):
     result = cur.fetchone()
     if result:
         user_id = result[0]
-        print(f"✅ Utilisateur créé: {username} (ID: {user_id})")
         for tag_id in tags:
             cur.execute("INSERT INTO user_tags (user_id, tag_id) VALUES(%s, %s)",
                         (user_id, tag_id))
-    conn.commit()
+    if (i % 10 == 0):
+        print(f"✅ Utilisateurs créés: (ID: {user_id})")
+        conn.commit()
 
 print("✅ fin de la création des utilisateurs")
 

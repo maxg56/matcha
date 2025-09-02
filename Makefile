@@ -31,7 +31,8 @@ stop:
 
 down:
 	$(DOCKER_COMPOSE_CMD) -p $(NAME) -f $(DOCKER_COMPOSE_PATH) down -v
-
+volumes-clean:
+	docker exec -it matcha-postgres-1 psql -U postgres -d matcha_dev -f docker-entrypoint-initdb.d/init.sql
 restart: down all
 
 prod:
