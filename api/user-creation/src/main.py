@@ -142,10 +142,10 @@ for _ in range(500):
         for tag_id in tags:
             cur.execute("INSERT INTO user_tags (user_id, tag_id) VALUES(%s, %s)",
                         (user_id, tag_id))
+    conn.commit()
 
 print("✅ fin de la création des utilisateurs")
 
-conn.commit()
 cur.close()
 conn.close()
 
