@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Sliders, MoreHorizontal } from 'lucide-react';
-
 interface DiscoverHeaderProps {
   onOpenFilters: () => void;
   onMoreOptions?: () => void;
@@ -32,7 +31,6 @@ export function DiscoverHeader({ onOpenFilters, onMoreOptions }: DiscoverHeaderP
             onClick={onOpenFilters}
           >
             <Sliders className="h-4 w-4" />
-            Filtres
           </Button>
           <Button 
             variant="ghost" 

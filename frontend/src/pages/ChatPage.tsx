@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TopBar } from '@/components/layout/TopBar';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Phone, Video, MoreHorizontal } from 'lucide-react';
 
 const mockMessages = [
   {
@@ -49,7 +47,6 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState(mockMessages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -77,34 +74,34 @@ export default function ChatPage() {
     navigate('/app/messages');
   };
 
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
       {/* Custom header */}
       <header className="sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ">
-        <div className="flex items-center justify-between h-16 px-4 ">
+        <div className="flex items-center justify-between h-16 w-full ">
           <TopBar 
             title=""
             showBack={true}
             onBack={handleBack}
-            rightAction={
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <Phone className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <Video className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </div>
-            }
-          />
-          
+            // rightAction={
+              //   // <div className="flex items-center gap-2">
+              //   //   <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              //   //     <Phone className="h-5 w-5" />
+              //   //   </Button>
+              //   //   <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              //   //     <Video className="h-5 w-5" />
+              //   //   </Button>
+              //   //   <Button variant="ghost" size="icon" className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              //   //     <MoreHorizontal className="h-5 w-5" />
+              //   //   </Button>
+              //   // </div>
+              // }
+              />
           {/* Match info */}
           <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
             <div className="relative">
-              <Avatar className="w-10 h-10 ring-2 ring-white/20">
+              <Avatar className="w-8 h-8 ring-2 ring-white/20">
                 <AvatarImage src={mockMatch.image} alt={mockMatch.name} />
                 <AvatarFallback>{mockMatch.name[0]}</AvatarFallback>
               </Avatar>
