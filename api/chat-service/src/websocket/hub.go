@@ -25,6 +25,9 @@ type Hub struct {
 	
 	// Chat service for business logic
 	chatService types.ChatService
+	
+	// Repository for direct data access (needed for system operations)
+	repository types.ChatRepository
 }
 
 // BroadcastMessage represents a message to broadcast
@@ -35,13 +38,14 @@ type BroadcastMessage struct {
 }
 
 // NewHub creates a new WebSocket hub
-func NewHub(chatService types.ChatService) *Hub {
+func NewHub(chatService types.ChatService, repository types.ChatRepository) *Hub {
 	return &Hub{
 		connections: make(map[uint]*Connection),
 		register:    make(chan *Connection),
 		unregister:  make(chan *Connection),
 		broadcast:   make(chan BroadcastMessage),
 		chatService: chatService,
+		repository:  repository,
 	}
 }
 
@@ -181,11 +185,13 @@ func (h *Hub) handleBroadcast(broadcastMsg BroadcastMessage) {
 }
 
 // getConversationParticipants gets participants for a conversation
-func (h *Hub) getConversationParticipants(_ uint) ([]uint, error) {
-	// This would typically use the chat service or repository
-	// For now, we'll implement a simple version
-	// TODO: Implement proper participant lookup
-	return []uint{}, nil
+func (h *Hub) getConversationParticipants(conversationID uint) ([]uint, error) {
+	if h.repository == nil {
+		log.Printf("Warning: No repository available for getting conversation participants")
+		return []uint{}, nil
+	}
+	
+	return h.repository.GetConversationParticipants(conversationID)
 }
 
 // notifyUserStatus notifies about user online/offline status
@@ -243,4 +249,9 @@ func (h *Hub) BroadcastToUsers(userIDs []uint, message any) error {
 // GetChatService returns the chat service instance
 func (h *Hub) GetChatService() types.ChatService {
 	return h.chatService
+}
+
+// SetChatService sets the chat service (used for dependency injection)
+func (h *Hub) SetChatService(chatService types.ChatService) {
+	h.chatService = chatService
 }

@@ -11,22 +11,27 @@ import (
 
 // Connection wraps a WebSocket connection with user info
 type Connection struct {
-	conn     *websocket.Conn
-	userID   uint
-	send     chan OutgoingMessage
-	hub      *Hub
-	mutex    sync.Mutex
-	lastPing time.Time
+	conn         *websocket.Conn
+	userID       uint
+	send         chan OutgoingMessage
+	hub          *Hub
+	mutex        sync.Mutex
+	lastPing     time.Time
+	
+	// Rate limiting
+	messageTimes []time.Time
+	rateMutex    sync.Mutex
 }
 
 // NewConnection creates a new WebSocket connection
 func NewConnection(conn *websocket.Conn, userID uint, hub *Hub) *Connection {
 	return &Connection{
-		conn:     conn,
-		userID:   userID,
-		send:     make(chan OutgoingMessage, 256),
-		hub:      hub,
-		lastPing: time.Now(),
+		conn:         conn,
+		userID:       userID,
+		send:         make(chan OutgoingMessage, 256),
+		hub:          hub,
+		lastPing:     time.Now(),
+		messageTimes: make([]time.Time, 0),
 	}
 }
 
@@ -58,7 +63,9 @@ func (c *Connection) SetReadDeadline(deadline any) error {
 	if t, ok := deadline.(time.Time); ok {
 		return c.conn.SetReadDeadline(t)
 	}
-	return nil
+	// If the type assertion fails, log warning and return error
+	log.Printf("Warning: Invalid deadline type for SetReadDeadline: %T", deadline)
+	return ErrInvalidMessage
 }
 
 // SetWriteDeadline implements types.WebSocketConnection
@@ -66,7 +73,9 @@ func (c *Connection) SetWriteDeadline(deadline any) error {
 	if t, ok := deadline.(time.Time); ok {
 		return c.conn.SetWriteDeadline(t)
 	}
-	return nil
+	// If the type assertion fails, log warning and return error
+	log.Printf("Warning: Invalid deadline type for SetWriteDeadline: %T", deadline)
+	return ErrInvalidMessage
 }
 
 // Start begins reading and writing for this connection
@@ -137,6 +146,13 @@ func (c *Connection) writePump() {
 
 // handleMessage processes incoming messages
 func (c *Connection) handleMessage(msg IncomingMessage, chatService types.ChatService) error {
+	// Check rate limiting for send messages
+	if msg.Type == MessageTypeSend {
+		if !c.checkRateLimit() {
+			return ErrRateLimited
+		}
+	}
+	
 	switch msg.Type {
 		case MessageTypeSend:
 			return c.handleSendMessage(msg, chatService)
@@ -173,6 +189,9 @@ func (c *Connection) handleSendMessage(msg IncomingMessage, chatService types.Ch
 		},
 		Timestamp: time.Now(),
 	})
+
+	// Update monitoring stats (would normally be done via callback or interface)
+	log.Printf("Message sent by user %d in conversation %d", c.userID, msg.ConversationID)
 
 	return nil
 }
@@ -229,6 +248,36 @@ func (c *Connection) sendError(code, message string) {
 		},
 		Timestamp: time.Now(),
 	})
+}
+
+// checkRateLimit checks if the user is sending messages too quickly
+func (c *Connection) checkRateLimit() bool {
+	c.rateMutex.Lock()
+	defer c.rateMutex.Unlock()
+	
+	now := time.Now()
+	maxMessages := 10                    // Max 10 messages
+	windowDuration := 1 * time.Minute    // Per minute
+	
+	// Remove old messages outside the time window
+	cutoff := now.Add(-windowDuration)
+	newTimes := make([]time.Time, 0)
+	for _, msgTime := range c.messageTimes {
+		if msgTime.After(cutoff) {
+			newTimes = append(newTimes, msgTime)
+		}
+	}
+	c.messageTimes = newTimes
+	
+	// Check if we're over the limit
+	if len(c.messageTimes) >= maxMessages {
+		log.Printf("Rate limit exceeded for user %d: %d messages in last minute", c.userID, len(c.messageTimes))
+		return false
+	}
+	
+	// Add current message time
+	c.messageTimes = append(c.messageTimes, now)
+	return true
 }
 
 // cleanup handles connection cleanup

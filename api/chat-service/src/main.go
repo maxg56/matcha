@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"chat-service/src/conf"
-	"chat-service/src/connections"
 	"chat-service/src/handlers"
 	"chat-service/src/messaging"
 	"chat-service/src/middleware"
@@ -25,16 +24,20 @@ func main() {
 
 	// Initialize dependencies with interfaces
 	chatRepo := repository.NewChatRepository(conf.DB)
-	connMgr := connections.NewConnectionManager()
-	publisher := messaging.NewMessagePublisher(connMgr)
-	chatService := services.NewChatService(chatRepo, publisher, connMgr)
+	
+	// Initialize WebSocket hub first
+	hub := websocket.NewHub(nil, chatRepo) // Will set chatService after creation
+	go hub.Run()
+	
+	// Initialize publisher and service with hub as connection manager
+	publisher := messaging.NewMessagePublisher(hub)
+	chatService := services.NewChatService(chatRepo, publisher, hub)
+	
+	// Update hub with chat service
+	hub.SetChatService(chatService)
 	
 	// Initialize handlers
 	chatHandlers := handlers.NewChatHandlers(chatService)
-	
-	// Initialize WebSocket hub and start it
-	hub := websocket.NewHub(chatService)
-	go hub.Run()
 	
 	// Set global hub for WebSocket handler
 	handlers.SetGlobalHub(hub)
@@ -44,6 +47,10 @@ func main() {
 
 	// Health check
 	r.GET("/health", handlers.HealthCheck)
+
+	// Monitoring routes
+	r.GET("/stats", handlers.GetConnectionStats)
+	r.GET("/stats/detailed", handlers.GetDetailedStats)
 
 	// Chat API routes
 	chat := r.Group("/api/v1/chat")

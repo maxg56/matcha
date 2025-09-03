@@ -3,7 +3,10 @@ package handlers
 import (
 	"chat-service/src/middleware"
 	wsocket "chat-service/src/websocket"
+	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -11,8 +14,47 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		// In production, implement proper origin checking
-		return true
+		origin := r.Header.Get("Origin")
+		
+		// Allow same origin (no Origin header or same host)
+		if origin == "" {
+			return true
+		}
+		
+		// Whitelist of allowed origins for WebSocket connections
+		allowedOrigins := []string{
+			"http://localhost:3000",   // React development server
+			"http://localhost:8000",   // Caddy proxy
+			"https://localhost:8000",  // Caddy proxy with SSL
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:8000",
+			"https://127.0.0.1:8000",
+		}
+		
+		// Add production domains from environment variables
+		if prodDomain := os.Getenv("FRONTEND_DOMAIN"); prodDomain != "" {
+			allowedOrigins = append(allowedOrigins, prodDomain)
+		}
+		
+		// Support multiple domains via comma-separated list
+		if extraDomains := os.Getenv("ALLOWED_ORIGINS"); extraDomains != "" {
+			domains := strings.Split(extraDomains, ",")
+			for _, domain := range domains {
+				domain = strings.TrimSpace(domain)
+				if domain != "" {
+					allowedOrigins = append(allowedOrigins, domain)
+				}
+			}
+		}
+		
+		for _, allowed := range allowedOrigins {
+			if origin == allowed {
+				return true
+			}
+		}
+		
+		log.Printf("WebSocket connection rejected from origin: %s", origin)
+		return false
 	},
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
