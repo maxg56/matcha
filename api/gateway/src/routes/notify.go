@@ -14,6 +14,9 @@ func SetupNotifyRoutes(r *gin.Engine) {
 	notify.GET("/", proxy.ProxyRequest("notify", "/health"))
 	notify.GET("/health", proxy.ProxyRequest("notify", "/health"))
 
+	// WebSocket notifications (route à la racine, pas dans /api/v1/notifications)
+    r.GET("/ws/notifications", proxy.ProxyWebSocket("notify", "/ws/notifications"))
+
 	// Notification management
 	protected := notify.Group("")
 	protected.Use(middleware.JWTMiddleware())
