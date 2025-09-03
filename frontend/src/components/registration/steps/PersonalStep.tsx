@@ -22,7 +22,6 @@ export function PersonalStep({ formData, errors, updateField }: PersonalStepProp
         error={errors.bio}
       />
 
-      <div className="grid grid-cols-2 gap-4">
         <InputField
           label="Ville de naissance"
           value={formData.birthCity}
@@ -30,15 +29,6 @@ export function PersonalStep({ formData, errors, updateField }: PersonalStepProp
           placeholder="Votre ville de naissance"
           error={errors.birthCity}
         />
-
-        <InputField
-          label="Ville actuelle"
-          value={formData.currentCity}
-          onChange={(value) => updateField('currentCity', value)}
-          placeholder="Votre ville actuelle"
-          error={errors.currentCity}
-        />
-      </div>
 
       <InputField
         label="Profession"
