@@ -13,27 +13,43 @@ export function Notification() {
     const { user } = useAuthStore();
 
     useEffect(() => {
-        // Don't create EventSource if user is not authenticated
-        if (!user?.id) {
+        const token = localStorage.getItem('accessToken');
+        console.log("Notification hook mounted", user?.id, token);
+        // Ne crée pas de WebSocket si l'utilisateur n'est pas authentifié
+        if (!user?.id || !token) {
             return;
         }
 
-        const evtSource = new EventSource(`/api/v1/notifications/stream/${user.id}`);
+        // Connexion WebSocket (adapter l'URL si besoin)
+        // const ws = new WebSocket(`wss://localhost:8443/api/v1/notifications/ws/notifications?token=${token}`);
+        const ws = new WebSocket(`wss://localhost:8443/ws/notifications?token=${token}`);
 
-        evtSource.onmessage = function (event) {
-            const notification = JSON.parse(event.data);
-            // Ici tu peux afficher la notif dans l'UI
-            setNotifications(prev => [...prev, [notification.message, notification.kind]]);
-            setSeen(false);
-            evtSource.close();
-            console.log("rgejreg")
+        ws.onopen = () => {
+            console.log("WebSocket connecté pour les notifications");
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const notification = JSON.parse(event.data);
+                setNotifications(prev => [...prev, [notification.message, notification.type]]);
+                setSeen(false);
+            } catch (e) {
+                console.error("Erreur de parsing notification:", e);
+            }
+        };
+
+        ws.onerror = (err) => {
+            console.error("WebSocket error:", err);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket déconnecté");
         };
 
         return () => {
-            evtSource.close();
+            ws.close();
         };
-        
-    }, [user?.id]);
+    }, [user?.id, user?.token]);
 
     // useEffect(() => {
     //     const interval = setInterval(() => {

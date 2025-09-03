@@ -5,6 +5,10 @@
 localhost:443, {$VITE_HOSTNAME}:443 {
   tls internal
   log foo
+  # WebSocket notifications (reverse proxy direct vers la gateway)
+  handle /ws/notifications* {
+    reverse_proxy gateway:8080
+  }
   #Frontend routes
   handle {
     # Frontend main route
