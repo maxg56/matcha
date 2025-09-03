@@ -7,7 +7,7 @@ interface BasicInfoStepProps {
   updateField: <K extends keyof RegistrationData>(field: K, value: RegistrationData[K]) => void;
 }
 
-export function BasicInfoStep({ formData, errors, updateField }: BasicInfoStepProps) {
+export function BasicInfoStep({ formData, updateField }: BasicInfoStepProps) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -21,6 +21,8 @@ export function BasicInfoStep({ formData, errors, updateField }: BasicInfoStepPr
         label="Taille"
         value={formData.height}
         onChange={(value) => updateField('height', value)}
+        currentCity={formData.currentCity}
+        onCityChange={(city) => updateField('currentCity', city)}
       />
     </div>
   );
