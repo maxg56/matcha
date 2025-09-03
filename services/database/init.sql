@@ -146,23 +146,28 @@ CREATE TABLE relations (
 -- ====================
 -- TABLE : discussion
 -- ====================
+
 CREATE TABLE discussion (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     last_message_content TEXT,
-    last_message_at TIMESTAMP
+    last_message_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- ====================
 -- TABLE : messages
 -- ====================
+
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     conv_id INT NOT NULL REFERENCES discussion(id) ON DELETE CASCADE,
     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     msg TEXT NOT NULL,
-    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP
 );
 
 -- ====================
