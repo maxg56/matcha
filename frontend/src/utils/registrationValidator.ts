@@ -139,7 +139,7 @@ export class RegistrationValidator {
     }
     
     if (!formData.birthCity?.trim()) errors.birthCity = 'Ville de naissance requise';
-    if (!formData.currentCity?.trim()) errors.currentCity = 'Ville actuelle requise';
+    // if (!formData.currentCity?.trim()) errors.currentCity = 'Ville actuelle requise';
     if (!formData.job?.trim()) errors.job = 'Profession requise';
     if (!formData.religion) errors.religion = 'Religion requise';
     if (!formData.childrenStatus) errors.childrenStatus = 'Statut enfants requis';

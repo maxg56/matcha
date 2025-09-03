@@ -1,129 +1,131 @@
-import React, { useCallback } from 'react';
-import { CardContent, CardDescription, CardTitle } from '@/components/ui/card';
+import React, { useCallback, useRef, useState } from 'react';
 import { Camera, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useProfileNotifications, useRegistration } from '@/hooks';
-import { useRegistrationStore } from '@/stores/registrationStore';
-import { 
-  ImageGrid, 
-  ActionButtons, 
-  PhotoGuidelines, 
-  MAX_IMAGES 
-} from './image-upload';
+
+export const MAX_IMAGES = 5;
+
+interface UploadedImage {
+  file: File;
+  preview: string;
+  id: string;
+}
 
 export const ImageUploadStep: React.FC = () => {
-  const {
-    selectedImages: images,
-    isLoading,
-    errors,
-  } = useRegistration();
-  
-  const {
-    addImages,
-    removeImage
-  } = useRegistrationStore();
-  
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  
-  // Hook to handle profile completion notifications
-  useProfileNotifications();
+  const [images, setImages] = useState<UploadedImage[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Gestion de la sélection de fichiers
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    const newImages = [];
-    const remainingSlots = MAX_IMAGES - images.length;
-    const filesToProcess = Array.from(files).slice(0, remainingSlots);
-    
-    filesToProcess.forEach((file) => {
-      if (!file.type.startsWith('image/')) {
-        return;
-      }
-      
-      if (file.size > 10 * 1024 * 1024) {
-        return;
-      }
-      
-      const preview = URL.createObjectURL(file);
-      newImages.push({
-        file,
-        preview,
-        id: Math.random().toString(36).substring(7),
-      });
-    });
-
-    if (newImages.length > 0) {
-      addImages(newImages);
-    }
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [images.length, addImages]);
-
-  const handleRemoveImage = useCallback((id: string) => {
-    removeImage(id);
-  }, [removeImage]);
-
+  // Ouvre le dialogue de fichier
   const openFileDialog = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  // Fonction pour finaliser l'inscription avec les images du store
+  // Gestion de la selection de fichiers
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files) return;
+
+      const newImages: UploadedImage[] = [];
+      const newErrors: string[] = [];
+      const remainingSlots = MAX_IMAGES - images.length;
+      const filesToProcess = Array.from(files).slice(0, remainingSlots);
+
+      filesToProcess.forEach((file) => {
+        if (!file.type.startsWith('image/')) {
+          newErrors.push(`Le fichier ${file.name} n'est pas une image.`);
+          return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          newErrors.push(`Le fichier ${file.name} dépasse 10 Mo.`);
+          return;
+        }
+
+        const preview = URL.createObjectURL(file);
+        newImages.push({
+          file,
+          preview,
+          id: Math.random().toString(36).substring(2, 9),
+        });
+      });
+
+      setErrors(newErrors);
+      if (newImages.length > 0) {
+        setImages((prev) => [...prev, ...newImages]);
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    [images.length]
+  );
+
+  const handleRemoveImage = useCallback((id: string) => {
+    setImages((prev) => prev.filter((img) => img.id !== id));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-4">
           <Camera className="w-10 h-10 text-purple-600" />
         </div>
-        <CardTitle className="text-2xl">Ajoutez vos photos</CardTitle>
-        <CardDescription>
-          <span className="text-red-600 dark:text-red-400 font-medium">Au moins 1 photo requise</span> - 
-          Ajoutez jusqu'à {MAX_IMAGES} photos pour compléter votre profil. 
-          Une belle photo peut faire toute la différence !
-        </CardDescription>
+        <h2 className="text-2xl font-bold">Ajoutez vos photos</h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Au moins 1 photo requise - Ajoutez jusqu'à {MAX_IMAGES} photos pour compléter votre profil.
+        </p>
       </div>
 
-      <CardContent className="space-y-6">
-        <ImageGrid 
-          images={images}
-          canAddMore={images.length < MAX_IMAGES}
-          onRemoveImage={handleRemoveImage}
-          onAddImage={openFileDialog}
-        />
+      <div className="grid grid-cols-3 gap-4">
+        {images.map((img) => (
+          <div key={img.id} className="relative">
+            <img src={img.preview} alt="preview" className="w-full h-32 object-cover rounded-md" />
+            <button
+              onClick={() => handleRemoveImage(img.id)}
+              className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+            >
+              ×
+            </button>
+          </div>
+        ))}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          aria-label="Sélectionner des images"
-        />
-
-        <PhotoGuidelines />
-
-        {errors.images && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{errors.images}</AlertDescription>
-          </Alert>
+        {images.length < MAX_IMAGES && (
+          <button
+            type="button"
+            onClick={openFileDialog}
+            className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md h-32 text-gray-500 hover:border-gray-400 hover:text-gray-700"
+          >
+            Ajouter
+          </button>
         )}
+      </div>
 
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          <span className={images.length === 0 ? 'text-red-600 dark:text-red-400 font-medium' : ''}>
-            {images.length}/{MAX_IMAGES} photos ajoutées
-          </span>
-          {images.length === 0 && (
-            <span className="block text-xs mt-1 text-red-500 dark:text-red-400">
-              Minimum requis: 1 photo
-            </span>
-          )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {errors.length > 0 && (
+        <div className="space-y-2">
+          {errors.map((err, idx) => (
+            <div key={idx} className="flex items-center text-red-600 text-sm">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              {err}
+            </div>
+          ))}
         </div>
-      </CardContent>
+      )}
+
+      <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+        <span className={images.length === 0 ? 'text-red-600 font-medium' : ''}>
+          {images.length}/{MAX_IMAGES} photos ajoutées
+        </span>
+        {images.length === 0 && <div className="text-xs mt-1 text-red-500">Minimum requis: 1 photo</div>}
+      </div>
     </div>
   );
 };
