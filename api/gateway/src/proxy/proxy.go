@@ -9,52 +9,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/koding/websocketproxy"
+
 )
-
-// ProxyWebSocket creates a handler that proxies WebSocket connections to the specified service
-func ProxyWebSocket(serviceName, path string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        service, exists := services.GetService(serviceName)
-        if !exists {
-            c.JSON(http.StatusServiceUnavailable, gin.H{
-                "error": fmt.Sprintf("Service %s not available", serviceName),
-            })
-            return
-        }
-
-        // Transforme l'URL HTTP en URL WebSocket
-        wsScheme := "ws"
-        if strings.HasPrefix(service.URL, "https://") {
-            wsScheme = "wss"
-        }
-        u, err := url.Parse(service.URL)
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error": "Invalid service URL",
-            })
-            return
-        }
-        host := u.Host
-        targetURL := fmt.Sprintf("%s://%s%s", wsScheme, host, path)
-        if c.Request.URL.RawQuery != "" {
-            targetURL += "?" + c.Request.URL.RawQuery
-        }
-        wsURL, err := url.Parse(targetURL)
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error": "Invalid target URL for WebSocket proxy",
-            })
-            return
-        }
-        websocketproxy.NewProxy(wsURL).ServeHTTP(c.Writer, c.Request)
-    }
-}
 
 // ProxyRequest creates a handler that proxies requests to the specified service
 func ProxyRequest(serviceName, path string) gin.HandlerFunc {

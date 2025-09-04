@@ -12,6 +12,7 @@ import (
 	"gateway/src/routes"
 	"gateway/src/services"
 	"gateway/src/utils"
+	"gateway/src/websocket"
 )
 
 func main() {
@@ -23,6 +24,9 @@ func main() {
 
 	// Initialize services configuration
 	services.InitServices()
+
+	// Initialize WebSocket manager
+	websocket.InitManager()
 
 	// Initialize Redis for JWT blacklisting
 	if err := utils.InitRedis(); err != nil {
@@ -52,6 +56,7 @@ func main() {
 	routes.SetupMatchRoutes(r)
 	routes.SetupChatRoutes(r)
 	routes.SetupNotifyRoutes(r)
+	routes.SetupWebSocketRoutes(r)
 
 	// Start server
 	port := os.Getenv("PORT")
