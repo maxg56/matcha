@@ -20,8 +20,6 @@ export function Notification() {
             return;
         }
 
-        // Connexion WebSocket (adapter l'URL si besoin)
-        // const ws = new WebSocket(`wss://localhost:8443/api/v1/notifications/ws/notifications?token=${token}`);
         const ws = new WebSocket(`wss://localhost:8443/ws/notifications?token=${token}`);
 
         ws.onopen = () => {
@@ -30,6 +28,7 @@ export function Notification() {
 
         ws.onmessage = (event) => {
             try {
+                console.log("WebSocket message reçu:", event.data);
                 const notification = JSON.parse(event.data);
                 setNotifications(prev => [...prev, [notification.message, notification.type]]);
                 setSeen(false);
@@ -50,17 +49,6 @@ export function Notification() {
             ws.close();
         };
     }, [user?.id, user?.token]);
-
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         const newNotif = `Nouvelle notification ${notifications.length + 1}`;
-    //         const newColor = randomInt(5);
-    //         setNotifications(prev => [...prev, [newNotif, newColor]]);
-    //         setSeen(false);
-    //     }, 5000);
-
-    //     return () => clearInterval(interval);
-    // }, [notifications.length]);
 
     const clearNotifications = () => {
         setNotifications([]);

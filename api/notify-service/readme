@@ -1,0 +1,13 @@
+{"to_user_id": 13, "notif_type": "1", "message": "Tu as reçu un like !"}'
+
+notif_type = 0 a 5
+0 = vue le profil
+1 = unlike
+2 = like
+3 = message
+4 = new match
+
+pour le moment on envoie que des notifs par le redis
+
+docker exec -it matcha-redis-1 redis-cli -h redis -p 6379
+publish notifications '{"to_user_id": 13, "notif_type": "0", "message": "on a vu ton profile !"}'
