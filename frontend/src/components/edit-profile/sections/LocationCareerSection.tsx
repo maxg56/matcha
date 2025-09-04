@@ -1,6 +1,7 @@
 import { MapPin } from 'lucide-react';
 import { SettingSection, TextInput } from '../index';
 import type { UserProfile } from '@/data/UserProfileData';
+import { useGeolocationCity } from '@/hooks/useGeolocationCity';
 
 interface LocationCareerSectionProps {
 	editingSection: string | null;
@@ -20,6 +21,11 @@ export function LocationCareerSection({
 	cancelEditing
 }: LocationCareerSectionProps) {
 	const isEditing = editingSection === 'location';
+	const { city, getCityFromGeolocation } = useGeolocationCity();
+
+	if (city && getCurrentValue('currentCity') !== city) {
+		updateField('currentCity', city);
+	}
 
 	const locationFields = [
 		{
@@ -32,33 +38,7 @@ export function LocationCareerSection({
 			label: 'Ville actuelle',
 			placeholder: 'Où habitez-vous ?',
 			button: true,
-			onButtonClick: () => {
-				if (!navigator.geolocation) {
-					alert("La géolocalisation n'est pas supportée par votre navigateur.");
-					return;
-				}
-				navigator.geolocation.getCurrentPosition(
-					async (position) => {
-						const { latitude, longitude } = position.coords;
-
-						try {
-							const response = await fetch(
-								`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-							);
-
-							const data = await response.json();
-							const city = data.address.city || data.address.town || data.address.village || "Ville inconnue";
-
-							updateField('currentCity', city);
-						} catch (error) {
-							alert("Impossible de récupérer le nom de la ville : " + (error as Error).message);
-						}
-					},
-					(error) => {
-						alert("Impossible de récupérer votre position : " + error.message);
-					}
-				);
-			},
+			onButtonClick: getCityFromGeolocation,
 		},
 		{
 			field: 'job' as const,

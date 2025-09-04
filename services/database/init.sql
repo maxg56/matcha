@@ -1,3 +1,7 @@
+-- DROP SCHEMA public CASCADE;
+CREATE SCHEMA IF NOT EXISTS public;
+SET search_path TO public;
+
 -- ====================
 -- RESET DES TABLES
 -- ====================

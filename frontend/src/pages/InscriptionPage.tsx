@@ -61,36 +61,36 @@ export default function InscriptionPage() {
   
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-violet-50 to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <div className="flex items-center justify-center pt-6 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-2xl flex items-center justify-center shadow-lg">
-            <Heart className="h-6 w-6 text-white fill-current" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Inscription</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Créez votre profil Matcha</p>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-gradient-to-br from-purple-50 via-violet-50 to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+  {/* Header */}
+  <div className="flex items-center justify-center pt-6 pb-4 px-4 sm:px-6">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-2xl flex items-center justify-center shadow-lg">
+        <Heart className="h-6 w-6 text-white fill-current" />
       </div>
+      <div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Inscription</h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Créez votre profil Matcha</p>
+      </div>
+    </div>
+  </div>
 
-      <ProgressBar 
-        currentStep={currentStep} 
-        totalSteps={registrationSteps.length} 
-        steps={registrationSteps} 
-      />
+  <ProgressBar 
+    currentStep={currentStep} 
+    totalSteps={registrationSteps.length} 
+    steps={registrationSteps} 
+  />
 
-      {/* Main Content */}
-      <div className="flex-1 px-4 pb-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {registrationSteps[currentStep - 1].title}
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                {stepDescriptions[currentStep as keyof typeof stepDescriptions]}
+  {/* Main Content */}
+  <div className="flex-1 px-4 sm:px-6 pb-8">
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            {registrationSteps[currentStep - 1].title}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            {stepDescriptions[currentStep as keyof typeof stepDescriptions]}
               </p>
             </div>
 

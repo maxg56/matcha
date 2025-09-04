@@ -1,6 +1,7 @@
-import { Heart, MessageCircle, Search, User, Map } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Heart, MessageCircle, Search, User, Map, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks';
 
 const navItems = [
   {
@@ -28,12 +29,27 @@ const navItems = [
     icon: Map,
     href: '/app/map',
   },
+  {
+    label: 'Log Out',
+    icon: LogOut,
+    href: '/app/logout',
+  },
 ];
 
 export function BottomNavigation() {
   const location = useLocation();
-  
-  // Don't show navigation on auth pages
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
+  };
+
   const authPages = ['/login', '/onboarding', '/Accueil', '/InscriptionPage'];
   if (authPages.includes(location.pathname)) {
     return null;
@@ -45,7 +61,22 @@ export function BottomNavigation() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
-          
+
+          if (item.label === 'Log Out') {
+            return (
+              <button
+                key="logout"
+                onClick={handleLogout}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-200 text-destructive hover:bg-destructive/10 active:scale-95"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs font-medium">Log out</span>
+              </button>
+            );
+          }
+
           return (
             <Link
               key={item.href}
