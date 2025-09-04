@@ -2,8 +2,6 @@ package websocket
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"time"
 
 	"gateway/src/middleware"
@@ -22,9 +20,7 @@ type Message struct {
 }
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true // En production, vérifier l'origine
-	},
+	CheckOrigin: secureCheckOrigin,
 }
 
 // UnifiedWebSocketHandler creates a unified WebSocket handler that routes messages by type
@@ -160,12 +156,12 @@ func HandleChatMessage(msg Message, userID, token string) {
 	
 	LogMessage(userID, "chat_processing", "conversation:", chatData.ConversationID, "message_length:", len(chatData.Message))
 	
-	// TODO: Call chat service to validate conversation access
-	// if !validateUserInConversation(userID, chatData.ConversationID, token) {
-	//     LogError(userID, "chat_access_denied", fmt.Errorf("access denied to conversation %s", chatData.ConversationID))
-	//     SendErrorToUser(userID, "access_denied", "Access denied to conversation")
-	//     return
-	// }
+	// Validate user access to conversation
+	if !validateUserInConversation(userID, chatData.ConversationID, token) {
+		LogError(userID, "chat_access_denied", fmt.Errorf("access denied to conversation %s", chatData.ConversationID))
+		SendErrorToUser(userID, "access_denied", "Access denied to conversation")
+		return
+	}
 	
 	// Enrich message data with sender info and timestamp
 	enrichedData := ChatMessageData{
@@ -175,6 +171,13 @@ func HandleChatMessage(msg Message, userID, token string) {
 		Timestamp:      time.Now().Unix(),
 		Type:           "chat_message",
 	}
+	
+	// Persist message to chat service (async, don't block the broadcast)
+	go func() {
+		if err := sendMessageToChatService(userID, chatData.ConversationID, chatData.Message, token); err != nil {
+			LogError(userID, "chat_persistence_failed", err, "conversation:", chatData.ConversationID)
+		}
+	}()
 	
 	// Broadcast to conversation participants
 	channelName := fmt.Sprintf("chat_%s", chatData.ConversationID)
@@ -192,7 +195,7 @@ func HandleChatMessage(msg Message, userID, token string) {
 
 // HandleNotificationMessage handles notification-related messages
 func HandleNotificationMessage(msg Message, userID, token string) {
-	log.Printf("Notification message from user %s: %+v", userID, msg)
+	LogMessage(userID, "notification_request", "action:", msg.Data)
 	
 	// Parse notification action data
 	notifData, err := parseNotificationActionData(msg.Data)
@@ -208,8 +211,12 @@ func HandleNotificationMessage(msg Message, userID, token string) {
 			return
 		}
 		
-		// TODO: Call notification service to mark as read
-		log.Printf("Marking notification %s as read for user %s", notifData.NotificationID, userID)
+		// Call notification service to mark as read
+		if err := markNotificationAsRead(userID, notifData.NotificationID, token); err != nil {
+			LogError(userID, "notification_mark_read_failed", err, "notification_id:", notifData.NotificationID)
+			SendErrorToUser(userID, "notification_service_error", fmt.Sprintf("Failed to mark notification as read: %s", err.Error()))
+			return
+		}
 		
 		GlobalManager.SendToUser(userID, string(MessageTypeNotificationRead), map[string]any{
 			"notification_id": notifData.NotificationID,
@@ -218,8 +225,12 @@ func HandleNotificationMessage(msg Message, userID, token string) {
 		})
 		
 	case "mark_all_read":
-		// TODO: Call notification service to mark all as read
-		log.Printf("Marking all notifications as read for user %s", userID)
+		// Call notification service to mark all as read
+		if err := markAllNotificationsAsRead(userID, token); err != nil {
+			LogError(userID, "notification_mark_all_read_failed", err)
+			SendErrorToUser(userID, "notification_service_error", fmt.Sprintf("Failed to mark all notifications as read: %s", err.Error()))
+			return
+		}
 		
 		GlobalManager.SendToUser(userID, string(MessageTypeAllNotificationRead), map[string]any{
 			"status":    "all_read",
