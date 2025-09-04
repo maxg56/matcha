@@ -18,6 +18,8 @@ export function useWebSocketConnection(options: UseWebSocketConnectionOptions = 
       connectionAttempted.current = true;
       webSocketService.connect().catch(error => {
         console.error('Failed to connect to WebSocket:', error);
+        // Réinitialiser pour permettre une nouvelle tentative plus tard
+        connectionAttempted.current = false;
       });
     }
   }, [user?.id, autoConnect]);

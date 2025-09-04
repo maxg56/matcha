@@ -1,4 +1,4 @@
-import { MessageHandler, WebSocketResponse } from './types';
+import { type MessageHandler, type WebSocketResponse } from './types';
 
 export class MessageHandlerManager {
   private messageHandlers = new Map<string, MessageHandler[]>();

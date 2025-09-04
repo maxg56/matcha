@@ -17,9 +17,19 @@ export class WebSocketConnection {
   }
 
   private getWebSocketURL(): string {
+    // Utiliser VITE_WS_URL si défini, sinon construire l'URL
+    const wsUrl = import.meta.env.VITE_WS_URL;
+    if (wsUrl) {
+      console.log('WebSocket: Using configured URL:', wsUrl);
+      return wsUrl;
+    }
+    
+    // Fallback vers l'ancien système
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = import.meta.env.VITE_WS_HOST || window.location.host;
-    return `${protocol}//${host}/ws`;
+    const url = `${protocol}//${host}/ws`;
+    console.log('WebSocket: Using fallback URL:', url);
+    return url;
   }
 
   async connect(
@@ -44,8 +54,9 @@ export class WebSocketConnection {
     this.isAuthenticated = true;
 
     try {
+      const url = this.getWebSocketURL();
       console.log('WebSocket: Connecting...');
-      this.ws = new WebSocket(this.getWebSocketURL());
+      this.ws = new WebSocket(url);
       
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
@@ -62,7 +73,15 @@ export class WebSocketConnection {
         };
 
         this.ws!.onmessage = onMessage || (() => {});
-        this.ws!.onclose = onClose || (() => {});
+        this.ws!.onclose = (event) => {
+          this.isConnecting = false;
+          onClose?.(event);
+          
+          // Gestion automatique de la reconnexion
+          if (this.shouldReconnect(event)) {
+            this.handleReconnect(onOpen, onMessage, onClose, onError);
+          }
+        };
         this.ws!.onerror = (error) => {
           clearTimeout(timeout);
           this.isConnecting = false;
@@ -75,10 +94,7 @@ export class WebSocketConnection {
       this.isConnecting = false;
       console.error('WebSocket: Connection failed', error);
       
-      if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
-        setTimeout(() => this.handleReconnect(onOpen, onMessage, onClose, onError), 
-                  this.config.reconnectDelay);
-      }
+      // Ne pas relancer automatiquement depuis connect(), laisser le onclose s'en charger
       throw error;
     }
   }
