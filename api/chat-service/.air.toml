@@ -1,4 +1,3 @@
-# Air configuration for hot reload
 root = "."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
