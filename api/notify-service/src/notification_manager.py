@@ -2,6 +2,7 @@ from typing import Dict
 from fastapi import WebSocket
 from src.types import Notification
 
+
 class NotificationManager:
     def __init__(self):
         self.active_connections: Dict[int, WebSocket] = {}

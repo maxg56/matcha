@@ -16,7 +16,6 @@ async def health_check():
 
 @app.websocket("/ws/notifications")
 async def websocket_endpoint(websocket: WebSocket):
-    print("New WebSocket connection")
     try:
         user_id = authenticate_websocket(websocket)
         await manager.connect(user_id, websocket)

@@ -11,6 +11,9 @@ COPY src/ .
 ENV FLASK_APP=main.py
 ENV FLASK_ENV=development
 
+# Pour que les logs s'affichent immédiatement
+ENV PYTHONUNBUFFERED=1
+
 EXPOSE 8005
 
 # --reload active le rechargement automatique
