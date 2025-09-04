@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
+import { webSocketService, MessageType, type MessageHandler } from '@/services/websocket';
 
 interface Message {
   id: number;
@@ -44,6 +45,7 @@ interface ChatActions {
   fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId: number) => Promise<void>;
   sendMessage: (conversationId: number, content: string) => Promise<void>;
+  sendWebSocketMessage: (conversationId: number, content: string) => void;
   markAsRead: (conversationId: number) => Promise<void>;
   setActiveConversation: (conversation: Conversation | null) => void;
   addMessage: (message: Message) => void;
@@ -53,6 +55,9 @@ interface ChatActions {
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   clearError: () => void;
+  initializeWebSocket: () => void;
+  subscribeToConversation: (conversationId: number) => void;
+  unsubscribeFromConversation: (conversationId: number) => void;
 }
 
 type ChatStore = ChatState & ChatActions;
@@ -205,6 +210,71 @@ export const useChatStore = create<ChatStore>()(
           msg.id === messageId ? { ...msg, ...updates } : msg
         );
         set({ messages });
+      },
+
+      sendWebSocketMessage: (conversationId: number, content: string) => {
+        const success = webSocketService.sendChatMessage(conversationId.toString(), content);
+        if (!success) {
+          // Fallback sur l'API HTTP si WebSocket échoue
+          get().sendMessage(conversationId, content).catch(error => {
+            console.error('Fallback HTTP message failed:', error);
+          });
+        }
+      },
+
+      subscribeToConversation: (conversationId: number) => {
+        webSocketService.subscribeToChatConversation(conversationId.toString());
+      },
+
+      unsubscribeFromConversation: (conversationId: number) => {
+        webSocketService.unsubscribe(`chat_${conversationId}`);
+      },
+
+      initializeWebSocket: () => {
+        // Handler pour les messages de chat reçus
+        const chatMessageHandler: MessageHandler = (data, message) => {
+          if (message.type === MessageType.CHAT_MESSAGE) {
+            // Convertir les données WebSocket au format Message
+            const chatMessage: Partial<Message> = {
+              id: Date.now(), // ID temporaire
+              conversation_id: parseInt(data.conversation_id),
+              sender_id: parseInt(data.from_user),
+              content: data.message,
+              sent_at: new Date(data.timestamp * 1000).toISOString(),
+              is_read: false
+            };
+            
+            get().addMessage(chatMessage as Message);
+          } else if (message.type === MessageType.CHAT_ACK) {
+            // Accusé de réception du message envoyé
+            console.log('Message acknowledgment received:', data);
+          }
+        };
+
+        // Handler pour l'état de connexion
+        const connectionHandler: MessageHandler = (data) => {
+          if (data.status === 'connected') {
+            set({ isConnected: true });
+            console.log('Chat WebSocket connected');
+          }
+        };
+
+        // Enregistrer les handlers
+        webSocketService.addMessageHandler(MessageType.CHAT_MESSAGE, chatMessageHandler);
+        webSocketService.addMessageHandler(MessageType.CHAT_ACK, chatMessageHandler);
+        webSocketService.addMessageHandler(MessageType.CONNECTION_ACK, connectionHandler);
+
+        // S'assurer que la connexion WebSocket est établie
+        if (!webSocketService.isConnected()) {
+          webSocketService.connect().then(() => {
+            set({ isConnected: true });
+          }).catch(error => {
+            console.error('Failed to connect WebSocket for chat:', error);
+            set({ isConnected: false });
+          });
+        } else {
+          set({ isConnected: true });
+        }
       },
     }),
     { name: 'ChatStore' }

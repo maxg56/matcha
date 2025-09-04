@@ -1,58 +1,60 @@
-import { useState, useEffect } from "react";
-import { useAuthStore } from '@/stores/authStore';
+import { useState, useEffect, useCallback } from "react";
+import { useWebSocketNotifications } from '../useWebSocketConnection';
+import { MessageType, type MessageHandler } from '@/services/websocket';
 
 type NotificationEntry = [string, number];
 
 export function Notification() {
-    function randomInt(max: number): number {
-        return Math.floor(Math.random() * max);
-    }
-
     const [seen, setSeen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
-    const { user } = useAuthStore();
+    const { addNotificationHandler, removeNotificationHandler, markAllAsRead } = useWebSocketNotifications();
 
-    useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        console.log("Notification hook mounted", user?.id, token);
-        // Ne crée pas de WebSocket si l'utilisateur n'est pas authentifié
-        if (!user?.id || !token) {
-            return;
+    // Handler pour les notifications WebSocket
+    const notificationHandler: MessageHandler = useCallback((data, message) => {
+        console.log("WebSocket notification reçue:", message);
+        
+        switch (message.type) {
+            case 'notification_event':
+                // Nouvelle notification reçue
+                if (data.message && typeof data.type === 'number') {
+                    setNotifications(prev => [...prev, [data.message, data.type]]);
+                    setSeen(false);
+                }
+                break;
+                
+            case MessageType.NOTIFICATION_READ:
+                // Une notification spécifique a été marquée comme lue
+                console.log("Notification marquée comme lue:", data.notification_id);
+                break;
+                
+            case MessageType.ALL_NOTIFICATION_READ:
+                // Toutes les notifications ont été marquées comme lues
+                console.log("Toutes les notifications marquées comme lues");
+                break;
+                
+            default:
+                // Fallback pour les anciens formats de notification
+                if (data.message && data.type !== undefined) {
+                    setNotifications(prev => [...prev, [data.message, data.type]]);
+                    setSeen(false);
+                }
         }
+    }, []);
 
-        const ws = new WebSocket(`wss://localhost:8443/ws/notifications?token=${token}`);
-
-        ws.onopen = () => {
-            console.log("WebSocket connecté pour les notifications");
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                console.log("WebSocket message reçu:", event.data);
-                const notification = JSON.parse(event.data);
-                setNotifications(prev => [...prev, [notification.message, notification.type]]);
-                setSeen(false);
-            } catch (e) {
-                console.error("Erreur de parsing notification:", e);
-            }
-        };
-
-        ws.onerror = (err) => {
-            console.error("WebSocket error:", err);
-        };
-
-        ws.onclose = () => {
-            console.log("WebSocket déconnecté");
-        };
-
+    // Configuration des handlers de notification
+    useEffect(() => {
+        addNotificationHandler(notificationHandler);
+        
         return () => {
-            ws.close();
+            removeNotificationHandler(notificationHandler);
         };
-    }, [user?.id, user?.token]);
+    }, [addNotificationHandler, removeNotificationHandler, notificationHandler]);
 
-    const clearNotifications = () => {
+    const clearNotifications = useCallback(() => {
         setNotifications([]);
-    };
+        // Marquer toutes les notifications comme lues côté serveur
+        markAllAsRead();
+    }, [markAllAsRead]);
 
     return { notifications, clearNotifications, seen, setSeen };
 }
