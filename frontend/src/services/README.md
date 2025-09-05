@@ -148,7 +148,7 @@ webSocketService.subscribe('my-channel');
 ### Store Chat (Zustand)
 
 ```tsx
-import { useChatStore } from '@/stores/chatStore';
+import { useChatStore } from '@/stores/chat';
 
 function ChatPage() {
   const { 
