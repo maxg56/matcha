@@ -1,16 +1,20 @@
 from typing import List, Dict, Any, Optional
 from sqlalchemy import text
 from app.config.database import db
-from app.models import User
+from app.models import User, UserInteraction, Match
+from app.services.vector_matching_service import VectorMatchingService
 
 class MatchService:
     """Service layer for matching operations"""
     
     def __init__(self):
         """Initialize match service"""
-        pass
+        self.vector_service = VectorMatchingService()
     
     def get_user_matches(self, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get basic potential matches for a user (fallback method)
+        """
         """
         Get potential matches for a user
         
@@ -21,8 +25,7 @@ class MatchService:
         Returns:
             List of potential matches
         """
-        # TODO: Implement sophisticated matching algorithm
-        # For now, return compatible users based on sexual preferences
+        # Basic matching algorithm based on sexual preferences and location
         
         # Get target user's preferences
         target_user = User.query.filter_by(id=user_id).first()
@@ -71,7 +74,8 @@ class MatchService:
             'first_name': user.first_name,
             'age': user.age,
             'bio': user.bio,
-            'fame': user.fame
+            'fame': user.fame,
+            'algorithm_type': 'basic'
         } for user in compatible_users]
     
     def like_user(self, user_id: int, target_user_id: int) -> Dict[str, Any]:
@@ -85,17 +89,7 @@ class MatchService:
         Returns:
             Dictionary with like result and potential match status
         """
-        # TODO: Implement like functionality
-        # - Store like in database
-        # - Check for mutual like (match)
-        # - Return match status
-        
-        return {
-            "liked": True,
-            "match": False,  # TODO: Implement match detection
-            "user_id": user_id,
-            "target_user_id": target_user_id
-        }
+        return self.vector_service.record_interaction(user_id, target_user_id, 'like')
     
     def unlike_user(self, user_id: int, target_user_id: int) -> Dict[str, Any]:
         """
@@ -108,15 +102,7 @@ class MatchService:
         Returns:
             Dictionary with unlike result
         """
-        # TODO: Implement unlike functionality
-        # - Remove like from database
-        # - Handle match status update if needed
-        
-        return {
-            "unliked": True,
-            "user_id": user_id,
-            "target_user_id": target_user_id
-        }
+        return self.vector_service.record_interaction(user_id, target_user_id, 'pass')
     
     def block_user(self, user_id: int, target_user_id: int) -> Dict[str, Any]:
         """
@@ -129,40 +115,43 @@ class MatchService:
         Returns:
             Dictionary with block result
         """
-        # TODO: Implement block functionality
-        # - Store block in database
-        # - Remove any existing likes/matches
-        # - Prevent future interactions
+        result = self.vector_service.record_interaction(user_id, target_user_id, 'block')
         
-        return {
-            "blocked": True,
-            "user_id": user_id,
-            "target_user_id": target_user_id
-        }
+        # Deactivate any existing match
+        match = Match.query.filter(
+            db.or_(
+                db.and_(Match.user1_id == user_id, Match.user2_id == target_user_id),
+                db.and_(Match.user1_id == target_user_id, Match.user2_id == user_id)
+            )
+        ).first()
+        
+        if match:
+            match.is_active = False
+            db.session.commit()
+            result['match_deactivated'] = True
+        
+        return result
     
-    def run_matching_algorithm(self, user_id: int, algorithm_type: str = 'default') -> List[Dict[str, Any]]:
+    def run_matching_algorithm(self, user_id: int, algorithm_type: str = 'vector_based', 
+                              limit: int = 20, max_distance: Optional[int] = None,
+                              age_range: Optional[tuple] = None) -> List[Dict[str, Any]]:
         """
         Run sophisticated matching algorithm for a user
         
         Args:
             user_id: ID of the user to find matches for
-            algorithm_type: Type of algorithm to use ('default', 'similarity', 'ml')
+            algorithm_type: Type of algorithm to use ('vector_based', 'basic')
+            limit: Maximum number of matches to return
+            max_distance: Maximum distance in km
+            age_range: Tuple of (min_age, max_age)
             
         Returns:
             List of ranked matches with compatibility scores
         """
-        # TODO: Implement advanced matching algorithms
-        # - Cosine similarity based on user attributes
-        # - Geographic distance weighting
-        # - Interest/tag matching
-        # - Machine learning based recommendations
-        
-        # For now, return basic matches
-        matches = self.get_user_matches(user_id, limit=20)
-        
-        # Add compatibility scores (placeholder)
-        for match in matches:
-            match['compatibility_score'] = 0.75  # TODO: Calculate real score
-            match['algorithm_type'] = algorithm_type
-        
-        return matches
+        if algorithm_type == 'vector_based':
+            return self.vector_service.get_potential_matches(
+                user_id, limit, max_distance, age_range
+            )
+        else:
+            # Fallback to basic matching
+            return self.get_user_matches(user_id, limit)
