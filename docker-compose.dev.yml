@@ -54,6 +54,7 @@ services:
     environment:
       PORT: 8080
       JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       GIN_MODE: debug
     volumes:
       - ./api/gateway/src:/app/src
