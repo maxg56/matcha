@@ -5,7 +5,7 @@ import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { WebSocketStatus } from '@/components/WebSocketStatus';
-import { useChatStore, type Message } from '@/stores/chatStore';
+import { useChatStore, type Message } from '@/stores/chat';
 import { useWebSocketChat } from '@/hooks/useWebSocketConnection';
 
 // Type pour les messages de l'interface UI (compatible avec ChatBubble)

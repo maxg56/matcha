@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { useChatStore } from '@/stores/chatStore';
+import { useChatConnectionStore } from '@/stores/chat';
 import { useWebSocketConnection } from '@/hooks/useWebSocketConnection';
 
 interface WebSocketContextValue {
@@ -17,7 +17,7 @@ interface WebSocketProviderProps {
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const { user } = useAuthStore();
-  const { initializeWebSocket } = useChatStore();
+  const { initializeWebSocket } = useChatConnectionStore();
   const webSocket = useWebSocketConnection();
 
   // Initialiser les handlers WebSocket quand l'utilisateur est connecté
