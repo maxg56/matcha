@@ -8,20 +8,30 @@ import (
 
 // SetupMatchRoutes configures matching service routes
 func SetupMatchRoutes(r *gin.Engine) {
-	match := r.Group("/api/matches")
-	match.Use(middleware.JWTMiddleware()) // All match routes require authentication
+	// Health check endpoint (no auth required)
+	r.GET("/api/v1/matches/health", proxy.ProxyRequest("match", "/health"))
 
-	// Match discovery
-	match.GET("/list", proxy.ProxyRequest("match", "/api/v1/matches"))
-	match.GET("/suggestions", proxy.ProxyRequest("match", "/api/v1/matches/suggestions"))
+	// Match routes (require authentication)
+	match := r.Group("/api/v1/matches")
+	match.Use(middleware.JWTMiddleware())
+	{
+		// Match discovery
+		match.GET("/", proxy.ProxyRequest("match", "/api/v1/matches"))
+		match.GET("/list", proxy.ProxyRequest("match", "/api/v1/matches"))
+		match.GET("/algorithm", proxy.ProxyRequest("match", "/api/v1/matches/algorithm"))
 
-	// User interactions
-	match.POST("/like/:userId", proxy.ProxyRequest("match", "/api/v1/matches/like/:userId"))
-	match.POST("/pass/:userId", proxy.ProxyRequest("match", "/api/v1/matches/pass/:userId"))
+		// User interactions
+		match.POST("/like", proxy.ProxyRequest("match", "/api/v1/matches/like"))
+		match.POST("/unlike", proxy.ProxyRequest("match", "/api/v1/matches/unlike"))
+		match.POST("/block", proxy.ProxyRequest("match", "/api/v1/matches/block"))
+	}
 
-	// Match management
-	match.DELETE("/:matchId", proxy.ProxyRequest("match", "/api/v1/matches/:matchId"))
-
-	// Health check endpoint
-	match.GET("/", proxy.ProxyRequest("match", "/health"))
+	// Matrix routes (require authentication)
+	matrix := r.Group("/api/v1/matrix")
+	matrix.Use(middleware.JWTMiddleware())
+	{
+		matrix.GET("/users", proxy.ProxyRequest("match", "/api/v1/matrix/users"))
+		matrix.GET("/compatible/:user_id", proxy.ProxyRequest("match", "/api/v1/matrix/compatible/:user_id"))
+		matrix.POST("/export", proxy.ProxyRequest("match", "/api/v1/matrix/export"))
+	}
 }
