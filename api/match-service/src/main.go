@@ -37,6 +37,7 @@ func main() {
 			matches.POST("/unlike", handlers.UnlikeUserHandler)
 			matches.POST("/block", handlers.BlockUserHandler)
 			matches.GET("/algorithm", handlers.MatchingAlgorithmHandler)
+			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
 		}
 
 		// Matrix routes

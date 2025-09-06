@@ -9,7 +9,7 @@ A microservices-based dating application built with Go, Python, and React.
 | **gateway** | Go | 8080 | API Gateway and reverse proxy |
 | **auth-service** | Go | 8001 | Authentication and authorization |
 | **user-service** | Go | 8002 | User profiles and management |
-| **match-service** | Python | 8003 | Matching algorithm and logic |
+| **match-service** | Go | 8003 | Matching algorithm and logic |
 | **chat-service** | Go | 8004 | Real-time messaging and WebSocket |
 | **notify-service** | Python | 8005 | Push notifications and alerts |
 | **media-service** | Python | 8006 | Image upload and processing |

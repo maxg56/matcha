@@ -112,11 +112,20 @@ Body: {"target_user_id": 456}
 
 ### Algorithm Endpoint
 ```bash
-# Run matching algorithm
+# Run enhanced vector matching algorithm
 GET /api/v1/matches/algorithm?limit=20&max_distance=50&age_min=25&age_max=35&algorithm_type=vector_based
 Headers: X-User-ID: 123
 
 # Response includes compatibility scores, distances, and algorithm metadata
+```
+
+### Preference Learning Endpoint
+```bash
+# Get learned user preferences
+GET /api/v1/matches/preferences
+Headers: X-User-ID: 123
+
+# Returns user's preference vector, learning metadata, and algorithm parameters
 ```
 
 ### Matrix Data Endpoints
@@ -134,34 +143,70 @@ Body: {"user_ids": [1,2,3], "filename": "my_matrix.json"}
 
 ## 🔍 Implementation Details
 
-### Database Models
-- **User Interactions**: GORM models for tracking likes, unlikes, and blocks
-- **Vector Storage**: User preference and profile vectors
-- **Match Tracking**: Bidirectional relationship management
+### Enhanced Vector Matching System
 
-### Matching Algorithm
+#### Multi-dimensional User Vectors
+Users are represented as 17-dimensional normalized vectors:
 ```go
-// Vector-based compatibility scoring
-// Implemented in services/vector_matching_service.go
-type CompatibilityScore struct {
-    UserID           uint    `json:"user_id"`
-    CompatibilityScore float64 `json:"compatibility_score"`
-    Distance         float64 `json:"distance_km"`
-    Factors          map[string]interface{} `json:"factors"`
+type UserVector struct {
+    Age                 float64   // Normalized 0-1 (18-80 years)
+    Height              float64   // Normalized 0-1 (140-220cm) 
+    Fame                float64   // Normalized 0-1 (0-100 points)
+    AlcoholConsumption  float64   // Encoded lifestyle attribute
+    Smoking             float64   // Encoded lifestyle attribute
+    Cannabis            float64   // Encoded lifestyle attribute
+    Drugs               float64   // Encoded lifestyle attribute
+    Pets                float64   // Encoded lifestyle attribute
+    SocialActivityLevel float64   // Encoded lifestyle attribute
+    SportActivity       float64   // Encoded lifestyle attribute
+    EducationLevel      float64   // Encoded lifestyle attribute
+    Religion            float64   // Encoded lifestyle attribute
+    ChildrenStatus      float64   // Encoded lifestyle attribute
+    PoliticalView       float64   // Encoded lifestyle attribute
+    Latitude            float64   // Normalized coordinates
+    Longitude           float64   // Normalized coordinates
 }
 ```
 
+#### Preference Learning Algorithm
+- **Positive Interactions (Likes)**: Preference vector moves closer to target user's vector
+- **Negative Interactions (Pass)**: Preference vector moves away from target user's vector
+- **Learning Rate**: Configurable (default 0.1) for gradual preference adaptation
+- **Persistent Storage**: User preferences saved to `user_preferences` table
+
+#### Advanced Compatibility Scoring
+```go
+finalScore = baseSimilarity * distancePenalty * ageCompatibilityFactor * 
+             fameBoost * freshnessBoost * randomFactor
+```
+
+**Factors:**
+- **Base Similarity**: Weighted cosine similarity between preference and candidate vectors
+- **Distance Penalty**: Geographic distance impact (closer users scored higher)
+- **Age Compatibility**: Penalty for age differences beyond threshold
+- **Fame Boost**: Small bonus for higher fame users
+- **Freshness Boost**: Bonus for recently updated profiles
+- **Random Factor**: Prevents identical rankings, adds variety
+
+#### Database Models
+- **User Interactions**: GORM models for tracking likes, unlikes, and blocks
+- **User Preferences**: Learned preference vectors with update tracking
+- **Vector Storage**: Normalized user attributes and learned preferences
+- **Match Tracking**: Bidirectional relationship management
+
 ### Service Architecture
 - **Handlers**: HTTP request/response handling with Gin
-- **Services**: Business logic for matching algorithms
+- **Vector Utils**: Mathematical functions for similarity calculations
+- **Services**: Business logic for enhanced matching algorithms
 - **Models**: GORM database models and relationships
 - **Middleware**: JWT authentication and request validation
 
-### Performance
-- **Database Indexing**: Optimized PostgreSQL queries
+### Performance Optimizations
+- **Database Indexing**: Optimized PostgreSQL queries with proper indexes
+- **Vector Calculations**: Efficient mathematical operations
 - **Goroutines**: Concurrent request processing
 - **GORM**: Efficient ORM with connection pooling
-- **Minimal Dependencies**: Lightweight Go binary
+- **Candidate Filtering**: Pre-filtering before expensive vector calculations
 
 ## 🧪 Testing
 
@@ -265,10 +310,9 @@ Current version: **v1**
 
 ## 📋 TODO / Roadmap
 
-- [ ] Enhanced vector matching algorithms
+- [x] Enhanced vector matching algorithms ✅
 - [ ] Caching layer with Redis integration
-- [ ] Advanced filtering and preference learning
-- [ ] Performance optimization and indexing
+- [ ] Performance optimization and indexing  
 - [ ] Comprehensive test coverage
 - [ ] API documentation and OpenAPI specs
 - [ ] Monitoring and observability improvements

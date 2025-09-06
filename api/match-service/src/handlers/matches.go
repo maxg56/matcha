@@ -44,8 +44,9 @@ func LikeUserHandler(c *gin.Context) {
 		return
 	}
 
-	matchService := services.NewMatchService()
-	result, err := matchService.LikeUser(userID, request.TargetUserID)
+	// Use enhanced vector matching service for preference learning
+	vectorService := services.NewVectorMatchingService()
+	result, err := vectorService.RecordInteraction(userID, request.TargetUserID, "like")
 	if err != nil {
 		utils.RespondError(c, "Failed to like user: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -71,8 +72,9 @@ func UnlikeUserHandler(c *gin.Context) {
 		return
 	}
 
-	matchService := services.NewMatchService()
-	result, err := matchService.UnlikeUser(userID, request.TargetUserID)
+	// Use enhanced vector matching service for preference learning
+	vectorService := services.NewVectorMatchingService()
+	result, err := vectorService.RecordInteraction(userID, request.TargetUserID, "pass")
 	if err != nil {
 		utils.RespondError(c, "Failed to unlike user: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -98,8 +100,9 @@ func BlockUserHandler(c *gin.Context) {
 		return
 	}
 
-	matchService := services.NewMatchService()
-	result, err := matchService.BlockUser(userID, request.TargetUserID)
+	// Use enhanced vector matching service for blocking
+	vectorService := services.NewVectorMatchingService()
+	result, err := vectorService.RecordInteraction(userID, request.TargetUserID, "block")
 	if err != nil {
 		utils.RespondError(c, "Failed to block user: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -157,5 +160,22 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 			"max_distance": maxDistance,
 			"age_range":    ageRange,
 		},
+	})
+}
+
+// GetUserPreferencesHandler returns the learned preferences for a user
+func GetUserPreferencesHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	vectorService := services.NewVectorMatchingService()
+	preferences, err := vectorService.GetUserPreferences(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{
+		"user_id":     userID,
+		"preferences": preferences,
 	})
 }

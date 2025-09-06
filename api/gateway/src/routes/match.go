@@ -19,6 +19,7 @@ func SetupMatchRoutes(r *gin.Engine) {
 		match.GET("/", proxy.ProxyRequest("match", "/api/v1/matches"))
 		match.GET("/list", proxy.ProxyRequest("match", "/api/v1/matches"))
 		match.GET("/algorithm", proxy.ProxyRequest("match", "/api/v1/matches/algorithm"))
+		match.GET("/preferences", proxy.ProxyRequest("match", "/api/v1/matches/preferences"))
 
 		// User interactions
 		match.POST("/like", proxy.ProxyRequest("match", "/api/v1/matches/like"))
