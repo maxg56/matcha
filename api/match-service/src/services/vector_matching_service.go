@@ -36,13 +36,13 @@ func (v *VectorMatchingService) RecordInteraction(userID, targetUserID int, acti
 		First(&existingInteraction)
 	
 	if result.Error == nil {
-		existingInteraction.Action = action
+		existingInteraction.InteractionType = action
 		conf.DB.Save(&existingInteraction)
 	} else {
 		interaction := models.UserInteraction{
-			UserID:       uint(userID),
-			TargetUserID: uint(targetUserID),
-			Action:       action,
+			UserID:          uint(userID),
+			TargetUserID:    uint(targetUserID),
+			InteractionType: action,
 		}
 		conf.DB.Create(&interaction)
 	}
@@ -56,7 +56,7 @@ func (v *VectorMatchingService) RecordInteraction(userID, targetUserID int, acti
 	// Handle like actions - check for mutual match
 	if action == "like" {
 		var mutualLike models.UserInteraction
-		mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND action = ?", 
+		mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND interaction_type = ?", 
 			targetUserID, userID, "like").First(&mutualLike)
 
 		if mutualResult.Error == nil {

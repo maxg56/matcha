@@ -14,6 +14,16 @@ func NewMatchService() *MatchService {
 	return &MatchService{}
 }
 
+// validateUserExists checks if a user exists in the database
+func (s *MatchService) validateUserExists(userID int) error {
+	var user models.User
+	result := conf.DB.First(&user, userID)
+	if result.Error != nil {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
 type MatchResult struct {
 	ID               int     `json:"id"`
 	Username         string  `json:"username"`
@@ -66,6 +76,11 @@ func (s *MatchService) GetUserMatches(userID int) ([]MatchResult, error) {
 }
 
 func (s *MatchService) LikeUser(userID, targetUserID int) (map[string]interface{}, error) {
+	// Validate that target user exists
+	if err := s.validateUserExists(targetUserID); err != nil {
+		return nil, errors.New("target user does not exist")
+	}
+
 	// Check if interaction already exists
 	var existingInteraction models.UserInteraction
 	result := conf.DB.Where("user_id = ? AND target_user_id = ?", userID, targetUserID).
@@ -73,21 +88,21 @@ func (s *MatchService) LikeUser(userID, targetUserID int) (map[string]interface{
 	
 	if result.Error == nil {
 		// Update existing interaction
-		existingInteraction.Action = "like"
+		existingInteraction.InteractionType = "like"
 		conf.DB.Save(&existingInteraction)
 	} else {
 		// Create new interaction
 		interaction := models.UserInteraction{
-			UserID:       uint(userID),
-			TargetUserID: uint(targetUserID),
-			Action:       "like",
+			UserID:          uint(userID),
+			TargetUserID:    uint(targetUserID),
+			InteractionType: "like",
 		}
 		conf.DB.Create(&interaction)
 	}
 
 	// Check if target user also liked this user (mutual like)
 	var mutualLike models.UserInteraction
-	mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND action = ?", 
+	mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND interaction_type = ?", 
 		targetUserID, userID, "like").First(&mutualLike)
 
 	response := map[string]interface{}{
@@ -133,19 +148,24 @@ func (s *MatchService) LikeUser(userID, targetUserID int) (map[string]interface{
 }
 
 func (s *MatchService) UnlikeUser(userID, targetUserID int) (map[string]interface{}, error) {
+	// Validate that target user exists
+	if err := s.validateUserExists(targetUserID); err != nil {
+		return nil, errors.New("target user does not exist")
+	}
+
 	// Update or create interaction
 	var existingInteraction models.UserInteraction
 	result := conf.DB.Where("user_id = ? AND target_user_id = ?", userID, targetUserID).
 		First(&existingInteraction)
 	
 	if result.Error == nil {
-		existingInteraction.Action = "pass"
+		existingInteraction.InteractionType = "pass"
 		conf.DB.Save(&existingInteraction)
 	} else {
 		interaction := models.UserInteraction{
-			UserID:       uint(userID),
-			TargetUserID: uint(targetUserID),
-			Action:       "pass",
+			UserID:          uint(userID),
+			TargetUserID:    uint(targetUserID),
+			InteractionType: "pass",
 		}
 		conf.DB.Create(&interaction)
 	}
@@ -157,19 +177,24 @@ func (s *MatchService) UnlikeUser(userID, targetUserID int) (map[string]interfac
 }
 
 func (s *MatchService) BlockUser(userID, targetUserID int) (map[string]interface{}, error) {
+	// Validate that target user exists
+	if err := s.validateUserExists(targetUserID); err != nil {
+		return nil, errors.New("target user does not exist")
+	}
+
 	// Create block interaction
 	var existingInteraction models.UserInteraction
 	result := conf.DB.Where("user_id = ? AND target_user_id = ?", userID, targetUserID).
 		First(&existingInteraction)
 	
 	if result.Error == nil {
-		existingInteraction.Action = "block"
+		existingInteraction.InteractionType = "block"
 		conf.DB.Save(&existingInteraction)
 	} else {
 		interaction := models.UserInteraction{
-			UserID:       uint(userID),
-			TargetUserID: uint(targetUserID),
-			Action:       "block",
+			UserID:          uint(userID),
+			TargetUserID:    uint(targetUserID),
+			InteractionType: "block",
 		}
 		conf.DB.Create(&interaction)
 	}
@@ -245,7 +270,7 @@ func (s *MatchService) getBasicMatches(userID int, limit int, maxDistance *int, 
 	// Exclude users that have been blocked or passed
 	query = query.Where(`id NOT IN (
 		SELECT target_user_id FROM user_interactions 
-		WHERE user_id = ? AND action IN ('block', 'pass')
+		WHERE user_id = ? AND interaction_type IN ('block', 'pass')
 	)`, userID)
 
 	// Order by fame and limit results
