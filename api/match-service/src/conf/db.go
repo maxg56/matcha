@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"match-service/src/models"
+	"match-service/src/utils"
 )
 
 var DB *gorm.DB
@@ -37,6 +38,10 @@ func InitDB() {
 
 	log.Printf("Connected to database: %s@%s:%s/%s", dbUser, dbHost, dbPort, dbName)
 
+	// Initialize caches
+	utils.InitializeCaches()
+	log.Println("In-memory caches initialized")
+
 	// Auto-migrate models if enabled
 	if getEnv("AUTO_MIGRATE", "false") == "true" {
 		err = DB.AutoMigrate(
@@ -52,6 +57,22 @@ func InitDB() {
 			log.Fatalf("Failed to auto-migrate: %v", err)
 		}
 		log.Println("Database auto-migration completed")
+
+		// Create performance indexes if enabled
+		if getEnv("CREATE_INDEXES", "false") == "true" {
+			if err := utils.CreateOptimizationIndexes(DB); err != nil {
+				log.Printf("Warning: Failed to create optimization indexes: %v", err)
+			}
+			
+			if err := utils.CreateCompositeIndexesForVectorMatching(DB); err != nil {
+				log.Printf("Warning: Failed to create vector matching indexes: %v", err)
+			}
+
+			// Analyze tables for better query planning
+			if err := utils.AnalyzeTablesForPerformance(DB); err != nil {
+				log.Printf("Warning: Failed to analyze tables: %v", err)
+			}
+		}
 	}
 }
 

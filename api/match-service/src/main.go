@@ -17,6 +17,9 @@ func main() {
 
 	r := gin.Default()
 
+	// Add performance monitoring middleware
+	r.Use(middleware.PerformanceMiddleware())
+
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -47,6 +50,15 @@ func main() {
 			matrix.GET("/users", handlers.GetMatrixHandler)
 			matrix.GET("/compatible/:user_id", handlers.GetCompatibleMatrixHandler)
 			matrix.POST("/export", handlers.GenerateMatrixHandler)
+		}
+
+		// Performance and admin routes
+		admin := api.Group("/admin")
+		admin.Use(middleware.AuthMiddleware()) // In production, add admin role check
+		{
+			admin.GET("/performance", handlers.GetPerformanceStatsHandler)
+			admin.POST("/cache/clear", handlers.ClearCacheHandler)
+			admin.POST("/indexes/create", handlers.CreateIndexesHandler)
 		}
 	}
 

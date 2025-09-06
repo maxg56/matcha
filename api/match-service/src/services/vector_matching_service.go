@@ -50,14 +50,30 @@ func NewVectorMatchingService() *VectorMatchingService {
 }
 
 func (v *VectorMatchingService) GetPotentialMatches(userID int, limit int, maxDistance *int, ageRange *AgeRange) ([]MatchResult, error) {
+	// Check cache first
+	cacheKey := utils.AlgorithmResultsCacheKey(userID, "enhanced_vector", limit, maxDistance)
+	if cached, exists := utils.CompatibilityCache.Get(cacheKey); exists {
+		if results, ok := cached.([]MatchResult); ok {
+			log.Printf("Cache hit for user %d matches", userID)
+			return results, nil
+		}
+	}
+
 	// Get current user
 	var currentUser models.User
 	if err := conf.DB.First(&currentUser, userID).Error; err != nil {
 		return nil, errors.New("user not found")
 	}
 
-	// Convert user to vector
-	currentUserVector := utils.UserToVector(&currentUser)
+	// Convert user to vector (check cache first)
+	var currentUserVector utils.UserVector
+	if cached, exists := utils.GetCachedUserVector(userID); exists {
+		currentUserVector = cached
+		log.Printf("Cache hit for user %d vector", userID)
+	} else {
+		currentUserVector = utils.UserToVector(&currentUser)
+		utils.CacheUserVector(userID, currentUserVector, 10*time.Minute)
+	}
 
 	// Get or create user preference vector
 	preferenceVector, err := v.getUserPreferenceVector(uint(userID), currentUserVector)
@@ -116,6 +132,9 @@ func (v *VectorMatchingService) GetPotentialMatches(userID int, limit int, maxDi
 		results = append(results, result)
 	}
 
+	// Cache the results for 5 minutes
+	utils.CompatibilityCache.Set(cacheKey, results, 5*time.Minute)
+
 	return results, nil
 }
 
@@ -170,57 +189,72 @@ func (v *VectorMatchingService) getUserPreferenceVector(userID uint, defaultVect
 	}, nil
 }
 
-// getCandidateUsers gets potential match candidates with filters
+// getCandidateUsers gets potential match candidates with optimized filters
 func (v *VectorMatchingService) getCandidateUsers(userID int, maxDistance *int, ageRange *AgeRange) ([]models.User, error) {
 	var users []models.User
-	query := conf.DB.Where("id != ?", userID)
+
+	// Build optimized query with proper joins for exclusions
+	query := conf.DB.Table("users").
+		Select("users.*").
+		Where("users.id != ?", userID).
+		Where("users.latitude IS NOT NULL AND users.longitude IS NOT NULL") // Only users with location
 
 	// Apply age range filter
 	if ageRange != nil {
-		query = query.Where("age BETWEEN ? AND ?", ageRange.Min, ageRange.Max)
+		query = query.Where("users.age BETWEEN ? AND ?", ageRange.Min, ageRange.Max)
 	}
 
-	// Get current user for distance calculation
-	var currentUser models.User
-	if err := conf.DB.First(&currentUser, userID).Error; err == nil && maxDistance != nil {
-		if currentUser.Latitude.Valid && currentUser.Longitude.Valid {
-			// Note: For precise distance filtering, we'd need PostGIS or similar
-			// For now, we'll filter after retrieval
-		}
-	}
+	// Exclude blocked users more efficiently with LEFT JOINs
+	query = query.
+		Where("users.id NOT IN (SELECT ui1.target_user_id FROM user_interactions ui1 WHERE ui1.user_id = ? AND ui1.interaction_type = 'block')", userID).
+		Where("users.id NOT IN (SELECT ui2.user_id FROM user_interactions ui2 WHERE ui2.target_user_id = ? AND ui2.interaction_type = 'block')", userID)
 
-	// Exclude already blocked users and users who blocked current user
-	query = query.Where("id NOT IN (SELECT target_user_id FROM user_interactions WHERE user_id = ? AND interaction_type = 'block')", userID)
-	query = query.Where("id NOT IN (SELECT user_id FROM user_interactions WHERE target_user_id = ? AND interaction_type = 'block')", userID)
+	// Order by fame and recent activity for better candidates first
+	query = query.Order("users.fame DESC, users.updated_at DESC")
+
+	// Limit initial candidates to avoid processing too many users
+	query = query.Limit(500) // Reasonable limit for large user bases
 
 	if err := query.Find(&users).Error; err != nil {
 		return nil, err
 	}
 
 	// Apply distance filter if specified
-	if maxDistance != nil && currentUser.Latitude.Valid && currentUser.Longitude.Valid {
-		var filteredUsers []models.User
-		for _, user := range users {
-			if user.Latitude.Valid && user.Longitude.Valid {
-				distance := utils.HaversineDistance(
-					currentUser.Latitude.Float64,
-					currentUser.Longitude.Float64,
-					user.Latitude.Float64,
-					user.Longitude.Float64,
-				)
-				if distance <= float64(*maxDistance) {
-					filteredUsers = append(filteredUsers, user)
+	if maxDistance != nil {
+		var currentUser models.User
+		if err := conf.DB.Select("latitude, longitude").First(&currentUser, userID).Error; err != nil {
+			return nil, err
+		}
+
+		if currentUser.Latitude.Valid && currentUser.Longitude.Valid {
+			var filteredUsers []models.User
+			for _, user := range users {
+				if user.Latitude.Valid && user.Longitude.Valid {
+					distance := utils.HaversineDistance(
+						currentUser.Latitude.Float64,
+						currentUser.Longitude.Float64,
+						user.Latitude.Float64,
+						user.Longitude.Float64,
+					)
+					if distance <= float64(*maxDistance) {
+						filteredUsers = append(filteredUsers, user)
+					}
 				}
 			}
+			users = filteredUsers
 		}
-		users = filteredUsers
 	}
 
+	log.Printf("Found %d candidate users for user %d", len(users), userID)
 	return users, nil
 }
 
-// calculateCompatibilityScore calculates enhanced compatibility score
+// calculateCompatibilityScore calculates enhanced compatibility score with caching
 func (v *VectorMatchingService) calculateCompatibilityScore(preferenceVector, candidateVector utils.UserVector, currentUser, candidate *models.User) utils.CompatibilityScore {
+	// Check cache first
+	if cached, exists := utils.GetCachedCompatibilityScore(int(currentUser.ID), int(candidate.ID)); exists {
+		return cached
+	}
 	// Calculate base weighted similarity
 	baseSimilarity := utils.WeightedSimilarity(preferenceVector, candidateVector, v.weights)
 
@@ -277,13 +311,18 @@ func (v *VectorMatchingService) calculateCompatibilityScore(preferenceVector, ca
 		"random_factor":            randomFactor,
 	}
 
-	return utils.CompatibilityScore{
+	score := utils.CompatibilityScore{
 		UserID:             candidate.ID,
 		CompatibilityScore: finalScore,
 		Distance:           distance,
 		AgeDifference:      ageDifference,
 		Factors:            factors,
 	}
+
+	// Cache the score for 10 minutes
+	utils.CacheCompatibilityScore(int(currentUser.ID), int(candidate.ID), score, 10*time.Minute)
+
+	return score
 }
 
 func (v *VectorMatchingService) RecordInteraction(userID, targetUserID int, action string) (map[string]interface{}, error) {
@@ -315,6 +354,9 @@ func (v *VectorMatchingService) RecordInteraction(userID, targetUserID int, acti
 		if err != nil {
 			log.Printf("Failed to update user preferences: %v", err)
 		}
+
+		// Invalidate caches for this user since preferences changed
+		utils.InvalidateUserCache(userID)
 	}
 
 	response := map[string]interface{}{
