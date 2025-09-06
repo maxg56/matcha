@@ -131,7 +131,9 @@ services:
     restart: unless-stopped
 
   match-service:
-    build: ./api/match-service
+    build: 
+      context: ./api/match-service
+      target: development
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -139,10 +141,11 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8003
-      FLASK_ENV: development
-      FLASK_DEBUG: 1
     volumes:
-      - ./api/match-service/src:/app/src:ro
+      - ./api/match-service/src:/app/src
+      - ./api/match-service/go.mod:/app/go.mod
+      - ./api/match-service/go.sum:/app/go.sum
+      - ./api/match-service/.air.toml:/app/.air.toml
     depends_on:
       - postgres
     networks:
