@@ -41,6 +41,8 @@ services:
     
   redis:
     image: redis:7-alpine
+    ports:
+      - "6379:6379"
     networks:
       - DB
     restart: unless-stopped
@@ -141,6 +143,10 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8003
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      USE_REDIS_CACHE: ${USE_REDIS_CACHE:-true}
     volumes:
       - ./api/match-service/src:/app/src
       - ./api/match-service/go.mod:/app/go.mod

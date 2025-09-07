@@ -1,10 +1,15 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // CacheItem represents a cached item with expiration
@@ -13,10 +18,52 @@ type CacheItem struct {
 	Expiration time.Time
 }
 
+// Cache interface that can be implemented by different cache backends
+type Cache interface {
+	Set(key string, value interface{}, ttl time.Duration) error
+	Get(key string) (interface{}, bool)
+	Delete(key string) error
+	Clear() error
+	Size() int
+}
+
 // InMemoryCache provides in-memory caching with TTL
 type InMemoryCache struct {
 	items map[string]CacheItem
 	mutex sync.RWMutex
+}
+
+// RedisCache provides Redis-based caching
+type RedisCache struct {
+	client *redis.Client
+	ctx    context.Context
+}
+
+// NewRedisCache creates a new Redis cache client
+func NewRedisCache() *RedisCache {
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	redisDB := 0
+	if dbStr := os.Getenv("REDIS_DB"); dbStr != "" {
+		if db, err := strconv.Atoi(dbStr); err == nil {
+			redisDB = db
+		}
+	}
+	
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: redisPassword,
+		DB:       redisDB,
+	})
+	
+	return &RedisCache{
+		client: rdb,
+		ctx:    context.Background(),
+	}
 }
 
 // NewInMemoryCache creates a new in-memory cache
@@ -31,8 +78,54 @@ func NewInMemoryCache() *InMemoryCache {
 	return cache
 }
 
+// Redis cache implementation
+
+// Set stores a value in Redis with TTL
+func (r *RedisCache) Set(key string, value interface{}, ttl time.Duration) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(r.ctx, key, data, ttl).Err()
+}
+
+// Get retrieves a value from Redis
+func (r *RedisCache) Get(key string) (interface{}, bool) {
+	data, err := r.client.Get(r.ctx, key).Result()
+	if err != nil {
+		return nil, false
+	}
+	
+	var value interface{}
+	if err := json.Unmarshal([]byte(data), &value); err != nil {
+		return nil, false
+	}
+	return value, true
+}
+
+// Delete removes a key from Redis
+func (r *RedisCache) Delete(key string) error {
+	return r.client.Del(r.ctx, key).Err()
+}
+
+// Clear removes all items from Redis (use with caution)
+func (r *RedisCache) Clear() error {
+	return r.client.FlushDB(r.ctx).Err()
+}
+
+// Size returns the number of keys in Redis database
+func (r *RedisCache) Size() int {
+	size, err := r.client.DBSize(r.ctx).Result()
+	if err != nil {
+		return 0
+	}
+	return int(size)
+}
+
+// In-memory cache implementation
+
 // Set stores a value in cache with TTL
-func (c *InMemoryCache) Set(key string, value interface{}, ttl time.Duration) {
+func (c *InMemoryCache) Set(key string, value interface{}, ttl time.Duration) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	
@@ -40,6 +133,7 @@ func (c *InMemoryCache) Set(key string, value interface{}, ttl time.Duration) {
 		Value:      value,
 		Expiration: time.Now().Add(ttl),
 	}
+	return nil
 }
 
 // Get retrieves a value from cache
@@ -66,17 +160,19 @@ func (c *InMemoryCache) Get(key string) (interface{}, bool) {
 }
 
 // Delete removes a key from cache
-func (c *InMemoryCache) Delete(key string) {
+func (c *InMemoryCache) Delete(key string) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	delete(c.items, key)
+	return nil
 }
 
 // Clear removes all items from cache
-func (c *InMemoryCache) Clear() {
+func (c *InMemoryCache) Clear() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.items = make(map[string]CacheItem)
+	return nil
 }
 
 // Size returns the number of items in cache
@@ -103,16 +199,26 @@ func (c *InMemoryCache) cleanup() {
 
 // Global cache instances
 var (
-	CompatibilityCache *InMemoryCache
-	UserVectorCache   *InMemoryCache
-	PreferenceCache   *InMemoryCache
+	CompatibilityCache Cache
+	UserVectorCache    Cache
+	PreferenceCache    Cache
 )
 
 // InitializeCaches sets up all cache instances
 func InitializeCaches() {
-	CompatibilityCache = NewInMemoryCache()
-	UserVectorCache = NewInMemoryCache()
-	PreferenceCache = NewInMemoryCache()
+	// Check if Redis should be used
+	useRedis := os.Getenv("USE_REDIS_CACHE")
+	if useRedis == "true" || useRedis == "1" {
+		// Use Redis for caching
+		CompatibilityCache = NewRedisCache()
+		UserVectorCache = NewRedisCache()
+		PreferenceCache = NewRedisCache()
+	} else {
+		// Fall back to in-memory caching
+		CompatibilityCache = NewInMemoryCache()
+		UserVectorCache = NewInMemoryCache()
+		PreferenceCache = NewInMemoryCache()
+	}
 }
 
 // Cache key generators
@@ -186,20 +292,32 @@ func GetCachedUserVector(userID int) (UserVector, bool) {
 
 // InvalidateUserCache removes all cached data for a user
 func InvalidateUserCache(userID int) {
-	if CompatibilityCache != nil {
-		// Remove all compatibility scores involving this user
-		// Note: This is a simplified approach; in production you might want more sophisticated invalidation
-		CompatibilityCache.mutex.Lock()
+	// For Redis, we use pattern matching to delete keys
+	if redisCache, ok := CompatibilityCache.(*RedisCache); ok {
+		// Delete compatibility scores involving this user
+		pattern := fmt.Sprintf("compat:%d:*", userID)
+		keys, err := redisCache.client.Keys(redisCache.ctx, pattern).Result()
+		if err == nil && len(keys) > 0 {
+			redisCache.client.Del(redisCache.ctx, keys...)
+		}
+		
+		// Delete reverse compatibility scores
+		pattern = fmt.Sprintf("compat:*:%d", userID)
+		keys, err = redisCache.client.Keys(redisCache.ctx, pattern).Result()
+		if err == nil && len(keys) > 0 {
+			redisCache.client.Del(redisCache.ctx, keys...)
+		}
+	} else if inMemCache, ok := CompatibilityCache.(*InMemoryCache); ok {
+		// Fallback for in-memory cache
+		inMemCache.mutex.Lock()
 		now := time.Now()
-		for key := range CompatibilityCache.items {
-			// Invalidate entries that contain this user ID
-			// This could be optimized with better key structure
-			CompatibilityCache.items[key] = CacheItem{
-				Value:      CompatibilityCache.items[key].Value,
-				Expiration: now, // Set to expired
+		for key := range inMemCache.items {
+			inMemCache.items[key] = CacheItem{
+				Value:      inMemCache.items[key].Value,
+				Expiration: now,
 			}
 		}
-		CompatibilityCache.mutex.Unlock()
+		inMemCache.mutex.Unlock()
 	}
 
 	if UserVectorCache != nil {
