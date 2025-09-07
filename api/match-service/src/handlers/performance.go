@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"match-service/src/conf"
+	"match-service/src/services"
 	"match-service/src/utils"
 )
 
@@ -83,4 +84,18 @@ func CreateIndexesHandler(c *gin.Context) {
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, response)
+}
+
+// GetCacheHealthHandler returns detailed cache health information
+func GetCacheHealthHandler(c *gin.Context) {
+	cacheService := services.NewCacheService()
+	
+	// Get comprehensive cache health
+	health := cacheService.GetCacheHealth()
+	stats := cacheService.GetCacheStatistics()
+	
+	utils.RespondSuccess(c, http.StatusOK, gin.H{
+		"cache_health": health,
+		"cache_statistics": stats,
+	})
 }

@@ -9,11 +9,16 @@ import (
 	"match-service/src/conf"
 	"match-service/src/handlers"
 	"match-service/src/middleware"
+	"match-service/src/utils"
 )
 
 func main() {
 	// Initialize database
 	conf.InitDB()
+
+	// Initialize cache system
+	utils.InitializeCaches()
+	log.Println("Cache system initialized")
 
 	r := gin.Default()
 
@@ -22,9 +27,11 @@ func main() {
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
+		cacheStats := utils.GetCacheStats()
 		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"service": "match-service",
+			"status":      "ok",
+			"service":     "match-service",
+			"cache_stats": cacheStats,
 		})
 	})
 
@@ -57,6 +64,7 @@ func main() {
 		admin.Use(middleware.AuthMiddleware()) // In production, add admin role check
 		{
 			admin.GET("/performance", handlers.GetPerformanceStatsHandler)
+			admin.GET("/cache/health", handlers.GetCacheHealthHandler)
 			admin.POST("/cache/clear", handlers.ClearCacheHandler)
 			admin.POST("/indexes/create", handlers.CreateIndexesHandler)
 		}

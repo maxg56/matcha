@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"math"
 	"match-service/src/models"
 )
@@ -40,6 +41,27 @@ type CompatibilityScore struct {
 	Distance           float64                `json:"distance_km"`
 	AgeDifference      int                    `json:"age_difference"`
 	Factors            map[string]interface{} `json:"factors"`
+}
+
+// MarshalJSON implements custom JSON marshaling for CompatibilityScore
+func (c CompatibilityScore) MarshalJSON() ([]byte, error) {
+	type Alias CompatibilityScore
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(&c),
+	})
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for CompatibilityScore
+func (c *CompatibilityScore) UnmarshalJSON(data []byte) error {
+	type Alias CompatibilityScore
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+	return json.Unmarshal(data, &aux)
 }
 
 // UserToVector converts a User model to a normalized vector

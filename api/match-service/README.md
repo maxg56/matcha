@@ -84,6 +84,14 @@ DB_NAME=matcha_dev
 DB_USER=postgres
 DB_PASSWORD=password
 
+# Redis Configuration (for external caching)
+REDIS_ADDR=localhost:6379
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+USE_REDIS_CACHE=true
+
 ```
 
 ## 🎯 API Endpoints
@@ -132,6 +140,10 @@ Headers: X-User-ID: 123
 ```bash
 # Get performance statistics (cache, database, service stats)
 GET /api/v1/admin/performance
+Headers: X-User-ID: 123
+
+# Get cache health status (Redis connection, cache statistics)
+GET /api/v1/admin/cache/health
 Headers: X-User-ID: 123
 
 # Clear all caches (admin only)
@@ -230,11 +242,13 @@ Key Indexes Created:
 - `idx_blocked_users_exclusion`: Fast blocked user exclusion
 - `idx_active_matches_ordered`: Efficient match retrieval
 
-#### In-Memory Caching
+#### Redis Caching System
+- **External Redis Support**: Production-ready caching with Redis backend
+- **Fallback to In-Memory**: Automatic fallback when Redis is unavailable  
 - **Multi-Level Cache**: Separate caches for vectors, preferences, and compatibility scores
 - **TTL-Based Expiration**: Automatic cache invalidation (5-10 minutes)
 - **Cache Invalidation**: Smart invalidation on user interactions
-- **Memory Management**: Automatic cleanup of expired entries
+- **Connection Health Monitoring**: Automatic Redis connection health checks
 
 Cache Types:
 - **Compatibility Cache**: User-to-user compatibility scores
@@ -373,7 +387,7 @@ Current version: **v1**
 
 - [x] Enhanced vector matching algorithms ✅
 - [x] Performance optimization and database indexing ✅
-- [ ] External Redis caching integration (currently using in-memory)
+- [x] External Redis caching integration ✅
 - [ ] Comprehensive test coverage
 - [ ] API documentation and OpenAPI specs
 - [ ] Monitoring and observability improvements

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"sync"
@@ -43,7 +44,15 @@ type RedisCache struct {
 func NewRedisCache() *RedisCache {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
-		redisAddr = "localhost:6379"
+		redisHost := os.Getenv("REDIS_HOST")
+		redisPort := os.Getenv("REDIS_PORT")
+		if redisHost == "" {
+			redisHost = "localhost"
+		}
+		if redisPort == "" {
+			redisPort = "6379"
+		}
+		redisAddr = redisHost + ":" + redisPort
 	}
 	
 	redisPassword := os.Getenv("REDIS_PASSWORD")
@@ -54,15 +63,26 @@ func NewRedisCache() *RedisCache {
 		}
 	}
 	
+	log.Printf("Connecting to Redis at %s (DB: %d)", redisAddr, redisDB)
+	
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: redisPassword,
 		DB:       redisDB,
 	})
 	
+	// Test connection
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Printf("Failed to connect to Redis: %v", err)
+		log.Println("Falling back to in-memory cache")
+		return nil
+	}
+	log.Printf("Successfully connected to Redis at %s", redisAddr)
+	
 	return &RedisCache{
 		client: rdb,
-		ctx:    context.Background(),
+		ctx:    ctx,
 	}
 }
 
@@ -208,16 +228,34 @@ var (
 func InitializeCaches() {
 	// Check if Redis should be used
 	useRedis := os.Getenv("USE_REDIS_CACHE")
+	log.Printf("USE_REDIS_CACHE environment variable: %s", useRedis)
+	
 	if useRedis == "true" || useRedis == "1" {
-		// Use Redis for caching
-		CompatibilityCache = NewRedisCache()
-		UserVectorCache = NewRedisCache()
-		PreferenceCache = NewRedisCache()
+		// Try to use Redis for caching
+		log.Println("Initializing Redis caches...")
+		redisCache := NewRedisCache()
+		
+		if redisCache != nil {
+			// Redis connection successful
+			CompatibilityCache = redisCache
+			UserVectorCache = NewRedisCache()
+			PreferenceCache = NewRedisCache()
+			log.Println("Redis caches initialized successfully")
+		} else {
+			// Redis connection failed, fall back to in-memory
+			log.Println("Redis connection failed, falling back to in-memory caches...")
+			CompatibilityCache = NewInMemoryCache()
+			UserVectorCache = NewInMemoryCache()
+			PreferenceCache = NewInMemoryCache()
+			log.Println("In-memory caches initialized as fallback")
+		}
 	} else {
-		// Fall back to in-memory caching
+		// Use in-memory caching by configuration
+		log.Println("Initializing in-memory caches...")
 		CompatibilityCache = NewInMemoryCache()
 		UserVectorCache = NewInMemoryCache()
 		PreferenceCache = NewInMemoryCache()
+		log.Println("In-memory caches initialized")
 	}
 }
 
@@ -252,7 +290,9 @@ func AlgorithmResultsCacheKey(userID int, algorithmType string, limit int, maxDi
 func CacheCompatibilityScore(userID, targetUserID int, score CompatibilityScore, ttl time.Duration) {
 	if CompatibilityCache != nil {
 		key := CompatibilityCacheKey(userID, targetUserID)
-		CompatibilityCache.Set(key, score, ttl)
+		if err := CompatibilityCache.Set(key, score, ttl); err != nil {
+			log.Printf("Error caching compatibility score for users %d,%d: %v", userID, targetUserID, err)
+		}
 	}
 }
 
