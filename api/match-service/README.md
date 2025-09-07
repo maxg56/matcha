@@ -55,6 +55,7 @@ src/
 ### Prerequisites
 - Go 1.19+
 - PostgreSQL 12+
+- Redis (optional, falls back to in-memory cache)
 - Git
 
 ### Installation
@@ -320,7 +321,50 @@ go test -v . -run TestSpecificFunction
 - Service availability monitoring
 - Integration with orchestration platforms
 
+## 🚀 Deployment
 
+### Docker Deployment
+```bash
+# Service runs in Docker via docker-compose
+# From project root:
+make          # Start all services
+make restart  # Restart services
+make stop     # Stop services
+make down     # Remove containers and volumes
+```
+
+### Development with Air (Hot Reload)
+```bash
+# Install Air for hot reload development
+go install github.com/air-verse/air@latest
+
+# Run with hot reload
+air -c .air.toml
+```
+
+### Environment Variables
+```bash
+# Database configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=matcha_dev
+DB_USER=postgres
+DB_PASSWORD=password
+AUTO_MIGRATE=true
+CREATE_INDEXES=true  # Enable performance index creation
+
+# Redis configuration (optional)
+USE_REDIS_CACHE=true
+REDIS_ADDR=localhost:6379
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+
+# Service configuration
+JWT_SECRET=your-jwt-secret
+PORT=8003
+```
 
 ## 📈 Performance
 
@@ -359,6 +403,17 @@ Current version: **v1**
 
 
 
+
+---
+
+---
+
+## 📝 Documentation Status
+
+✅ **Architecture**: Go + Gin + GORM + PostgreSQL + Redis  
+✅ **API Endpoints**: All documented endpoints match implementation  
+✅ **Installation**: Go modules and Docker setup verified  
+✅ **Development**: Air hot reload configuration included  
 
 ---
 
