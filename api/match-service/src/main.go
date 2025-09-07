@@ -28,6 +28,19 @@ func main() {
 		})
 	})
 
+	// TEST ENDPOINTS: Admin stats without auth for debugging
+	r.GET("/test/admin/stats", func(c *gin.Context) {
+		// Set mock user for testing
+		c.Set("userID", 1)
+		handlers.GetAdminStatsHandler(c)
+	})
+	
+	r.GET("/test/admin/trends", func(c *gin.Context) {
+		// Set mock user for testing
+		c.Set("userID", 1)
+		handlers.GetMatchTrendsHandler(c)
+	})
+
 	// API routes
 	api := r.Group("/api/v1")
 	{
@@ -54,11 +67,16 @@ func main() {
 
 		// Performance and admin routes
 		admin := api.Group("/admin")
-		admin.Use(middleware.AuthMiddleware()) // In production, add admin role check
+		admin.Use(middleware.AdminAuthMiddleware()) // Admin authentication required
 		{
 			admin.GET("/performance", handlers.GetPerformanceStatsHandler)
 			admin.POST("/cache/clear", handlers.ClearCacheHandler)
 			admin.POST("/indexes/create", handlers.CreateIndexesHandler)
+			
+			// Statistics endpoints for admin dashboard
+			admin.GET("/stats", handlers.GetAdminStatsHandler)
+			admin.GET("/stats/user/:user_id", handlers.GetUserStatsHandler)
+			admin.GET("/stats/trends", handlers.GetMatchTrendsHandler)
 		}
 	}
 

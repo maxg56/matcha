@@ -48,5 +48,9 @@ func SetupMatchRoutes(r *gin.Engine) {
 		
 		// Database optimization
 		admin.POST("/indexes/create", proxy.ProxyRequest("match", "/api/v1/admin/indexes/create"))
+
+		admin.GET("/stats", proxy.ProxyRequest("match", "/api/v1/admin/stats"))
+		admin.GET("/stats/user/:user_id", proxy.ProxyRequest("match", "/api/v1/admin/stats/user/:user_id"))
+		admin.GET("/stats/trends", proxy.ProxyRequest("match", "/api/v1/admin/stats/trends"))
 	}
 }

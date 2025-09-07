@@ -19,6 +19,7 @@ import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { RootRedirect } from './components/RootRedirect';
 import { NotificationButton } from './components/Notifications'
 import MapPage  from './pages/Map';
+import AdminPage from './pages/AdminPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="edit-profile" element={<EditProfilePage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="map" element={<MapPage />} />
+                  <Route path="admin" element={<AdminPage />} />
                 </Route>
                 {/* Default redirect based on authentication status */}
                 <Route path="/" element={<RootRedirect />} />
