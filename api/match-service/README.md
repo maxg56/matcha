@@ -320,33 +320,7 @@ go test -v . -run TestSpecificFunction
 - Service availability monitoring
 - Integration with orchestration platforms
 
-## 🚀 Deployment
 
-### Docker Deployment
-```bash
-# Service runs in Docker via docker-compose
-# From project root:
-make          # Start all services
-make restart  # Restart services
-make stop     # Stop services
-make down     # Remove containers and volumes
-```
-
-### Environment Variables
-```bash
-# Database configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=matcha_dev
-DB_USER=postgres
-DB_PASSWORD=password
-AUTO_MIGRATE=true
-CREATE_INDEXES=true  # Enable performance index creation
-
-# Service configuration
-JWT_SECRET=your-jwt-secret
-PORT=8003
-```
 
 ## 📈 Performance
 
@@ -383,21 +357,8 @@ Current version: **v1**
 - Backward compatibility maintained within major versions
 - Deprecation notices provided 3 months before removal
 
-## 📋 TODO / Roadmap
 
-- [x] Enhanced vector matching algorithms ✅
-- [x] Performance optimization and database indexing ✅
-- [x] External Redis caching integration ✅
-- [ ] Comprehensive test coverage
-- [ ] API documentation and OpenAPI specs
-- [ ] Monitoring and observability improvements
 
-## 📞 Support
-
-For issues, feature requests, or questions:
-- Create an issue in the repository
-- Check the API documentation at `/docs/api_spec.yaml`
-- Review logs for debugging information
 
 ---
 
