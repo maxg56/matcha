@@ -20,6 +20,7 @@ async def listen_redis(manager: NotificationManager):
         if message["type"] == "message":
             data = json.loads(message["data"])
             conn = db_connection()
+            await manager.send_notification(data["notif_type"], data["message"], data["to_user_id"])
             if conn:
                 cur = conn.cursor()
                 cur.execute(
@@ -29,4 +30,3 @@ async def listen_redis(manager: NotificationManager):
                 conn.commit()
                 cur.close()
                 conn.close()
-            await manager.send_notification(data["notif_type"], data["message"], data["to_user_id"])

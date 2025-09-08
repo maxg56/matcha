@@ -10,4 +10,4 @@ notif_type = 0 a 5
 pour le moment on envoie que des notifs par le redis
 
 docker exec -it matcha-redis-1 redis-cli -h redis -p 6379
-publish notifications '{"to_user_id": 4, "notif_type": "0", "message": "on a vu ton profile !"}'
+publish notifications '{"to_user_id": 2, "notif_type": "0", "message": "on a vu ton profile !"}'

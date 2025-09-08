@@ -17,8 +17,9 @@ class NotificationManager:
             cur.execute("""
             SELECT *
             FROM notifications
+            WHERE to_user_id = %s
             ORDER BY time DESC;
-            """)
+            """, (user_id,))
             rows = cur.fetchall()
             cur.close()
             conn.close()
@@ -28,7 +29,9 @@ class NotificationManager:
                     message=row[3],
                     to_user_id=row[1]
                 )
-                await websocket.send_json(notif.to_dict())
+                if user_id in self.active_connections:
+                    ws = self.active_connections[user_id]
+                    await ws.send_json(notif.to_dict())
 
     def disconnect(self, user_id: int):
         if user_id in self.active_connections:
@@ -41,3 +44,11 @@ class NotificationManager:
             ws = self.active_connections[user_id]
             await ws.send_json(notif.to_dict())
 
+    def delete_notification(self, user_id: int):
+        conn = db_connection()
+        if conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM notifications WHERE to_user_id = %s", (user_id,))
+            conn.commit()
+            cur.close()
+            conn.close()
