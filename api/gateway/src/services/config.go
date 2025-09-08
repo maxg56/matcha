@@ -35,6 +35,10 @@ func InitServices() {
 			Name: "notify-service",
 			URL:  "http://notify-service:8005",
 		},
+		"paiements": {
+			Name: "paiements-service",
+			URL:  "http://paiements-service:8085",
+		},
 	}
 }
 

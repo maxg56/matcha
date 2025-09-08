@@ -67,6 +67,7 @@ services:
       - chat-service
       - notify-service
       - media-service
+      - paiements-service
     networks:
       - DB
       - backend
