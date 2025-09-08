@@ -20,6 +20,7 @@ import { RootRedirect } from './components/RootRedirect';
 import { NotificationButton } from './components/Notifications'
 import MapPage  from './pages/Map';
 import AdminPage from './pages/AdminPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -31,6 +32,7 @@ createRoot(document.getElementById('root')!).render(
               <Routes>
                 {/* Auth routes */}
                 <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/inscription" element={<InscriptionPage />} />
               
                 {/* Main app routes */}

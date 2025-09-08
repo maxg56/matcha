@@ -47,15 +47,9 @@ export interface MatchTrendsResponse {
 
 class AdminService {
   private baseUrl = '/api/v1/admin';
-  private testUrl = '/api/v1/matches/admin';
 
   async getAdminStats(): Promise<AdminStatsResponse> {
-    try {
-      return await apiService.get<AdminStatsResponse>(`${this.baseUrl}/stats`);
-    } catch (error) {
-      console.log('Normal endpoint failed, trying test endpoint');
-      return await apiService.get<AdminStatsResponse>(`${this.testUrl}/stats`);
-    }
+    return await apiService.get<AdminStatsResponse>(`${this.baseUrl}/stats`);
   }
 
   async getUserStats(userId: number): Promise<UserMatchStats> {
@@ -63,12 +57,7 @@ class AdminService {
   }
 
   async getMatchTrends(days: number = 30): Promise<MatchTrendsResponse> {
-    try {
-      return await apiService.get<MatchTrendsResponse>(`${this.baseUrl}/stats/trends?days=${days}`);
-    } catch (error) {
-      console.log('Normal trends endpoint failed, trying test endpoint');
-      return await apiService.get<MatchTrendsResponse>(`${this.testUrl}/stats/trends?days=${days}`);
-    }
+    return await apiService.get<MatchTrendsResponse>(`${this.baseUrl}/stats/trends?days=${days}`);
   }
 
   async clearCache(): Promise<void> {

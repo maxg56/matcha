@@ -56,3 +56,48 @@ func AdminAccessTTL() time.Duration {
 	}
 	return 30 * time.Minute
 }
+
+// ParseUserToken parses a regular user JWT token (not admin token)
+func ParseUserToken(tokenString string) (jwt.MapClaims, error) {
+	secret, err := jwtSecret()
+	if err != nil {
+		return nil, err
+	}
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !token.Valid {
+		return nil, jwt.ErrTokenMalformed
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		return claims, nil
+	}
+	return nil, jwt.ErrTokenInvalidClaims
+}
+
+// IsUserAdmin checks if a user has admin privileges
+// For now, we'll consider users with specific IDs or usernames as admins
+// This is a temporary solution - in production, implement proper RBAC
+func IsUserAdmin(userID string) bool {
+	// Allow specific user IDs (admin users)
+	adminUserIDs := []string{"1", "2", "336"} // Add known admin user IDs here
+
+	for _, id := range adminUserIDs {
+		if userID == id {
+			return true
+		}
+	}
+
+	// Allow specific usernames (if userID contains username)
+	adminUsernames := []string{"admin", "administrator", "root"}
+	for _, username := range adminUsernames {
+		if userID == username {
+			return true
+		}
+	}
+
+	return false
+}
