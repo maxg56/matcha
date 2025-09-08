@@ -18,7 +18,7 @@ class NotificationManager:
             SELECT *
             FROM notifications
             WHERE to_user_id = %s
-            ORDER BY time DESC;
+            ORDER BY time ASC;
             """, (user_id,))
             rows = cur.fetchall()
             cur.close()
