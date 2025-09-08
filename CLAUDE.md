@@ -10,7 +10,7 @@ Matcha is a microservices-based dating application with the following key compon
 - **Gateway** (Go, :8080): API Gateway with JWT validation, reverse proxy, and CORS handling
 - **Auth Service** (Go, :8001): User authentication, JWT token management, Redis token blacklisting
 - **User Service** (Go, :8002): User profiles and management
-- **Match Service** (Python, :8003): Matching algorithm and logic
+- **Match Service** (Go, :8003): Vector-based matching algorithm with Redis caching
 - **Chat Service** (Go, :8004): Real-time messaging with WebSocket support
 - **Notify Service** (Python, :8005): Push notifications
 - **Media Service** (Python, :8006): Image upload and processing
@@ -60,7 +60,18 @@ cd api/auth-service
 ./test.sh             # Full test suite with coverage
 ```
 
-**Python Services (match-service, notify-service, media-service):**
+**Match Service (Go):**
+```bash
+cd api/match-service
+go mod tidy
+cd src
+go build              # Compile
+go run main.go        # Run locally
+go test -v .          # Run tests
+air -c .air.toml      # Hot reload development
+```
+
+**Python Services (notify-service, media-service):**
 ```bash
 cd api/<service-name>
 pip install -r requirements.txt
