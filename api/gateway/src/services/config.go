@@ -41,6 +41,10 @@ func InitServices() {
 			WebSocket: true,
 			URL_WS: "ws://notify-service:8005",
 		},
+		"paiements": {
+			Name: "paiements-service",
+			URL:  "http://paiements-service:8085",
+		},
 	}
 }
 
