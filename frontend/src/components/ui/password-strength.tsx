@@ -1,4 +1,4 @@
-import { PasswordValidator, PasswordValidationResult } from '@/utils/passwordValidator';
+import { PasswordValidator } from '@/utils/passwordValidator';
 import { Check, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

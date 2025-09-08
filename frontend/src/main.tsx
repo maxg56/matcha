@@ -21,39 +21,47 @@ import { NotificationButton } from './components/Notifications'
 import MapPage  from './pages/Map';
 import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminProtectedRoute } from './components/admin/AdminProtectedRoute';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <WebSocketProvider>
         <BrowserRouter>
-          <NotificationButton />
+          
             <div className="min-h-screen bg-background text-foreground">
               <Routes>
                 {/* Auth routes */}
                 <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
-                <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/inscription" element={<InscriptionPage />} />
-              
+
+                {/* Admin routes - completely separate from user app */}
+                <Route path="/admin/login" element={<AdminProtectedRoute requireAuth={false}><AdminLoginPage /></AdminProtectedRoute>} />
+                <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<AdminPage />} />
+                </Route>
+
                 {/* Main app routes */}
                 <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
-                  <Route index element={<Navigate to="discover" replace />} />
-                  <Route path="discover" element={<DiscoverPage />} />
-                  <Route path="matches" element={<MatchesPage />} />
-                  <Route path="messages" element={<MessagesPage />} />
-                  <Route path="chat/:matchId" element={<ChatPage />} />
-                  <Route path="profile" element={<ProfilePage />} />
-                  <Route path="edit-profile" element={<EditProfilePage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="map" element={<MapPage />} />
-                  <Route path="admin" element={<AdminPage />} />
+                  <WebSocketProvider>
+                    <NotificationButton />
+                    <Route index element={<Navigate to="discover" replace />} />
+                    <Route path="discover" element={<DiscoverPage />} />
+                    <Route path="matches" element={<MatchesPage />} />
+                    <Route path="messages" element={<MessagesPage />} />
+                    <Route path="chat/:matchId" element={<ChatPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                    <Route path="edit-profile" element={<EditProfilePage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="map" element={<MapPage />} />
+                  </WebSocketProvider>
                 </Route>
                 {/* Default redirect based on authentication status */}
                 <Route path="/" element={<RootRedirect />} />
               </Routes>
             </div>
           </BrowserRouter>
-      </WebSocketProvider>
     </ThemeProvider>
   </StrictMode>,
 )

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LineChart,
@@ -30,12 +30,12 @@ import {
   BarChart3,
   TrendingDown,
 } from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { adminService, type AdminStatsResponse, type MatchTrendsResponse } from '@/services/admin';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { adminUser, logout } = useAdminAuthStore();
   const [adminStats, setAdminStats] = useState<AdminStatsResponse | null>(null);
   const [matchTrends, setMatchTrends] = useState<MatchTrendsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,27 +43,7 @@ const AdminPage: React.FC = () => {
   const [trendPeriod, setTrendPeriod] = useState(30);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Liste des utilisateurs admin autorisés
-  const adminUsers = ['admin', 'administrator', 'root'];
-
-  useEffect(() => {
-    if (!isAuthenticated || !user) {
-      navigate('/admin/login');
-      return;
-    }
-
-    const isAdmin = adminUsers.includes(user.username?.toLowerCase() || '') || user.id === 1;
-
-    if (!isAdmin) {
-      setError('Accès non autorisé. Cette page est réservée aux administrateurs.');
-      setLoading(false);
-      return;
-    }
-
-    loadData();
-  }, [isAuthenticated, user, navigate]);
-
-  const loadData = async (showRefreshIndicator = false) => {
+  const loadData = useCallback(async (showRefreshIndicator = false) => {
     try {
       if (showRefreshIndicator) setIsRefreshing(true);
       setLoading(true);
@@ -100,7 +80,11 @@ const AdminPage: React.FC = () => {
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [trendPeriod]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleTrendPeriodChange = async (days: number) => {
     setTrendPeriod(days);
@@ -186,7 +170,7 @@ const AdminPage: React.FC = () => {
                   Panel d'Administration
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Connecté en tant que {user?.username}
+                  Connecté en tant que {adminUser?.email}
                 </p>
               </div>
             </div>

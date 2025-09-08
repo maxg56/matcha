@@ -1,25 +1,34 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Shield, AlertCircle } from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
+import { Eye, EyeOff, Shield, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 
 export const AdminLoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const location = useLocation();
+  const { login, isLoading, error, clearError, isAuthenticated } = useAdminAuthStore();
 
   const [formData, setFormData] = useState({
-    login: '',
+    email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const handleInputChange = (field: 'login' | 'password', value: string) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/admin/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
+
+  const handleInputChange = (field: 'email' | 'password', value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (localError) setLocalError(null);
     if (error) clearError();
@@ -28,45 +37,30 @@ export const AdminLoginForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.login.trim() || !formData.password.trim()) {
+    if (!formData.email.trim() || !formData.password.trim()) {
       setLocalError('Veuillez remplir tous les champs');
       return;
     }
 
     try {
-      await login(formData.login, formData.password);
-
-      // Vérifier si l'utilisateur est admin après connexion
-      const { user } = useAuthStore.getState();
-      if (user) {
-        // Liste des utilisateurs admin autorisés
-        const adminUsers = ['admin', 'administrator', 'root'];
-        const isAdmin = adminUsers.includes(user.username?.toLowerCase() || '') || user.id === 1;
-
-        if (isAdmin) {
-          navigate('/admin');
-        } else {
-          setLocalError('Accès non autorisé. Cette section est réservée aux administrateurs.');
-          // Déconnexion automatique si pas admin
-          useAuthStore.getState().logout();
-        }
-      }
-    } catch (err) {
-      // L'erreur sera gérée par le store
+      await login(formData.email, formData.password);
+      // Navigation will be handled by useEffect when isAuthenticated becomes true
+    } catch {
+      // Error is handled by the store
     }
   };
 
   const displayError = localError || error;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
             <Shield className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            Panel Administration
+            Panel d'Administration
           </CardTitle>
           <CardDescription>
             Accès réservé aux administrateurs système
@@ -83,13 +77,13 @@ export const AdminLoginForm: React.FC = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="admin-login">Identifiant administrateur</Label>
+              <Label htmlFor="admin-email">Email administrateur</Label>
               <Input
-                id="admin-login"
-                type="text"
-                placeholder="admin ou votre email"
-                value={formData.login}
-                onChange={(e) => handleInputChange('login', e.target.value)}
+                id="admin-email"
+                type="email"
+                placeholder="admin@matcha.com"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 disabled={isLoading}
                 className="w-full"
               />
@@ -121,20 +115,27 @@ export const AdminLoginForm: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !formData.login.trim() || !formData.password.trim()}
+              disabled={isLoading || !formData.email.trim() || !formData.password.trim()}
             >
               {isLoading ? 'Connexion en cours...' : 'Accéder au panel'}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 space-y-3">
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => navigate('/login')}
-              className="text-sm text-gray-600 dark:text-gray-400"
+              className="w-full"
             >
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Retour à la connexion utilisateur
             </Button>
+
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Accès réservé aux administrateurs autorisés
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

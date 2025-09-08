@@ -1,5 +1,3 @@
-import { apiService } from './api';
-
 export interface UserMatchStats {
   user_id: number;
   username?: string;
@@ -48,24 +46,71 @@ export interface MatchTrendsResponse {
 class AdminService {
   private baseUrl = '/api/v1/admin';
 
+  private getHeaders() {
+    const token = localStorage.getItem('adminToken');
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+  }
+
   async getAdminStats(): Promise<AdminStatsResponse> {
-    return await apiService.get<AdminStatsResponse>(`${this.baseUrl}/stats`);
+    const response = await fetch(`${this.baseUrl}/stats`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   async getUserStats(userId: number): Promise<UserMatchStats> {
-    return await apiService.get<UserMatchStats>(`${this.baseUrl}/stats/user/${userId}`);
+    const response = await fetch(`${this.baseUrl}/stats/user/${userId}`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   async getMatchTrends(days: number = 30): Promise<MatchTrendsResponse> {
-    return await apiService.get<MatchTrendsResponse>(`${this.baseUrl}/stats/trends?days=${days}`);
+    const response = await fetch(`${this.baseUrl}/stats/trends?days=${days}`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   async clearCache(): Promise<void> {
-    await apiService.post(`${this.baseUrl}/cache/clear`);
+    const response = await fetch(`${this.baseUrl}/cache/clear`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
   }
 
-  async getPerformanceStats(): Promise<any> {
-    return await apiService.get(`${this.baseUrl}/performance`);
+  async getPerformanceStats(): Promise<unknown> {
+    const response = await fetch(`${this.baseUrl}/performance`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 }
 

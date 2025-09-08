@@ -1,4 +1,5 @@
 import React, { createContext, useReducer, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { authService } from '@/services/auth';
 
 interface AuthResponse {
