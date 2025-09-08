@@ -27,20 +27,6 @@ func main() {
 			"service": "match-service",
 		})
 	})
-
-	// TEST ENDPOINTS: Admin stats without auth for debugging
-	r.GET("/test/admin/stats", func(c *gin.Context) {
-		// Set mock user for testing
-		c.Set("userID", 1)
-		handlers.GetAdminStatsHandler(c)
-	})
-	
-	r.GET("/test/admin/trends", func(c *gin.Context) {
-		// Set mock user for testing
-		c.Set("userID", 1)
-		handlers.GetMatchTrendsHandler(c)
-	})
-
 	// API routes
 	api := r.Group("/api/v1")
 	{
