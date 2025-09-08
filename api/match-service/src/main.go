@@ -50,24 +50,7 @@ func main() {
 			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
 		}
 
-		// Matrix routes
-		matrix := api.Group("/matrix")
-		matrix.Use(middleware.AuthMiddleware())
-		{
-			matrix.GET("/users", handlers.GetMatrixHandler)
-			matrix.GET("/compatible/:user_id", handlers.GetCompatibleMatrixHandler)
-			matrix.POST("/export", handlers.GenerateMatrixHandler)
-		}
 
-		// Performance and admin routes
-		admin := api.Group("/admin")
-		admin.Use(middleware.AuthMiddleware()) // In production, add admin role check
-		{
-			admin.GET("/performance", handlers.GetPerformanceStatsHandler)
-			admin.GET("/cache/health", handlers.GetCacheHealthHandler)
-			admin.POST("/cache/clear", handlers.ClearCacheHandler)
-			admin.POST("/indexes/create", handlers.CreateIndexesHandler)
-		}
 	}
 
 	log.Println("Match service starting on port 8003")
