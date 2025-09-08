@@ -111,7 +111,9 @@ func GetAdminStatsHandler(c *gin.Context) {
 			COUNT(DISTINCT CASE WHEN source_table = 'interactions' THEN id END) as new_interactions,
 			COUNT(DISTINCT user_id) as active_users
 		FROM (
-			SELECT id, user_id, created_at, 'matches' as source_table FROM matches WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+			SELECT id, user1_id as user_id, matched_at as created_at, 'matches' as source_table FROM matches WHERE matched_at >= CURRENT_DATE - INTERVAL '30 days'
+			UNION ALL
+			SELECT id, user2_id as user_id, matched_at as created_at, 'matches' as source_table FROM matches WHERE matched_at >= CURRENT_DATE - INTERVAL '30 days'
 			UNION ALL
 			SELECT id, user_id, created_at, 'interactions' as source_table FROM user_interactions WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
 		) combined
@@ -218,7 +220,7 @@ func GetMatchTrendsHandler(c *gin.Context) {
 			COUNT(DISTINCT CASE WHEN source_table = 'interactions' AND interaction_type = 'like' THEN id END) as likes,
 			COUNT(DISTINCT CASE WHEN source_table = 'interactions' AND interaction_type = 'pass' THEN id END) as passes
 		FROM (
-			SELECT id, created_at, 'matches' as source_table, NULL as interaction_type FROM matches WHERE created_at >= CURRENT_DATE - INTERVAL '%d days'
+			SELECT id, matched_at as created_at, 'matches' as source_table, NULL as interaction_type FROM matches WHERE matched_at >= CURRENT_DATE - INTERVAL '%d days'
 			UNION ALL
 			SELECT id, created_at, 'interactions' as source_table, interaction_type FROM user_interactions WHERE created_at >= CURRENT_DATE - INTERVAL '%d days'
 		) combined

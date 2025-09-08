@@ -13,7 +13,7 @@ func RegisterAdminRoutes(r *gin.Engine) {
 		admin.POST("/login", proxy.ProxyRequest("admin", "/api/v1/admin/login"))
 
 		secured := admin.Group("")
-		// secured.Use(middleware.AdminJWTMiddleware())
+		secured.Use(middleware.AdminJWTMiddleware())
 		{
 			secured.GET("/admins", proxy.ProxyRequest("admin", "/api/v1/admin/admins"))
 			secured.POST("/admins", proxy.ProxyRequest("admin", "/api/v1/admin/admins"))
