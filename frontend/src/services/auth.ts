@@ -160,8 +160,8 @@ class AuthService {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     
-    // Also set access_token as cookie for EventSource and WebSocket authentication
-    document.cookie = `access_token=${accessToken}; path=/; max-age=3600; samesite=lax; secure`;
+    // Also set access_token as cookie for EventSource authentication
+    document.cookie = `access_token=${accessToken}; path=/; max-age=3600; samesite=strict`;
   }
 
   getAccessToken(): string | null {
