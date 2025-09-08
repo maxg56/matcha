@@ -1,0 +1,10 @@
+.git
+node_modules
+bin
+build
+dist
+vendor
+.DS_Store
+.env
+*.log
+.tmp

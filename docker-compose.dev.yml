@@ -241,6 +241,36 @@ services:
       - backend
     restart: unless-stopped
 
+  admin-service:
+    build:
+      context: ./api/admin-servise
+      target: development
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:-${JWT_SECRET}}
+      ADMIN_PORT: 8007
+      GIN_MODE: debug
+    volumes:
+      - ./api/admin-servise/src:/app/src
+      - ./api/admin-servise/go.mod:/app/go.mod
+      - ./api/admin-servise/go.sum:/app/go.sum
+      - ./api/admin-servise/.air.toml:/app/.air.toml
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

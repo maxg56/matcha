@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS images CASCADE;
 DROP TABLE IF EXISTS user_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
+DROP TABLE IF EXISTS admins CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ====================
@@ -101,6 +102,20 @@ CREATE TABLE email_verifications (
 );
 
 CREATE INDEX idx_email_verifications_email ON email_verifications(email);
+
+-- ====================
+-- TABLE : admins
+-- ====================
+CREATE TABLE admins (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role VARCHAR(32) NOT NULL DEFAULT 'admin',
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_admins_role ON admins(role);
 
 -- ====================
 -- TABLE : tags
