@@ -17,7 +17,6 @@ func SetupNotifyRoutes(r *gin.Engine) {
 
 	// WebSocket notifications (route à la racine, pas dans /api/v1/notifications)
   r.GET("/ws/notifications", proxy.ProxyWebSocket("notify", "/ws/notifications"))
-	notify.GET("/delete", proxy.ProxyRequest("notify", "/delete"))
 
 	// Notification management
 	protected := notify.Group("")
@@ -25,10 +24,6 @@ func SetupNotifyRoutes(r *gin.Engine) {
 	{
 		
 	// Notification retrieval
-		protected.GET("/list", proxy.ProxyRequest("notify", "/api/v1/notifications"))
-		protected.GET("/stream/:user_id", proxy.ProxyRequest("notify", "/api/v1/notifications/stream/:user_id"))
-		protected.PUT("/:id/read", proxy.ProxyRequest("notify", "/api/v1/notifications/:id/read"))
-		protected.DELETE("/:id", proxy.ProxyRequest("notify", "/api/v1/notifications/:id"))
-		protected.PUT("/read-all", proxy.ProxyRequest("notify", "/api/v1/notifications/read-all"))
+		protected.GET("/delete", proxy.ProxyRequest("notify", "/delete"))
 	}
 }
