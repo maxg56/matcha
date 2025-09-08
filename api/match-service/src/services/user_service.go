@@ -65,7 +65,7 @@ func (u *UserService) GetCandidateUsers(userID int, maxDistance *int, ageRange *
 		return nil, err
 	}
 
-	query := conf.DB.Where("id != ? AND is_active = ?", userID, true)
+	query := conf.DB.Where("id != ?", userID)
 
 	// Apply age range filter
 	if ageRange != nil {
