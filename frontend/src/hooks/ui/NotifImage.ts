@@ -7,37 +7,16 @@ type NotificationEntry = [string, number];
 export function Notification() {
     const [seen, setSeen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
-    const { addNotificationHandler, removeNotificationHandler, markAllAsRead } = useWebSocketNotifications();
 
-    // Handler pour les notifications WebSocket
-    const notificationHandler: MessageHandler = useCallback((data, message) => {
-        console.log("WebSocket notification reçue:", message);
-        
-        switch (message.type) {
-            case 'notification_event':
-                // Nouvelle notification reçue
-                if (data.message && typeof data.type === 'number') {
-                    setNotifications(prev => [...prev, [data.message, data.type]]);
-                    setSeen(false);
-                }
-                break;
-                
-            case MessageType.NOTIFICATION_READ:
-                // Une notification spécifique a été marquée comme lue
-                console.log("Notification marquée comme lue:", data.notification_id);
-                break;
-                
-            case MessageType.ALL_NOTIFICATION_READ:
-                // Toutes les notifications ont été marquées comme lues
-                console.log("Toutes les notifications marquées comme lues");
-                break;
-                
-            default:
-                // Fallback pour les anciens formats de notification
-                if (data.message && data.type !== undefined) {
-                    setNotifications(prev => [...prev, [data.message, data.type]]);
-                    setSeen(false);
-                }
+    const { user } = useAuthStore();
+    const token = localStorage.getItem('accessToken');
+
+    useEffect(() => {
+        console.log("Notification hook mounted", user?.id, token);
+        // Ne crée pas de WebSocket si l'utilisateur n'est pas authentifié
+        if (!user?.id || !token) {
+            return;
+
         }
     }, []);
 
@@ -50,11 +29,21 @@ export function Notification() {
         };
     }, [addNotificationHandler, removeNotificationHandler, notificationHandler]);
 
-    const clearNotifications = useCallback(() => {
+
+    const clearNotifications = async () => {
         setNotifications([]);
-        // Marquer toutes les notifications comme lues côté serveur
-        markAllAsRead();
-    }, [markAllAsRead]);
+        const response = await fetch(
+        `https://localhost:8443/api/v1/notifications/delete?user_id=${user.id}`,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+        const data = await response.json();
+        console.log("Réponse backend:", data);
+    }
 
     return { notifications, clearNotifications, seen, setSeen };
 }
