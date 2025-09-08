@@ -147,7 +147,6 @@ for i in range(500):
 
 print("✅ fin de la création des utilisateurs")
 
-conn.commit()
 cur.close()
 conn.close()
 

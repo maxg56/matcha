@@ -11,7 +11,10 @@ COPY src/ .
 ENV FLASK_APP=main.py
 ENV FLASK_ENV=development
 
+# Pour que les logs s'affichent immédiatement
+ENV PYTHONUNBUFFERED=1
+
 EXPOSE 8005
 
 # --reload active le rechargement automatique
-CMD ["flask", "run", "--host=0.0.0.0", "--port=8005"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
