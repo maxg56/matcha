@@ -1,54 +1,60 @@
-import { useState, useEffect } from "react";
-import { useAuthStore } from '@/stores/authStore';
+import { useState, useEffect, useCallback } from "react";
+import { useWebSocketNotifications } from '../useWebSocketConnection';
+import { MessageType, type MessageHandler } from '@/services/websocket';
 
 type NotificationEntry = [string, number];
 
 export function Notification() {
-    function randomInt(max: number): number {
-        return Math.floor(Math.random() * max);
-    }
-
     const [seen, setSeen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
-    const { user } = useAuthStore();
+    const { addNotificationHandler, removeNotificationHandler, markAllAsRead } = useWebSocketNotifications();
 
-    useEffect(() => {
-        // Don't create EventSource if user is not authenticated
-        if (!user?.id) {
-            return;
-        }
-
-        const evtSource = new EventSource(`/api/v1/notifications/stream/${user.id}`);
-
-        evtSource.onmessage = function (event) {
-            const notification = JSON.parse(event.data);
-            // Ici tu peux afficher la notif dans l'UI
-            setNotifications(prev => [...prev, [notification.message, notification.kind]]);
-            setSeen(false);
-            evtSource.close();
-            console.log("rgejreg")
-        };
-
-        return () => {
-            evtSource.close();
-        };
+    // Handler pour les notifications WebSocket
+    const notificationHandler: MessageHandler = useCallback((data, message) => {
+        console.log("WebSocket notification reçue:", message);
         
-    }, [user?.id]);
+        switch (message.type) {
+            case 'notification_event':
+                // Nouvelle notification reçue
+                if (data.message && typeof data.type === 'number') {
+                    setNotifications(prev => [...prev, [data.message, data.type]]);
+                    setSeen(false);
+                }
+                break;
+                
+            case MessageType.NOTIFICATION_READ:
+                // Une notification spécifique a été marquée comme lue
+                console.log("Notification marquée comme lue:", data.notification_id);
+                break;
+                
+            case MessageType.ALL_NOTIFICATION_READ:
+                // Toutes les notifications ont été marquées comme lues
+                console.log("Toutes les notifications marquées comme lues");
+                break;
+                
+            default:
+                // Fallback pour les anciens formats de notification
+                if (data.message && data.type !== undefined) {
+                    setNotifications(prev => [...prev, [data.message, data.type]]);
+                    setSeen(false);
+                }
+        }
+    }, []);
 
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         const newNotif = `Nouvelle notification ${notifications.length + 1}`;
-    //         const newColor = randomInt(5);
-    //         setNotifications(prev => [...prev, [newNotif, newColor]]);
-    //         setSeen(false);
-    //     }, 5000);
+    // Configuration des handlers de notification
+    useEffect(() => {
+        addNotificationHandler(notificationHandler);
+        
+        return () => {
+            removeNotificationHandler(notificationHandler);
+        };
+    }, [addNotificationHandler, removeNotificationHandler, notificationHandler]);
 
-    //     return () => clearInterval(interval);
-    // }, [notifications.length]);
-
-    const clearNotifications = () => {
+    const clearNotifications = useCallback(() => {
         setNotifications([]);
-    };
+        // Marquer toutes les notifications comme lues côté serveur
+        markAllAsRead();
+    }, [markAllAsRead]);
 
     return { notifications, clearNotifications, seen, setSeen };
 }

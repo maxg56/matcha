@@ -1,3 +1,7 @@
+-- DROP SCHEMA public CASCADE;
+CREATE SCHEMA IF NOT EXISTS public;
+SET search_path TO public;
+
 -- ====================
 -- RESET DES TABLES
 -- ====================
@@ -134,8 +138,51 @@ CREATE TABLE images (
 );
 
 -- ====================
--- TABLE : relations
+-- MATCHING SYSTEM TABLES
 -- ====================
+
+-- Table to store user preference vectors and weights
+CREATE TABLE IF NOT EXISTS user_preferences (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    preference_vector TEXT NOT NULL, -- JSON string storing the preference vector
+    age_weight REAL DEFAULT 0.2,
+    distance_weight REAL DEFAULT 0.3,
+    interests_weight REAL DEFAULT 0.25,
+    habits_weight REAL DEFAULT 0.15,
+    relationship_weight REAL DEFAULT 0.1,
+    total_likes INTEGER DEFAULT 0,
+    total_passes INTEGER DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table to track user interactions
+CREATE TABLE IF NOT EXISTS user_interactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    interaction_type VARCHAR(20) NOT NULL CHECK (interaction_type IN ('like', 'pass', 'block')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Prevent duplicate interactions
+    CONSTRAINT unique_user_interaction UNIQUE (user_id, target_user_id)
+);
+
+-- Table for mutual matches
+CREATE TABLE IF NOT EXISTS matches (
+    id SERIAL PRIMARY KEY,
+    user1_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user2_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    
+    -- Ensure consistent ordering and uniqueness
+    CONSTRAINT user_order_check CHECK (user1_id < user2_id),
+    CONSTRAINT unique_match UNIQUE (user1_id, user2_id)
+);
+
+-- Legacy relations table (kept for backward compatibility)
 CREATE TABLE relations (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -147,23 +194,28 @@ CREATE TABLE relations (
 -- ====================
 -- TABLE : discussion
 -- ====================
+
 CREATE TABLE discussion (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     last_message_content TEXT,
-    last_message_at TIMESTAMP
+    last_message_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- ====================
 -- TABLE : messages
 -- ====================
+
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     conv_id INT NOT NULL REFERENCES discussion(id) ON DELETE CASCADE,
     sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     msg TEXT NOT NULL,
-    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP
 );
 
 -- ====================
@@ -227,6 +279,22 @@ FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
 
+-- Function to update last_updated for preferences
+CREATE OR REPLACE FUNCTION update_last_updated_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.last_updated = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Trigger for user preferences
+DROP TRIGGER IF EXISTS update_user_preferences_last_updated ON user_preferences;
+CREATE TRIGGER update_user_preferences_last_updated
+    BEFORE UPDATE ON user_preferences
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_updated_column();
+
 -- ====================
 -- INSERTS DE TEST
 -- ====================
@@ -248,3 +316,76 @@ INSERT INTO tags (name) VALUES
 ('🍷 Gastronomie & vin'),
 ('👨🏻‍💻 Code avec vim'),
 ('⛰️ Randonnée & plein air');
+
+-- ====================
+-- INDEXES FOR MATCHING PERFORMANCE
+-- ====================
+
+-- User preferences indexes
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_last_updated ON user_preferences(last_updated);
+
+-- User interactions indexes
+CREATE INDEX IF NOT EXISTS idx_user_interactions_user_id ON user_interactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_target_user_id ON user_interactions(target_user_id);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_type ON user_interactions(interaction_type);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_created_at ON user_interactions(created_at);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_user_target ON user_interactions(user_id, target_user_id);
+
+-- Matches indexes
+CREATE INDEX IF NOT EXISTS idx_matches_user1 ON matches(user1_id);
+CREATE INDEX IF NOT EXISTS idx_matches_user2 ON matches(user2_id);
+CREATE INDEX IF NOT EXISTS idx_matches_is_active ON matches(is_active);
+CREATE INDEX IF NOT EXISTS idx_matches_matched_at ON matches(matched_at);
+
+-- Additional user indexes for matching
+CREATE INDEX IF NOT EXISTS idx_users_location ON users(latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_users_age_gender ON users(age, gender);
+CREATE INDEX IF NOT EXISTS idx_users_gender_sex_pref ON users(gender, sex_pref);
+CREATE INDEX IF NOT EXISTS idx_users_fame ON users(fame);
+
+-- ====================
+-- ANALYTICAL VIEWS FOR MATCHING
+-- ====================
+
+-- User interaction statistics
+CREATE OR REPLACE VIEW user_interaction_stats AS
+SELECT 
+    u.id as user_id,
+    u.username,
+    u.first_name,
+    u.gender,
+    u.age,
+    u.fame,
+    COUNT(CASE WHEN ui.interaction_type = 'like' THEN 1 END) as likes_given,
+    COUNT(CASE WHEN ui.interaction_type = 'pass' THEN 1 END) as passes_given,
+    COUNT(CASE WHEN ui.interaction_type = 'block' THEN 1 END) as blocks_given,
+    COUNT(CASE WHEN ui2.interaction_type = 'like' THEN 1 END) as likes_received,
+    COUNT(CASE WHEN ui2.interaction_type = 'pass' THEN 1 END) as passes_received,
+    COUNT(CASE WHEN ui2.interaction_type = 'block' THEN 1 END) as blocks_received,
+    u.created_at as joined_at
+FROM users u
+LEFT JOIN user_interactions ui ON u.id = ui.user_id
+LEFT JOIN user_interactions ui2 ON u.id = ui2.target_user_id
+GROUP BY u.id, u.username, u.first_name, u.gender, u.age, u.fame, u.created_at;
+
+-- Active matches with user details
+CREATE OR REPLACE VIEW active_matches_detailed AS
+SELECT 
+    m.id as match_id,
+    m.matched_at,
+    u1.id as user1_id,
+    u1.username as user1_username,
+    u1.first_name as user1_first_name,
+    u1.age as user1_age,
+    u2.id as user2_id,
+    u2.username as user2_username,
+    u2.first_name as user2_first_name,
+    u2.age as user2_age,
+    -- Calculate days since match
+    EXTRACT(DAY FROM NOW() - m.matched_at) as days_since_match
+FROM matches m
+JOIN users u1 ON m.user1_id = u1.id
+JOIN users u2 ON m.user2_id = u2.id
+WHERE m.is_active = TRUE
+ORDER BY m.matched_at DESC;

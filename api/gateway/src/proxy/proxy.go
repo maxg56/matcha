@@ -3,16 +3,17 @@ package proxy
 import (
 	"bytes"
 	"fmt"
+	"gateway/src/middleware"
+	"gateway/src/services"
+	"gateway/src/utils"
 	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"gateway/src/middleware"
-	"gateway/src/services"
-	"gateway/src/utils"
 	"github.com/gin-gonic/gin"
+
 )
 
 // ProxyRequest creates a handler that proxies requests to the specified service
