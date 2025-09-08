@@ -56,6 +56,12 @@ func main() {
 		apiAuth := api.Group("")
 		apiAuth.Use(middleware.RequireAdmin())
 		apiAuth.GET("/admins", handlers.ListAdmins)
+		apiAuth.GET("/stats", handlers.GetAdminStatsHandler)
+		apiAuth.GET("/stats/user/:user_id", handlers.GetUserStatsHandler)
+		apiAuth.GET("/stats/trends", handlers.GetMatchTrendsHandler)
+		apiAuth.GET("/performance", handlers.GetPerformanceStatsHandler)
+		apiAuth.POST("/cache/clear", handlers.ClearCacheHandler)
+		apiAuth.POST("/indexes/create", handlers.CreateIndexesHandler)
 
 		apiSuper := api.Group("")
 		apiSuper.Use(middleware.RequireSuperAdmin())

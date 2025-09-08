@@ -65,19 +65,8 @@ func main() {
 			matrix.POST("/export", handlers.GenerateMatrixHandler)
 		}
 
-		// Performance and admin routes
-		admin := api.Group("/admin")
-		admin.Use(middleware.AdminAuthMiddleware()) // Admin authentication required
-		{
-			admin.GET("/performance", handlers.GetPerformanceStatsHandler)
-			admin.POST("/cache/clear", handlers.ClearCacheHandler)
-			admin.POST("/indexes/create", handlers.CreateIndexesHandler)
-			
-			// Statistics endpoints for admin dashboard
-			admin.GET("/stats", handlers.GetAdminStatsHandler)
-			admin.GET("/stats/user/:user_id", handlers.GetUserStatsHandler)
-			admin.GET("/stats/trends", handlers.GetMatchTrendsHandler)
-		}
+		// Admin routes moved to dedicated admin-service
+		// All admin functionality is now handled by admin-service on port 8007
 	}
 
 	log.Println("Match service starting on port 8003")
