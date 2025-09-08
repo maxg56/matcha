@@ -8,18 +8,22 @@ import (
 
 // SetupNotifyRoutes configures notification service routes
 func SetupNotifyRoutes(r *gin.Engine) {
-	notify := r.Group("/api/notifications")
-	notify.Use(middleware.JWTMiddleware()) // All notification routes require authentication
-
-	// Notification retrieval
-	notify.GET("/list", proxy.ProxyRequest("notify", "/api/v1/notifications"))
-	notify.GET("/stream/:user_id", proxy.ProxyRequest("notify", "/api/v1/notifications/stream/:user_id"))
-
-	// Notification management
-	notify.PUT("/:id/read", proxy.ProxyRequest("notify", "/api/v1/notifications/:id/read"))
-	notify.DELETE("/:id", proxy.ProxyRequest("notify", "/api/v1/notifications/:id"))
-	notify.PUT("/read-all", proxy.ProxyRequest("notify", "/api/v1/notifications/read-all"))
-
+	notify := r.Group("/api/v1/notifications")
+	
 	// Health check endpoint
 	notify.GET("/", proxy.ProxyRequest("notify", "/health"))
+	notify.GET("/health", proxy.ProxyRequest("notify", "/health"))
+
+
+	// WebSocket notifications (route à la racine, pas dans /api/v1/notifications)
+  r.GET("/ws/notifications", proxy.ProxyWebSocket("notify", "/ws/notifications"))
+
+	// Notification management
+	protected := notify.Group("")
+	protected.Use(middleware.JWTMiddleware())
+	{
+		
+	// Notification retrieval
+		protected.GET("/delete", proxy.ProxyRequest("notify", "/delete"))
+	}
 }

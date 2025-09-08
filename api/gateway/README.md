@@ -2,31 +2,45 @@
 
 ## 📋 Overview
 
-The Gateway is the central entry point for all API requests in the Matcha application. It acts as a reverse proxy, API gateway, and authentication middleware, providing centralized JWT validation, CORS handling, and load balancing across microservices.
+The Gateway is the **central entry point** for all API requests in the Matcha application. It acts as a **reverse proxy, API gateway, and authentication middleware**, providing centralized JWT validation, CORS handling, WebSocket management, and load balancing across microservices.
 
 ## 🏗️ Architecture
 
 ```
 gateway/
 ├── src/
-│   ├── handlers/       # HTTP handlers
-│   │   ├── health.go   # Health check endpoints
-│   │   └── cors.go     # CORS middleware
-│   ├── middleware/     # Request middleware
-│   │   └── jwt.go      # JWT authentication
-│   ├── proxy/          # Reverse proxy logic
-│   │   └── proxy.go    # Request forwarding
-│   ├── redis/          # Redis integration
-│   │   └── blacklist.go # JWT blacklisting
-│   ├── routes/         # Route definitions
-│   │   ├── auth.go     # Auth service routes
-│   │   ├── user.go     # User service routes
-│   │   ├── media.go    # Media service routes
-│   │   ├── match.go    # Match service routes
-│   │   ├── chat.go     # Chat service routes
-│   │   └── notify.go   # Notification routes
-│   ├── utils/          # Utility functions
-│   └── main.go         # Application entry point
+│   ├── config/          # Environment configuration
+│   │   └── env.go       # Configuration validation
+│   ├── handlers/        # HTTP handlers
+│   │   ├── health.go    # Health check endpoints
+│   │   └── cors.go      # Secure CORS middleware
+│   ├── middleware/      # Request middleware
+│   │   ├── jwt.go       # JWT authentication
+│   │   └── ratelimit.go # Rate limiting protection
+│   ├── proxy/           # Reverse proxy logic
+│   │   └── proxy.go     # HTTP/WebSocket forwarding
+│   ├── routes/          # Route definitions
+│   │   ├── auth.go      # Auth service routes
+│   │   ├── user.go      # User service routes
+│   │   ├── media.go     # Media service routes
+│   │   ├── match.go     # Match service routes
+│   │   ├── chat.go      # Chat service routes
+│   │   ├── notify.go    # Notification routes
+│   │   └── websocket.go # WebSocket unified route
+│   ├── services/        # Service discovery
+│   │   └── config.go    # Service configuration
+│   ├── utils/           # Utility functions
+│   │   ├── blacklist.go # Redis JWT blacklisting
+│   │   └── token.go     # JWT utilities
+│   ├── websocket/       # WebSocket management
+│   │   ├── manager.go   # Connection manager
+│   │   ├── client.go    # Client representation
+│   │   ├── handlers.go  # Message routing
+│   │   ├── services.go  # Service integration
+│   │   ├── security.go  # Origin validation
+│   │   ├── logger.go    # Structured logging
+│   │   └── types.go     # WebSocket types
+│   └── main.go          # Application entry point
 ├── Dockerfile
 └── go.mod
 ```
@@ -35,23 +49,37 @@ gateway/
 
 ### API Gateway Capabilities
 - ✅ Reverse proxy to microservices
+- ✅ **WebSocket unified management**
 - ✅ Load balancing and service discovery
 - ✅ Request/response transformation
+- ✅ **Rate limiting protection**
 - ✅ Centralized logging and monitoring
 - ✅ Health check aggregation
 
-### Authentication & Authorization
-- ✅ JWT token validation
+### Authentication & Security
+- ✅ JWT token validation with leeway
 - ✅ Redis-based token blacklisting
+- ✅ **Secure origin validation**
 - ✅ User context propagation
 - ✅ Route-based authentication
+- ✅ **Production-ready CORS**
 - ✅ Token forwarding to services
 
+### WebSocket Features
+- ✅ **Unified WebSocket endpoint** (`/ws`)
+- ✅ **Message type routing** (chat, notifications, subscriptions)
+- ✅ **Real-time chat broadcasting**
+- ✅ **Service integration** (chat/notification services)
+- ✅ **Connection management** with cleanup
+- ✅ **Secure origin checking**
+- ✅ **JWT authentication** for WebSocket
+
 ### Cross-Cutting Concerns
-- ✅ CORS handling for web clients
+- ✅ **Environment validation**
+- ✅ **Structured logging system**
+- ✅ **Rate limiting** (token bucket)
 - ✅ Request timeout management
 - ✅ Error handling and normalization
-- ✅ Request/response logging
 - ✅ Graceful error fallback
 
 ## 🔌 API Routes
@@ -86,6 +114,11 @@ gateway/
 | GET | `/api/notifications/list` | notify-service:8005 | Get notifications |
 | PUT | `/api/notifications/:id/read` | notify-service:8005 | Mark as read |
 
+### WebSocket Routes (JWT Required)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| WS | `/ws` | **Unified WebSocket connection** |
+
 ### Health Endpoints
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -98,29 +131,48 @@ gateway/
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
+| **Core Configuration** |
 | `PORT` | Gateway server port | 8080 | ❌ |
+| `ENVIRONMENT` | Environment (development/production) | development | ❌ |
+| **Security** |
 | `JWT_SECRET` | JWT signing secret | - | ✅ |
-| `JWT_REFRESH_SECRET` | JWT refresh secret | JWT_SECRET | ❌ |
-| `REDIS_ADDR` | Redis address | redis:6379 | ❌ |
+| `ALLOWED_ORIGINS` | Comma-separated allowed origins | localhost:3000,127.0.0.1:3000 | ❌ |
+| **Redis** |
+| `REDIS_ADDR` | Redis address | localhost:6379 | ❌ |
 | `REDIS_PASSWORD` | Redis password | - | ❌ |
-| `GIN_MODE` | Gin mode (debug/release) | release | ❌ |
+| **Timeouts** |
+| `HTTP_TIMEOUT` | HTTP client timeout | 30s | ❌ |
+| `REDIS_TIMEOUT` | Redis operation timeout | 5s | ❌ |
+| **Rate Limiting** |
+| `RATE_LIMIT_ENABLED` | Enable rate limiting | true | ❌ |
+| `RATE_LIMIT_RPS` | Requests per second per IP | 100 | ❌ |
+| **Logging** |
+| `LOG_LEVEL` | Logging level (debug/info/warn/error) | info | ❌ |
 
-### Service Configuration
+### Production Environment Example
 
-The gateway automatically configures upstream services:
+```bash
+# .env.production
+ENVIRONMENT=production
+JWT_SECRET=your-super-secure-32-char-secret-key-here
+ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_RPS=50
+LOG_LEVEL=warn
+HTTP_TIMEOUT=10s
+REDIS_TIMEOUT=3s
+```
 
-```go
-services = map[string]ServiceConfig{
-    "auth": {
-        Name: "auth-service",
-        URL:  "http://auth-service:8001",
-    },
-    "user": {
-        Name: "user-service",
-        URL:  "http://user-service:8002",
-    },
-    // ... other services
-}
+### Development Environment Example
+
+```bash
+# .env.development
+ENVIRONMENT=development
+JWT_SECRET=dev-secret-min-32-chars-here-for-testing
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_RPS=200
+LOG_LEVEL=debug
 ```
 
 ## 🔒 Security Features
@@ -128,39 +180,168 @@ services = map[string]ServiceConfig{
 ### JWT Authentication Flow
 
 1. **Token Extraction**: From `Authorization: Bearer <token>` header or `access_token` cookie
-2. **Token Validation**: HMAC-SHA256 signature verification
-3. **Blacklist Check**: Redis lookup for revoked tokens
+2. **Token Validation**: HMAC-SHA256 signature verification with time leeway
+3. **Blacklist Check**: Redis lookup for revoked tokens (2s timeout)
 4. **Claims Extraction**: User ID and token metadata
 5. **Context Propagation**: `X-User-ID` and `X-JWT-Token` headers to upstream services
 
-### CORS Configuration
+### Secure CORS Configuration
 
 ```go
-// Dynamic CORS based on Origin header
-if origin != "" {
-    // Echo caller origin and allow credentials
-    "Access-Control-Allow-Origin": origin
-    "Access-Control-Allow-Credentials": "true"
+// ✅ Production-ready CORS
+if origin != "" && isOriginAllowedCORS(origin) {
+    c.Header("Access-Control-Allow-Origin", origin)
+    c.Header("Access-Control-Allow-Credentials", "true")
+} else if origin == "" {
+    c.Header("Access-Control-Allow-Origin", "*")
+    c.Header("Access-Control-Allow-Credentials", "false")
 } else {
-    // Wildcard for non-browser requests
-    "Access-Control-Allow-Origin": "*"
-    "Access-Control-Allow-Credentials": "false"
+    // ✅ Reject unauthorized origins
+    c.Header("Access-Control-Allow-Origin", "null")
 }
 ```
 
-### Redis Blacklisting
+### WebSocket Security
 
-- **Token Hashing**: SHA256 hash of tokens as Redis keys
-- **TTL Management**: Expiration matches token expiration
-- **Graceful Fallback**: Allow requests if Redis unavailable
-- **Performance**: 2-second timeout for Redis operations
+```go
+// ✅ Secure origin validation
+CheckOrigin: func(r *http.Request) bool {
+    origin := r.Header.Get("Origin")
+    return isOriginAllowed(origin) // Validates against ALLOWED_ORIGINS
+}
+```
+
+### Rate Limiting
+
+- **Algorithm**: Token bucket per IP address
+- **Default**: 100 RPS per client
+- **Cleanup**: Automatic removal of old limiters (10min)
+- **Response**: `429 Too Many Requests` when exceeded
+
+## 🔌 WebSocket Protocol
+
+### Connection
+
+```javascript
+// ✅ Authenticated WebSocket connection
+const ws = new WebSocket('ws://gateway:8080/ws', [], {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+```
+
+### Message Format
+
+```javascript
+// Standard message format
+{
+  "type": "chat|notification|subscribe|unsubscribe|ping",
+  "data": { ... },
+  "to": "optional_target",
+  "from": "optional_sender"
+}
+```
+
+### Chat Messages
+
+```javascript
+// Send chat message
+ws.send(JSON.stringify({
+  type: 'chat',
+  data: {
+    conversation_id: '123',
+    message: 'Hello world!'
+  }
+}));
+
+// Receive chat message
+{
+  "type": "chat_message",
+  "data": {
+    "conversation_id": "123",
+    "message": "Hello world!",
+    "from_user": "user456",
+    "timestamp": 1640995200,
+    "type": "chat_message"
+  }
+}
+
+// Chat acknowledgment
+{
+  "type": "chat_ack",
+  "data": {
+    "status": "sent",
+    "timestamp": 1640995200,
+    "conversation_id": "123"
+  }
+}
+```
+
+### Subscription Management
+
+```javascript
+// Subscribe to notifications
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  data: 'notifications'
+}));
+
+// Subscribe to chat conversation
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  data: 'chat_123'
+}));
+
+// Unsubscribe
+ws.send(JSON.stringify({
+  type: 'unsubscribe',
+  data: 'notifications'
+}));
+```
+
+### Notification Handling
+
+```javascript
+// Mark notification as read
+ws.send(JSON.stringify({
+  type: 'notification',
+  data: {
+    action: 'mark_read',
+    notification_id: '456'
+  }
+}));
+
+// Mark all notifications as read
+ws.send(JSON.stringify({
+  type: 'notification',
+  data: {
+    action: 'mark_all_read'
+  }
+}));
+```
+
+### Error Handling
+
+```javascript
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  
+  if (msg.type === 'error') {
+    console.error('WebSocket error:', msg.data);
+    // Handle: access_denied, invalid_data, service_error, etc.
+  }
+};
+```
 
 ## 🚦 Request Flow
 
-### Authenticated Request Flow
+### HTTP Request Flow
 
 ```
 Client Request
+    ↓
+Rate Limiting
     ↓
 CORS Middleware
     ↓
@@ -185,17 +366,29 @@ Response Transformation
 Client Response
 ```
 
-### Headers Propagation
+### WebSocket Flow
 
-**To Upstream Services:**
-- `X-User-ID`: Extracted from JWT `sub` claim
-- `X-JWT-Token`: Original JWT token
-- All original request headers (except `Host`)
-
-**From Upstream Services:**
-- All response headers preserved
-- Multiple `Set-Cookie` headers supported
-- Content-Type and custom headers forwarded
+```
+WebSocket Upgrade
+    ↓
+Origin Validation (CORS)
+    ↓
+JWT Middleware
+    ↓
+Connection Registration
+    ↓
+Message Type Routing
+    ↓
+┌─────────────────────────────────┐
+│ Service Integration             │
+│ ├─ Chat: Access validation      │
+│ ├─ Chat: Message persistence    │
+│ ├─ Notification: Mark as read   │
+│ └─ Real-time: Broadcasting      │
+└─────────────────────────────────┘
+    ↓
+Client Response/Broadcast
+```
 
 ## 🧪 Testing
 
@@ -210,84 +403,97 @@ go test -v .
 go test -v . -run TestJWT
 go test -v . -run TestProxy
 go test -v . -run TestCORS
+go test -v . -run TestWebSocket
 
 # Run with coverage
 go test -cover .
 ```
 
-### Test Categories
+### WebSocket Testing
 
-**JWT Middleware Tests:**
-- Token validation and rejection
-- Blacklist integration
-- Context setting
-- Error handling
+```javascript
+// Basic WebSocket test
+const WebSocket = require('ws');
 
-**Proxy Tests:**
-- Header forwarding
-- Path parameter replacement
-- Query parameter preservation
-- Response copying
+const ws = new WebSocket('ws://localhost:8080/ws', {
+  headers: {
+    'Authorization': 'Bearer ' + validToken
+  }
+});
 
-**CORS Tests:**
-- Origin-based CORS policies
-- Preflight request handling
-- Credential policies
-
-### Test Environment Setup
-
-```go
-// Test JWT token generation
-func signTestToken(sub string, secret string) (string, error) {
-    claims := jwt.MapClaims{
-        "sub": sub,
-        "exp": time.Now().Add(1 * time.Hour).Unix(),
-        "iat": time.Now().Add(-1 * time.Minute).Unix(),
+ws.on('open', () => {
+  // Test chat message
+  ws.send(JSON.stringify({
+    type: 'chat',
+    data: {
+      conversation_id: 'test123',
+      message: 'Test message'
     }
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(secret))
-}
+  }));
+});
+
+ws.on('message', (data) => {
+  const msg = JSON.parse(data);
+  console.log('Received:', msg);
+});
 ```
 
 ## 📊 Monitoring & Observability
 
-### Health Checks
+### Structured Logging
 
-The gateway provides comprehensive health information:
+The gateway provides comprehensive structured logging:
+
+```json
+{
+  "level": "INFO",
+  "component": "websocket",
+  "user": "user123",
+  "operation": "chat_message",
+  "details": {
+    "conversation": "conv456",
+    "message_length": 25
+  },
+  "timestamp": "2025-01-15T10:30:00Z"
+}
+```
+
+### Health Check Response
 
 ```json
 {
   "status": "ok",
   "timestamp": "2025-01-15T10:30:00Z",
+  "configuration": {
+    "environment": "production",
+    "rate_limiting": true,
+    "websocket_enabled": true
+  },
   "services": {
-    "auth": "http://auth-service:8001",
-    "user": "http://user-service:8002",
-    "media": "http://media-service:8006",
-    "match": "http://match-service:8003",
-    "chat": "http://chat-service:8004",
-    "notify": "http://notify-service:8005"
+    "auth": {
+      "name": "auth-service",
+      "url": "http://auth-service:8001",
+      "websocket": false
+    },
+    "chat": {
+      "name": "chat-service", 
+      "url": "http://chat-service:8004",
+      "websocket": true
+    },
+    "notify": {
+      "name": "notify-service",
+      "url": "http://notify-service:8005", 
+      "websocket": true
+    }
+  },
+  "metrics": {
+    "active_websocket_connections": 42,
+    "rate_limit_stats": {
+      "enabled": true,
+      "max_tokens": 100,
+      "active_clients": 15
+    }
   }
-}
-```
-
-### Request Logging
-
-Built-in Gin logging middleware provides:
-- Request method and path
-- Response status code
-- Response time
-- Client IP address
-- Request size
-
-### Error Handling
-
-Standardized error responses:
-
-```json
-{
-  "error": "Service user-service unavailable",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "path": "/api/users/profile/123"
 }
 ```
 
@@ -295,85 +501,195 @@ Standardized error responses:
 
 ### Optimizations
 
-- **Connection Pooling**: HTTP client reuse
-- **Timeout Management**: 30-second upstream timeouts
-- **Redis Caching**: Token blacklist with 2-second timeout
-- **Memory Efficiency**: Request body streaming
+- **Connection Pooling**: HTTP client reuse with configurable timeouts
+- **WebSocket Management**: Efficient connection pooling with automatic cleanup
+- **Rate Limiting**: Token bucket algorithm with memory-efficient cleanup
+- **Redis Caching**: Token blacklist with configurable timeout (3-5s)
+- **Async Processing**: Chat message persistence doesn't block real-time broadcast
 - **Concurrent Processing**: Goroutine-based request handling
 
-### Scaling Considerations
+### WebSocket Performance
 
-- **Stateless Design**: No session storage
-- **Redis Dependency**: Shared blacklist across instances
-- **Service Discovery**: Static configuration for container networking
-- **Load Balancing**: External load balancer recommended
+- **Connection Limit**: Managed by system resources
+- **Message Broadcasting**: Efficient channel-based routing
+- **Memory Management**: Automatic cleanup of stale connections (5min)
+- **Service Calls**: Async persistence, sync validation for security
 
-## 🔄 Development
+## 🚨 Error Scenarios & Troubleshooting
 
-### Adding New Service Routes
+### Configuration Errors
 
-1. **Service Configuration**: Add to `initServices()` function
-2. **Route Setup**: Create `setup<Service>Routes()` function
-3. **Middleware**: Apply `jwtMiddleware()` for protected routes
-4. **Path Mapping**: Map gateway paths to upstream paths
-5. **Testing**: Add route-specific tests
+**JWT Secret Missing (Production):**
+```bash
+FATAL: Required environment variable JWT_SECRET is not set
+```
 
-### Custom Middleware
+**Invalid Origins:**
+```bash
+FATAL: Empty origin found in ALLOWED_ORIGINS
+```
 
-```go
-func customMiddleware() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        // Pre-processing
-        c.Next()
-        // Post-processing
-    }
+### Runtime Errors
+
+**WebSocket Connection Rejected:**
+```json
+{
+  "error": "WebSocket upgrade failed: origin not allowed",
+  "origin": "https://malicious-site.com"
 }
 ```
 
-### Service Health Integration
+**Rate Limit Exceeded:**
+```json
+{
+  "error": "Rate limit exceeded. Please try again later."
+}
+```
 
-Future enhancement: Active health checking of upstream services with circuit breaker pattern.
+**Service Integration Errors:**
+```json
+{
+  "type": "error",
+  "data": {
+    "error_type": "notification_service_error",
+    "message": "Failed to mark notification as read: service unavailable"
+  }
+}
+```
 
-## 🚨 Error Scenarios
-
-### Common Issues
-
-**JWT Secret Missing:**
-- Gateway logs: "JWT_SECRET is not set"
-- Response: All protected routes return 401
-
-**Redis Connection Failed:**
-- Gateway logs: "Failed to initialize Redis"
-- Behavior: Token blacklisting disabled, requests proceed
-
-**Upstream Service Unavailable:**
-- Response: 502 Bad Gateway
-- Retry: No automatic retry (implement in future)
-
-**Token Expired/Invalid:**
-- Response: 401 Unauthorized
-- Body: `{"error": "token expired"}` or `{"error": "invalid token"}`
-
-### Debugging Tools
+### Debugging Commands
 
 ```bash
 # Check gateway logs
-docker logs matcha-gateway-1
+docker logs matcha-gateway-1 -f
 
-# Test JWT manually
-curl -H "Authorization: Bearer <token>" http://localhost:8080/api/users/profile/1
+# Test WebSocket connection
+curl -i -N -H "Connection: Upgrade" \
+     -H "Upgrade: websocket" \
+     -H "Origin: http://localhost:3000" \
+     -H "Authorization: Bearer <token>" \
+     http://localhost:8080/ws
 
 # Check Redis blacklist
 docker exec matcha-redis-1 redis-cli keys "blacklist:*"
+
+# Monitor rate limiting
+curl http://localhost:8080/health | jq .metrics.rate_limit_stats
 ```
 
 ## 📈 Metrics & Analytics
 
 ### Key Metrics to Monitor
 
-- **Request Rate**: Requests per second by endpoint
-- **Response Time**: P95/P99 latencies by service
-- **Error Rate**: 4xx/5xx responses by endpoint
-- **Authentication**: JWT validation success/failure rates
-- **Redis Performance**: Blacklist check latencies
-- **Upstream Health**: Service availability and response times
+**HTTP Metrics:**
+- Request rate by endpoint
+- Response time P95/P99 by service  
+- Error rate (4xx/5xx) by endpoint
+- Authentication success/failure rates
+
+**WebSocket Metrics:**
+- Active connection count
+- Message throughput by type
+- Connection duration distribution
+- Origin validation success/failure
+
+**Security Metrics:**
+- Rate limiting triggers
+- Invalid origin attempts
+- JWT validation failures
+- Blacklist hit rates
+
+**Service Integration:**
+- Chat service response times
+- Notification service availability
+- Message persistence success rates
+
+## 🔄 Development
+
+### Adding New Services
+
+1. **Service Configuration** (`services/config.go`):
+```go
+"newservice": {
+    Name: "new-service",
+    URL:  "http://new-service:8007",
+    WebSocket: false, // or true for WebSocket support
+},
+```
+
+2. **Route Setup** (`routes/newservice.go`):
+```go
+func SetupNewServiceRoutes(r *gin.Engine) {
+    service := r.Group("/api/v1/newservice")
+    service.Use(middleware.JWTMiddleware())
+    {
+        service.GET("/data", proxy.ProxyRequest("newservice", "/api/v1/data"))
+    }
+}
+```
+
+3. **Register in Main** (`main.go`):
+```go
+routes.SetupNewServiceRoutes(r)
+```
+
+### WebSocket Message Types
+
+To add new WebSocket message types:
+
+1. **Add Type Constant** (`websocket/types.go`):
+```go
+const (
+    MessageTypeNewFeature MessageType = "new_feature"
+)
+```
+
+2. **Add Handler** (`websocket/handlers.go`):
+```go
+case MessageTypeNewFeature:
+    HandleNewFeatureMessage(msg, userID, token)
+```
+
+3. **Implement Handler**:
+```go
+func HandleNewFeatureMessage(msg Message, userID, token string) {
+    // Implementation
+}
+```
+
+## 🔐 Security Best Practices
+
+### Production Checklist
+
+- ✅ **JWT_SECRET**: 32+ characters, cryptographically random
+- ✅ **ALLOWED_ORIGINS**: Specific domains only, no wildcards
+- ✅ **HTTPS**: Use wss:// for WebSocket in production
+- ✅ **Rate Limiting**: Enable and tune for your traffic
+- ✅ **Logging**: Set to 'warn' or 'error' level
+- ✅ **Timeouts**: Configure appropriate timeouts for your services
+- ✅ **Redis**: Secure Redis connection with password
+- ✅ **CORS**: Validate all allowed origins are legitimate
+- ✅ **Monitoring**: Set up alerts for security metrics
+
+### Security Headers
+
+The gateway automatically sets security-appropriate headers:
+
+```http
+Access-Control-Allow-Origin: https://yourdomain.com
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Methods: GET,POST,PUT,DELETE,OPTIONS
+Access-Control-Allow-Headers: Origin,Content-Type,Accept,Authorization
+Vary: Origin
+```
+
+---
+
+## 📚 Additional Resources
+
+- **JWT Best Practices**: [RFC 8725](https://tools.ietf.org/rfc/rfc8725.txt)
+- **WebSocket Security**: [RFC 6455 Security Considerations](https://tools.ietf.org/rfc/rfc6455.html#section-10)
+- **Rate Limiting**: [Token Bucket Algorithm](https://en.wikipedia.org/wiki/Token_bucket)
+- **CORS Specification**: [W3C CORS](https://www.w3.org/TR/cors/)
+
+**Production-Ready Gateway with Security, Performance, and Observability Built-in** 🚀

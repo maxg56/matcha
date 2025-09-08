@@ -1,54 +1,49 @@
-import { useState, useEffect } from "react";
-import { useAuthStore } from '@/stores/authStore';
+import { useState, useEffect, useCallback } from "react";
+import { useWebSocketNotifications } from '../useWebSocketConnection';
+import { MessageType, type MessageHandler } from '@/services/websocket';
 
 type NotificationEntry = [string, number];
 
 export function Notification() {
-    function randomInt(max: number): number {
-        return Math.floor(Math.random() * max);
-    }
-
     const [seen, setSeen] = useState(false);
     const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
+
     const { user } = useAuthStore();
+    const token = localStorage.getItem('accessToken');
 
     useEffect(() => {
-        // Don't create EventSource if user is not authenticated
-        if (!user?.id) {
+        console.log("Notification hook mounted", user?.id, token);
+        // Ne crée pas de WebSocket si l'utilisateur n'est pas authentifié
+        if (!user?.id || !token) {
             return;
+
         }
+    }, []);
 
-        const evtSource = new EventSource(`/api/v1/notifications/stream/${user.id}`);
-
-        evtSource.onmessage = function (event) {
-            const notification = JSON.parse(event.data);
-            // Ici tu peux afficher la notif dans l'UI
-            setNotifications(prev => [...prev, [notification.message, notification.kind]]);
-            setSeen(false);
-            evtSource.close();
-            console.log("rgejreg")
-        };
-
-        return () => {
-            evtSource.close();
-        };
+    // Configuration des handlers de notification
+    useEffect(() => {
+        addNotificationHandler(notificationHandler);
         
-    }, [user?.id]);
+        return () => {
+            removeNotificationHandler(notificationHandler);
+        };
+    }, [addNotificationHandler, removeNotificationHandler, notificationHandler]);
 
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         const newNotif = `Nouvelle notification ${notifications.length + 1}`;
-    //         const newColor = randomInt(5);
-    //         setNotifications(prev => [...prev, [newNotif, newColor]]);
-    //         setSeen(false);
-    //     }, 5000);
 
-    //     return () => clearInterval(interval);
-    // }, [notifications.length]);
-
-    const clearNotifications = () => {
+    const clearNotifications = async () => {
         setNotifications([]);
-    };
+        const response = await fetch(
+        `https://localhost:8443/api/v1/notifications/delete?user_id=${user.id}`,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+        const data = await response.json();
+        console.log("Réponse backend:", data);
+    }
 
     return { notifications, clearNotifications, seen, setSeen };
 }
