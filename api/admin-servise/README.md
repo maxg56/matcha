@@ -48,6 +48,56 @@ export ADMIN_JWT_SECRET=your-secret
 # Build et run
 go build -o bin/admin-service ./src
 ./bin/admin-service
-```
+
+
+# 📝 TODO Service Admin
+
+ [ ] Implémenter **GetPerformanceStatsHandler()** (vraies métriques : latence DB, mémoire, CPU, cache hit/miss, etc.).
+ [ ] Finaliser **ClearCacheHandler()** (support multi-backends, feedback détaillé).
+ [ ] Implémenter **CreateIndexesHandler()** (création d’index DB + vérification existance).
+
+### 2. Gestion des utilisateurs
+
+ [ ] Endpoint **GET /api/v1/admin/users** : liste/recherche utilisateurs (filtres, pagination).
+[ ] Endpoint **GET /api/v1/admin/users/\:id** : profil détaillé utilisateur.
+[ ] Endpoint **PUT /api/v1/admin/users/\:id/suspend** : suspension/bannissement.
+[ ] Endpoint **POST /api/v1/admin/reports** : gestion des signalements.
+[ ] Outils de **modération de contenu** (posts, messages, images).
+
+### 3. Statistiques avancées
+
+[ ] Statistiques **temps réel** (via websockets/events).
+[ ] Métriques de **performance détaillées** (APM, DB query times, cache, etc.).
+[ ] **Analytics comportement utilisateur** (sessions, retention, funnel).
+[ ] **Export rapports** (CSV/PDF).
+[ ] **Dashboards interactifs** (API pour frontend admin).
+
+### 4. Administration avancée
+[ ] Gestion des **paramètres système** (config dynamique).
+[ ] **Logs centralisés** + monitoring.
+[ ] **Notifications admin** (ex. nouveaux
+gnalements).
+[ ] **Audit trails** (traçabilité des actions admin).
+
+### 5. Sécurité et intégration
+
+[ ] Refaire **IsUserAdmin()** sans IDs codés en dur.
+[ ] Intégration **avec les autres services** (validation croisée JWT).
+[ ] Mise en place d’un **système de permissions granulaire** (RBAC/ABAC).
+
+### 6. Interface et outils
+
+[ ] Développer une **interface web admin** (React ou autre).
+[ ] Support **bulk operations** (création, suppression massive).
+[ ] **Import/export de données** (CSV, JSON).
+[ ] Outils de **debugging** internes.
+[ ] **Health checks détaillés** (DB, cache, services externes).
+
+### 7. Tests & Documentation
+
+[ ] Étendre les **tests unitaires** (handlers, services, utils).
+[ ] Ajouter des **tests d’intégration** (workflow complet).
+[ ] Rédiger une **documentation API complète** (Swagger/OpenAPI).
+
 
 Ou via Docker Compose (service déjà configuré).
