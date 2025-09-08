@@ -52,6 +52,7 @@ func main() {
 	routes.SetupMatchRoutes(r)
 	routes.SetupChatRoutes(r)
 	routes.SetupNotifyRoutes(r)
+	routes.SetupPaiementsRoutes(r)
 
 	// Start server
 	port := os.Getenv("PORT")

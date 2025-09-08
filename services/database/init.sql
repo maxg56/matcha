@@ -44,6 +44,7 @@ CREATE TABLE users (
     birth_date DATE ,
     age INT,
     height INT,
+    premium TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     alcohol_consumption yes_sometimes_no_enum,
     smoking yes_sometimes_no_enum,
