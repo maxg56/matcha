@@ -1,6 +1,6 @@
 
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from src.auth import authenticate_websocket
 from src.notification_manager import NotificationManager
 from src.redis_listener import listen_redis
@@ -25,6 +25,12 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(user_id)
     except Exception:
         manager.disconnect(user_id)
+
+
+@app.get("/delete")
+async def delete_notifications(user_id: int):
+    manager.delete_notification(user_id)
+    return {"status": "deleted", "user_id": user_id}
 
 
 @app.on_event("startup")
