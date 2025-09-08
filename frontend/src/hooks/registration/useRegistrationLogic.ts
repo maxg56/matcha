@@ -6,7 +6,6 @@ import { useUserStore } from '@/stores/userStore';
 import { RegistrationValidator } from '@/utils/registrationValidator';
 import { authService } from '@/services/auth';
 import { ErrorHandler } from '@/utils/errorHandler';
-import type { RegistrationData } from '@/types/registration';
 
 /**
  * Hook contenant toute la logique métier pour l'inscription
@@ -155,7 +154,6 @@ export function useRegistrationLogic() {
     
     try {
       // 1. Upload des images depuis le store
-      let imageUrls: string[] = [];
       const uploadPromises = selectedImages.map(async (imagePreview) => {
         const formData = new FormData();
         formData.append('file', imagePreview.file);
@@ -174,13 +172,14 @@ export function useRegistrationLogic() {
         return result.data.url;
       });
       
-      imageUrls = await Promise.all(uploadPromises);
+      // Les images sont uploadées mais pas utilisées dans le payload pour l'instant
+      await Promise.all(uploadPromises);
 
       // 2. Préparer les données de profil à partir du formulaire d'inscription
       const profileUpdatePayload = RegistrationValidator.prepareProfilePayload(formData);
       
-      // 3. Ajouter les URLs des images uploadées (obligatoires)
-      profileUpdatePayload.images = imageUrls;
+      // 3. Les images sont gérées séparément via l'API d'upload
+      // profileUpdatePayload.images = imageUrls;
 
       // 4. Mettre à jour le profil utilisateur
       const currentUser = useAuthStore.getState().user;

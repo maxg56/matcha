@@ -1,6 +1,4 @@
-import { Plus } from 'lucide-react';
 import { BlurredLikesGrid } from '@/components/cards/BlurredLikeCard';
-import { Button } from '@/components/ui/button';
 
 const mockLikes = [
   {
@@ -27,10 +25,6 @@ export default function MatchesPage() {
   const handleLikeClick = (likeId: string) => {
     console.log('Like clicked:', likeId);
     // TODO: Implement like reveal logic
-  };
-  
-  const handleOpenLikeModal = () => {
-    console.log('Open like modal - TODO: Implement');
   };
 
   return (

@@ -67,7 +67,7 @@ export const useRegistrationSubmission = () => {
           globalError: 'Erreur lors de la mise à jour de vos centres d\'intérêt. Vous pouvez les modifier plus tard dans votre profil.'
         };
       } else if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
-        const success = await handleTokenExpiration(() => completeRegistration(formData));
+        const success = await handleTokenExpiration(async () => { await completeRegistration(formData); return; });
         if (success) return true;
         
         throw { fieldErrors: {}, globalError: 'Session expirée. Redirection en cours...' };

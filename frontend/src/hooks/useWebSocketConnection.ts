@@ -46,7 +46,7 @@ export function useWebSocketConnection(options: UseWebSocketConnectionOptions = 
 
       return () => clearTimeout(timer);
     }
-  }, [user?.token, reconnectOnAuthChange]);
+  }, [user?.id, reconnectOnAuthChange]);
 
   // Nettoyage à la destruction du composant
   useEffect(() => {

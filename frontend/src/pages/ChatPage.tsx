@@ -5,7 +5,13 @@ import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-const mockMessages = [
+const mockMessages: ({
+  id: string;
+  content: string;
+  timestamp: string;
+  isOwn: boolean;
+  status: 'read' | 'delivered' | 'sent';
+})[] = [
   {
     id: '1',
     content: 'Salut ! Comment ça va ? 😊',

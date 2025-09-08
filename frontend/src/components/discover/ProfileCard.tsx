@@ -5,8 +5,10 @@ import { ProfileActions } from './ProfileActions';
 import { ProfileDetails } from './ProfileDetails';
 
 interface Profile {
-  id: string;
-  name: string;
+  id: number;
+  username: string;
+  first_name?: string;
+  last_name?: string;
   age: number;
   images: string[];
   bio: string;
@@ -14,6 +16,9 @@ interface Profile {
   occupation: string;
   interests: string[];
   distance: number;
+  fame_rating?: number;
+  is_online?: boolean;
+  last_seen?: string;
 }
 
 interface ProfileCardProps {
@@ -56,7 +61,7 @@ export function ProfileCard({
       <div className="bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950">
       <ProfileImageCarousel
         images={profile.images}
-        profileName={profile.name}
+        profileName={profile.first_name || profile.username}
         currentIndex={currentImageIndex}
         onImageChange={handleImageChange}
       />
@@ -66,7 +71,7 @@ export function ProfileCard({
       <div className="flex-1 bg-white dark:bg-gradient-to-b dark:from-emerald-950 dark:to-gray-900 flex flex-col">
         {/* Infos profil */}
         <ProfileInfo
-          name={profile.name}
+          name={profile.first_name || profile.username}
           age={profile.age}
           location={profile.location}
           distance={profile.distance}
@@ -77,7 +82,7 @@ export function ProfileCard({
 
         {/* Boutons d'actions */}
         <ProfileActions
-          profileId={profile.id}
+          profileId={profile.id.toString()}
           onLike={onLike}
           onPass={onPass}
           onSuperLike={onSuperLike}
@@ -90,7 +95,7 @@ export function ProfileCard({
       <ProfileDetails
         bio={profile.bio}
         interests={profile.interests}
-        profileId={profile.id}
+        profileId={profile.id.toString()}
         isOpen={showDetails}
         onClose={handleCloseDetails}
         onReport={onReport}

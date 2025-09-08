@@ -104,7 +104,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
       },
 
       // === NAVIGATION ===
-      setCurrentStep: (currentStep) => set({ currentStep }),
+      setCurrentStep: (_currentStep) => set({ currentStep: _currentStep }),
 
       // === ERROR MANAGEMENT ===
       setErrors: (errors) => set({ errors }),
