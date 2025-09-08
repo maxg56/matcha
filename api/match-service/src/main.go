@@ -13,12 +13,20 @@ import (
 )
 
 func main() {
+	// Initialize Redis configuration
+	conf.InitRedisConfig()
+	
 	// Initialize database
 	conf.InitDB()
 
-	// Initialize cache system
-	utils.InitializeCaches()
-	log.Println("Cache system initialized")
+	// Initialize cache system with centralized Redis config
+	utils.InitializeCachesWithConfig(
+		conf.Redis.Enabled,
+		conf.Redis.GetRedisAddr(),
+		conf.Redis.Password,
+		conf.Redis.DB,
+	)
+	log.Println("Cache system initialized with centralized config")
 
 	r := gin.Default()
 

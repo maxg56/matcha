@@ -40,7 +40,32 @@ type RedisCache struct {
 	ctx    context.Context
 }
 
-// NewRedisCache creates a new Redis cache client
+// NewRedisCacheWithConfig creates a new Redis cache client with provided configuration
+func NewRedisCacheWithConfig(addr, password string, db int) *RedisCache {
+	log.Printf("Connecting to Redis at %s (DB: %d)", addr, db)
+	
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+	
+	// Test connection
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Printf("Failed to connect to Redis: %v", err)
+		log.Println("Falling back to in-memory cache")
+		return nil
+	}
+	log.Printf("Successfully connected to Redis at %s", addr)
+	
+	return &RedisCache{
+		client: rdb,
+		ctx:    ctx,
+	}
+}
+
+// NewRedisCache creates a new Redis cache client (deprecated, use NewRedisCacheWithConfig)
 func NewRedisCache() *RedisCache {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
@@ -63,27 +88,7 @@ func NewRedisCache() *RedisCache {
 		}
 	}
 	
-	log.Printf("Connecting to Redis at %s (DB: %d)", redisAddr, redisDB)
-	
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
-		DB:       redisDB,
-	})
-	
-	// Test connection
-	ctx := context.Background()
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Printf("Failed to connect to Redis: %v", err)
-		log.Println("Falling back to in-memory cache")
-		return nil
-	}
-	log.Printf("Successfully connected to Redis at %s", redisAddr)
-	
-	return &RedisCache{
-		client: rdb,
-		ctx:    ctx,
-	}
+	return NewRedisCacheWithConfig(redisAddr, redisPassword, redisDB)
 }
 
 // NewInMemoryCache creates a new in-memory cache
@@ -224,7 +229,38 @@ var (
 	PreferenceCache    Cache
 )
 
-// InitializeCaches sets up all cache instances
+// InitializeCachesWithConfig sets up all cache instances with provided Redis config
+func InitializeCachesWithConfig(useRedis bool, redisAddr, redisPassword string, redisDB int) {
+	if useRedis {
+		// Try to use Redis for caching
+		log.Println("Initializing Redis caches with provided config...")
+		redisCache := NewRedisCacheWithConfig(redisAddr, redisPassword, redisDB)
+		
+		if redisCache != nil {
+			// Redis connection successful
+			CompatibilityCache = redisCache
+			UserVectorCache = NewRedisCacheWithConfig(redisAddr, redisPassword, redisDB)
+			PreferenceCache = NewRedisCacheWithConfig(redisAddr, redisPassword, redisDB)
+			log.Println("Redis caches initialized successfully")
+		} else {
+			// Redis connection failed, fall back to in-memory
+			log.Println("Redis connection failed, falling back to in-memory caches...")
+			CompatibilityCache = NewInMemoryCache()
+			UserVectorCache = NewInMemoryCache()
+			PreferenceCache = NewInMemoryCache()
+			log.Println("In-memory caches initialized as fallback")
+		}
+	} else {
+		// Use in-memory caching by configuration
+		log.Println("Initializing in-memory caches...")
+		CompatibilityCache = NewInMemoryCache()
+		UserVectorCache = NewInMemoryCache()
+		PreferenceCache = NewInMemoryCache()
+		log.Println("In-memory caches initialized")
+	}
+}
+
+// InitializeCaches sets up all cache instances (uses environment variables for backward compatibility)
 func InitializeCaches() {
 	// Check if Redis should be used
 	useRedis := os.Getenv("USE_REDIS_CACHE")
