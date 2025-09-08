@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS images CASCADE;
 DROP TABLE IF EXISTS user_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ====================
@@ -48,6 +49,7 @@ CREATE TABLE users (
     birth_date DATE ,
     age INT,
     height INT,
+    premium TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     alcohol_consumption yes_sometimes_no_enum,
     smoking yes_sometimes_no_enum,
@@ -193,7 +195,6 @@ CREATE TABLE relations (
 -- ====================
 -- TABLE : discussion
 -- ====================
-
 CREATE TABLE discussion (
     id SERIAL PRIMARY KEY,
     user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -207,7 +208,6 @@ CREATE TABLE discussion (
 -- ====================
 -- TABLE : messages
 -- ====================
-
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     conv_id INT NOT NULL REFERENCES discussion(id) ON DELETE CASCADE,
@@ -216,6 +216,18 @@ CREATE TABLE messages (
     time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     read_at TIMESTAMP
 );
+
+-- ====================
+-- TABLE : notifications
+-- ====================
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    to_user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    notif_type VARCHAR(10) NOT NULL,
+    msg TEXT NOT NULL,
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 -- ====================
 -- TRIGGERS

@@ -70,6 +70,7 @@ func main() {
 	routes.SetupMatchRoutes(r)
 	routes.SetupChatRoutes(r)
 	routes.SetupNotifyRoutes(r)
+	routes.SetupPaiementsRoutes(r)
 	routes.SetupWebSocketRoutes(r)
 
 	// Start server
