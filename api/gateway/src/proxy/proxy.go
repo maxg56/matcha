@@ -9,11 +9,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/koding/websocketproxy"
 )
 
 // ProxyRequest creates a handler that proxies requests to the specified service
@@ -138,4 +139,67 @@ func copyResponse(c *gin.Context, resp *http.Response) {
 	}
 
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
+}
+
+// ProxyWebSocket creates a handler that proxies WebSocket connections to the specified service
+func ProxyWebSocket(serviceName, path string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		service, exists := services.GetService(serviceName)
+		if !exists {
+			log.Printf("WebSocket service %s not available", serviceName)
+			c.AbortWithStatus(http.StatusServiceUnavailable)
+			return
+		}
+
+		// Build target WebSocket URL
+		targetPath := replacePlaceholders(path, c)
+		
+		// Convert HTTP URL to WebSocket URL
+		serviceURL := strings.Replace(service.URL, "http://", "ws://", 1)
+		serviceURL = strings.Replace(serviceURL, "https://", "wss://", 1)
+		targetURL := serviceURL + targetPath
+		
+		// Add query parameters if present
+		if c.Request.URL.RawQuery != "" {
+			targetURL += "?" + c.Request.URL.RawQuery
+		}
+
+		log.Printf("Proxying WebSocket connection to: %s", targetURL)
+
+		// Parse the target URL
+		backendURL, err := url.Parse(targetURL)
+		if err != nil {
+			log.Printf("Error parsing WebSocket URL %s: %v", targetURL, err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		// Create WebSocket proxy
+		proxy := websocketproxy.NewProxy(backendURL)
+		
+		// Add custom director to modify the request before forwarding
+		proxy.Director = func(incoming *http.Request, out http.Header) {
+			// Copy headers
+			for key, values := range incoming.Header {
+				for _, v := range values {
+					out.Add(key, v)
+				}
+			}
+
+			// Add user context headers if available
+			if v, ok := c.Get(middleware.CtxUserIDKey); ok {
+				if s, ok := v.(string); ok && s != "" {
+					out.Set("X-User-ID", s)
+				}
+			}
+
+			// Forward original JWT token
+			if token := utils.ExtractToken(c); token != "" {
+				out.Set("X-JWT-Token", token)
+			}
+		}
+
+		// Serve the WebSocket proxy
+		proxy.ServeHTTP(c.Writer, c.Request)
+	}
 }
