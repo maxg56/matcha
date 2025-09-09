@@ -22,7 +22,7 @@ func GetProfileHandler(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := conf.DB.Preload("Tags").Preload("Images").First(&user, id).Error; err != nil {
+	if err := conf.DB.Preload("Tags").Preload("Images", "is_active = ?", true).First(&user, id).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "user not found")
 		return
 	}
