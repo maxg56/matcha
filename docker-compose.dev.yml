@@ -70,6 +70,7 @@ services:
       - chat-service
       - notify-service
       - media-service
+      - paiements-service
     networks:
       - DB
       - backend
@@ -243,6 +244,30 @@ services:
       - backend
     restart: unless-stopped
 
+  paiements-service:
+    build:
+      context: ./api/paiements-service
+      target: development
+    ports:
+      - "8085:8085"
+    env_file:
+      - ./.env
+    volumes:
+      - ./api/paiements-service/src:/app/src
+      - ./api/paiements-service/go.mod:/app/go.mod
+      - ./api/paiements-service/go.sum:/app/go.sum
+      - ./api/paiements-service/.air.toml:/app/.air.toml
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - backend
+      - DB
+    restart: unless-stopped
+
+
+
+
   frontend:
     build:
       context: ./frontend
@@ -275,11 +300,11 @@ services:
 
 volumes:
   postgres_data_dev:
-    # driver: local
-    # driver_opts:
-    #   type: none
-    #   device: ./volumes/data
-    #   o: bind
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/data
+      o: bind
   redis_data_dev:
     driver: local
     driver_opts:
