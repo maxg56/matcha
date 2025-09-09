@@ -24,6 +24,7 @@ export const MessageType = {
   // Serveur vers client
   CHAT_MESSAGE: 'chat_message',
   CHAT_ACK: 'chat_ack',
+  NOTIFICATION_RECEIVED: 'notification_received',
   NOTIFICATION_READ: 'notification_marked_read',
   ALL_NOTIFICATION_READ: 'all_notifications_marked_read',
   SUBSCRIPTION_ACK: 'subscription_ack',
