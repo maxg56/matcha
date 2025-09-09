@@ -87,6 +87,11 @@ export class RegistrationValidator {
       }
     }
     
+    // Champs de profil obligatoires
+    if (!formData.gender?.trim()) errors.gender = 'Genre requis';
+    if (!formData.sexPref?.trim()) errors.sexPref = 'Préférence sexuelle requise';
+    if (!formData.relationshipType?.trim()) errors.relationshipType = 'Type de relation requis';
+    
     return errors;
   }
 
@@ -194,7 +199,7 @@ export class RegistrationValidator {
   /**
    * Prépare les données pour la mise à jour du profil
    */
-  static prepareProfilePayload(formData: RegistrationData) {
+  static prepareProfilePayload(formData: RegistrationData): Record<string, any> {
     // Filter and clean tags to ensure they're valid strings
     const cleanTags = formData.tags
       .filter(tag => tag && typeof tag === 'string' && tag.trim().length > 0)

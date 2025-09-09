@@ -1,16 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Camera, AlertCircle } from 'lucide-react';
-
-export const MAX_IMAGES = 5;
-
-interface UploadedImage {
-  file: File;
-  preview: string;
-  id: string;
-}
+import { useRegistrationStore } from '@/stores/registrationStore';
+import type { ImagePreview } from '@/components/registration/steps/image-upload/types';
+import { MAX_IMAGES } from '@/components/registration/steps/image-upload/types';
 
 export const ImageUploadStep: React.FC = () => {
-  const [images, setImages] = useState<UploadedImage[]>([]);
+  const { selectedImages, addImages, removeImage, errors: formErrors } = useRegistrationStore();
   const [errors, setErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -25,9 +20,9 @@ export const ImageUploadStep: React.FC = () => {
       const files = event.target.files;
       if (!files) return;
 
-      const newImages: UploadedImage[] = [];
+      const newImages: ImagePreview[] = [];
       const newErrors: string[] = [];
-      const remainingSlots = MAX_IMAGES - images.length;
+      const remainingSlots = MAX_IMAGES - selectedImages.length;
       const filesToProcess = Array.from(files).slice(0, remainingSlots);
 
       filesToProcess.forEach((file) => {
@@ -50,19 +45,19 @@ export const ImageUploadStep: React.FC = () => {
 
       setErrors(newErrors);
       if (newImages.length > 0) {
-        setImages((prev) => [...prev, ...newImages]);
+        addImages(newImages);
       }
 
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     },
-    [images.length]
+    [selectedImages.length, addImages]
   );
 
   const handleRemoveImage = useCallback((id: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== id));
-  }, []);
+    removeImage(id);
+  }, [removeImage]);
 
   return (
     <div className="space-y-6">
@@ -77,7 +72,7 @@ export const ImageUploadStep: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        {images.map((img) => (
+        {selectedImages.map((img) => (
           <div key={img.id} className="relative">
             <img src={img.preview} alt="preview" className="w-full h-32 object-cover rounded-md" />
             <button
@@ -89,7 +84,7 @@ export const ImageUploadStep: React.FC = () => {
           </div>
         ))}
 
-        {images.length < MAX_IMAGES && (
+        {selectedImages.length < MAX_IMAGES && (
           <button
             type="button"
             onClick={openFileDialog}
@@ -109,8 +104,14 @@ export const ImageUploadStep: React.FC = () => {
         className="hidden"
       />
 
-      {errors.length > 0 && (
+      {(errors.length > 0 || formErrors.images) && (
         <div className="space-y-2">
+          {formErrors.images && (
+            <div className="flex items-center text-red-600 text-sm">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              {formErrors.images}
+            </div>
+          )}
           {errors.map((err, idx) => (
             <div key={idx} className="flex items-center text-red-600 text-sm">
               <AlertCircle className="w-4 h-4 mr-1" />
@@ -121,10 +122,10 @@ export const ImageUploadStep: React.FC = () => {
       )}
 
       <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-        <span className={images.length === 0 ? 'text-red-600 font-medium' : ''}>
-          {images.length}/{MAX_IMAGES} photos ajoutées
+        <span className={selectedImages.length === 0 ? 'text-red-600 font-medium' : ''}>
+          {selectedImages.length}/{MAX_IMAGES} photos ajoutées
         </span>
-        {images.length === 0 && <div className="text-xs mt-1 text-red-500">Minimum requis: 1 photo</div>}
+        {selectedImages.length === 0 && <div className="text-xs mt-1 text-red-500">Minimum requis: 1 photo</div>}
       </div>
     </div>
   );
