@@ -196,39 +196,7 @@ pnpm test
 
 This project uses pre-commit hooks to maintain code quality:
 
-### Pre-commit Hooks
-- **Black**: Python code formatting
-- **isort**: Python import sorting
-- **flake8**: Python linting
-- **go fmt**: Go code formatting
-- **go vet**: Go code analysis
-- **ESLint**: TypeScript/JavaScript linting
-- **General**: Trailing whitespace, end of files, YAML validation, etc.
 
-### Running Quality Checks
-```bash
-# Install pre-commit hooks
-pre-commit install
-
-# Run on all files
-pre-commit run --all-files
-
-# Run on staged files only
-pre-commit run
-```
-
-### Continuous Integration
-
-The project includes GitHub Actions workflows for automated quality checks:
-
-- **Pre-commit Workflow** (`.github/workflows/pre-commit.yml`)
-  - Runs on every push and pull request
-  - Executes all pre-commit hooks automatically
-  - Can be triggered manually via GitHub Actions UI
-
-- **Legacy Lint Workflow** (`.github/workflows/lint.yml`)
-  - Individual linting jobs for Go, TypeScript, and Python
-  - More granular but slower than pre-commit approach
 
 The pre-commit workflow is recommended as it's faster and mirrors local development.
 ```

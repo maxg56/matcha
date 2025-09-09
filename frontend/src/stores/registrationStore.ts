@@ -123,7 +123,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({ emailVerificationCode });
         if (emailVerificationCode.length > 0) {
           set(state => {
-            const { emailVerificationCode: _, ...restErrors } = state.errors;
+            const { emailVerificationCode, ...restErrors } = state.errors;
             return { errors: restErrors, globalError: '' };
           });
         }

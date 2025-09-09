@@ -119,8 +119,8 @@ export default function InscriptionPage() {
               ) : (
                 <Button
                   onClick={completeRegistration}
-                  disabled={isLoading}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
+                  disabled={!canContinue() || isLoading}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white disabled:opacity-50"
                 >
                   {isLoading ? (
                     <>

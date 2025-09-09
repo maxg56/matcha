@@ -6,7 +6,6 @@ import { useUserStore } from '@/stores/userStore';
 import { RegistrationValidator } from '@/utils/registrationValidator';
 import { authService } from '@/services/auth';
 import { ErrorHandler } from '@/utils/errorHandler';
-import type { RegistrationData } from '@/types/registration';
 
 /**
  * Hook contenant toute la logique métier pour l'inscription
@@ -34,13 +33,23 @@ export function useRegistrationLogic() {
   // === VALIDATION ===
   const validateCurrentStep = useCallback((): boolean => {
     const newErrors = RegistrationValidator.validateStep(currentStep, formData, isEmailVerified);
+    
+    // Special validation for image upload step
+    if (currentStep === 9 && selectedImages.length === 0) {
+      newErrors.images = 'Au moins une image est requise';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [currentStep, formData, isEmailVerified, setErrors]);
+  }, [currentStep, formData, isEmailVerified, selectedImages.length, setErrors]);
 
   const canContinue = useCallback((): boolean => {
+    // Special validation for image upload step
+    if (currentStep === 9) {
+      return selectedImages.length > 0; // At least one image required
+    }
     return RegistrationValidator.canContinueStep(currentStep, formData, isEmailVerified);
-  }, [currentStep, formData, isEmailVerified]);
+  }, [currentStep, formData, isEmailVerified, selectedImages.length]);
 
   // === NAVIGATION AVEC LOGIQUE ===
   const nextStep = useCallback(async () => {
@@ -203,7 +212,7 @@ export function useRegistrationLogic() {
         // Try to update profile without tags first, then handle tags separately
         try {
           const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
-          const { tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
+          const { tags: _tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
           
           await useUserStore.getState().updateProfile(payloadWithoutTags);
           
