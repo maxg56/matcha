@@ -33,6 +33,23 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(user_id)
 
 
+@app.websocket("/ws/gateway")
+async def gateway_websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint specifically for the gateway service"""
+    try:
+        await websocket.accept()
+        print("✅ Gateway WebSocket connected")
+        manager.gateway_connection = websocket
+        while True:
+            await websocket.receive_text()  # Keep connection alive
+    except WebSocketDisconnect:
+        print("❌ Gateway WebSocket disconnected")
+        manager.gateway_connection = None
+    except Exception as e:
+        print(f"❌ Gateway WebSocket error: {e}")
+        manager.gateway_connection = None
+
+
 @app.get("/delete")
 async def delete_notifications(user_id: int):
     manager.delete_notification(user_id)
