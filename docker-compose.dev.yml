@@ -23,8 +23,6 @@ services:
       POSTGRES_DB: ${DB_NAME:-matcha}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
       - ./services/database:/docker-entrypoint-initdb.d
@@ -41,8 +39,6 @@ services:
     
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     networks:
       - DB
     restart: unless-stopped
@@ -211,8 +207,6 @@ services:
       PORT: 8005
       FLASK_ENV: development
       FLASK_DEBUG: 1
-    ports:
-      - "8005:8005"
     volumes:
       - ./api/notify-service/src:/app/src:ro
     depends_on:
@@ -248,8 +242,6 @@ services:
     build:
       context: ./api/paiements-service
       target: development
-    ports:
-      - "8085:8085"
     env_file:
       - ./.env
     volumes:
@@ -264,9 +256,6 @@ services:
       - backend
       - DB
     restart: unless-stopped
-
-
-
 
   frontend:
     build:
