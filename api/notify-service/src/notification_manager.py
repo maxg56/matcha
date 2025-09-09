@@ -38,6 +38,7 @@ class NotificationManager:
             del self.active_connections[user_id]
 
     async def send_notification(self, to_user_id: int, notif_type: str, message: str):
+        print(f"📨 Sending notification to user {to_user_id}: {message}")
         notif = Notification(notif_type=notif_type, message=message, to_user_id=to_user_id)
         user_id = notif.to_user_id
         if user_id in self.active_connections:
