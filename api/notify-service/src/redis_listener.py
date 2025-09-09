@@ -12,6 +12,7 @@ CHANNEL = os.getenv("REDIS_CHANNEL", "notifications")
 
 redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
+
 async def listen_redis(manager: NotificationManager):
     pubsub = redis.pubsub()
     await pubsub.subscribe(CHANNEL)
@@ -20,7 +21,6 @@ async def listen_redis(manager: NotificationManager):
         if message["type"] == "message":
             data = json.loads(message["data"])
             conn = db_connection()
-            await manager.send_notification(data["notif_type"], data["message"], data["to_user_id"])
             if conn:
                 cur = conn.cursor()
                 cur.execute(
@@ -30,3 +30,4 @@ async def listen_redis(manager: NotificationManager):
                 conn.commit()
                 cur.close()
                 conn.close()
+            await manager.send_notification(data["to_user_id"], data["notif_type"], data["message"])

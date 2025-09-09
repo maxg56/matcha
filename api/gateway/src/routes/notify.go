@@ -22,7 +22,6 @@ func SetupNotifyRoutes(r *gin.Engine) {
 	protected := notify.Group("")
 	protected.Use(middleware.JWTMiddleware())
 	{
-		
 	// Notification retrieval
 		protected.GET("/delete", proxy.ProxyRequest("notify", "/delete"))
 	}
