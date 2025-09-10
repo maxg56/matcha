@@ -20,17 +20,24 @@ func main() {
         log.Println("No .env file found, relying on environment variables")
     }
 
-    // Validate required environment variables
-    requiredEnvVars := []string{
-        "STRIPE_SECRET_KEY",
-        "STRIPE_PRICE_MENSUEL", 
-        "STRIPE_PRICE_ANNUEL",
-        "STRIPE_WEBHOOK_SECRET",
-    }
-    
-    for _, envVar := range requiredEnvVars {
-        if os.Getenv(envVar) == "" {
-            log.Fatalf("Required environment variable %s is not set", envVar)
+    // Validate required environment variables (only in production)
+    if os.Getenv("GIN_MODE") == "release" {
+        requiredEnvVars := []string{
+            "STRIPE_SECRET_KEY",
+            "STRIPE_PRICE_MENSUEL", 
+            "STRIPE_PRICE_ANNUEL",
+            "STRIPE_WEBHOOK_SECRET",
+        }
+        
+        for _, envVar := range requiredEnvVars {
+            if os.Getenv(envVar) == "" {
+                log.Fatalf("Required environment variable %s is not set", envVar)
+            }
+        }
+    } else {
+        // In development, just warn about missing Stripe keys
+        if os.Getenv("STRIPE_SECRET_KEY") == "" || strings.Contains(os.Getenv("STRIPE_SECRET_KEY"), "placeholder") {
+            log.Println("WARNING: STRIPE_SECRET_KEY not configured - payment functionality will not work")
         }
     }
 
