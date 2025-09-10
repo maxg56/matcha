@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDiscoverStore } from '@/stores/discoverStore';
 
-export function useDiscoverProfiles() {
+export function useDiscoverProfiles(initialProfiles = []) {
+  // --- STORE MODE ---
   const {
     profiles,
     currentIndex,
@@ -15,43 +16,84 @@ export function useDiscoverProfiles() {
     reportProfile,
   } = useDiscoverStore();
 
-  const currentProfile = profiles[currentIndex];
+  // --- MOCK MODE ---
+  const [mockIndex, setMockIndex] = useState(0);
+
+  const isMockMode = initialProfiles.length > 0;
+  const usedProfiles = isMockMode ? initialProfiles : profiles;
+  const currentProfile = usedProfiles[isMockMode ? mockIndex : currentIndex];
 
   useEffect(() => {
-    if (profiles.length === 0 && !isLoading) {
+    if (!isMockMode && profiles.length === 0 && !isLoading) {
       fetchProfiles();
     }
-  }, [profiles.length, isLoading, fetchProfiles]);
+  }, [isMockMode, profiles.length, isLoading, fetchProfiles]);
 
-  const handleLike = (id: number) => {
-    likeProfile(id);
+  // Actions adaptées selon le mode
+  const handleLike = (id: string | number) => {
+    if (isMockMode) {
+      console.log('Liked:', id);
+      setMockIndex((prev) => prev + 1);
+    } else {
+      if (typeof id === 'number') {
+        likeProfile(id);
+      } else {
+        console.error('likeProfile expects a number as id');
+      }
+    }
   };
 
-  const handlePass = (id: number) => {
-    dislikeProfile(id);
+  const handlePass = (id: string | number) => {
+    if (isMockMode) {
+      console.log('Passed:', id);
+      setMockIndex((prev) => prev + 1);
+    } else {
+      if (typeof id === 'number') {
+        dislikeProfile(id);
+      } else {
+        console.error('dislikeProfile expects a number as id');
+      }
+    }
   };
 
-  const handleSuperLike = (id: number) => {
-    superLikeProfile(id);
+  const handleSuperLike = (id: string | number) => {
+    if (isMockMode) {
+      console.log('SuperLiked:', id);
+      setMockIndex((prev) => prev + 1);
+    } else {
+      if (typeof id === 'number') {
+        superLikeProfile(id);
+      } else {
+        console.error('superLikeProfile expects a number as id');
+      }
+    }
   };
 
-  const handleBoost = (id: number) => {
+  const handleBoost = (id: string | number) => {
     console.log('Boosted:', id);
   };
 
-  const handleMessage = (id: number) => {
+  const handleMessage = (id: string | number) => {
     console.log('Message:', id);
   };
 
-  const handleReport = (id: number, reason: string = 'inappropriate') => {
-    reportProfile(id, reason);
+  const handleReport = (id: string | number, reason: string = 'inappropriate') => {
+    if (isMockMode) {
+      console.log('Reported:', id, reason);
+    } else {
+      if (typeof id === 'number') {
+        reportProfile(id, reason);
+      } else {
+        console.error('reportProfile expects a number as id');
+      }
+    }
   };
 
   return {
     currentProfile,
-    hasMoreProfiles,
-    isLoading,
-    error,
+    hasMoreProfiles: isMockMode ? mockIndex < initialProfiles.length - 1 : hasMoreProfiles,
+    isLoading: isMockMode ? false : isLoading,
+    error: isMockMode ? null : error,
     actions: {
       onLike: handleLike,
       onPass: handlePass,

@@ -1,19 +1,45 @@
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
 
 interface ProfileDetailsProps {
   bio: string;
   interests: string[];
-  profileId: string;
+  personalOpinion?: string;
+  educationLevel?: string;
+  socialActivityLevel?: string;
+  sportActivity?: string;
+  religion?: string;
+  childrenStatus?: string;
+  zodiacSign?: string;
+  hairColor?: string;
+  skinColor?: string;
+  eyeColor?: string;
+  birthCity?: string;
+  currentCity?: string;
+  job?: string;
   isOpen: boolean;
+  profileId: string;
   onClose: () => void;
   onReport?: (id: string) => void;
 }
 
+
 export function ProfileDetails({
   bio,
-  interests,
+  personalOpinion,
+  educationLevel,
+  socialActivityLevel,
+  sportActivity,
+  religion,
+  childrenStatus,
+  zodiacSign,
+  hairColor,
+  skinColor,
+  eyeColor,
+  birthCity,
+  currentCity,
+  job,
   profileId,
   isOpen,
   onClose,
@@ -27,24 +53,51 @@ export function ProfileDetails({
         <div className="space-y-6">
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-lg">À propos</h3>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed border-2 border-primary rounded-md pl-4">
               {bio}
             </p>
           </div>
 
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-lg">Centres d'intérêt</h3>
-            <div className="flex flex-wrap gap-2">
-              {interests.map((interest) => (
-                <Badge
-                  key={interest}
-                  variant="secondary"
-                  className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1"
-                >
-                  {interest}
-                </Badge>
-              ))}
-            </div>
+          <div className="space-y-4 border-2 border-primary rounded-md p-4">
+            {personalOpinion && (
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-lg">Opinion personnelle</h3>
+                <p className="text-gray-600 dark:text-gray-300">{personalOpinion}</p>
+              </div>
+            )}
+
+            {educationLevel && (
+              <p className="text-gray-700 dark:text-gray-300">🎓 Niveau d'éducation : {educationLevel}</p>
+            )}
+            {socialActivityLevel && (
+              <p className="text-gray-700 dark:text-gray-300">👥 Vie sociale : {socialActivityLevel}</p>
+            )}
+            {sportActivity && (
+              <p className="text-gray-700 dark:text-gray-300">💪 Activité sportive : {sportActivity}</p>
+            )}
+            {religion && (
+              <p className="text-gray-700 dark:text-gray-300">🙏 Religion : {religion}</p>
+            )}
+            {childrenStatus && (
+              <p className="text-gray-700 dark:text-gray-300">👶 Enfants : {childrenStatus}</p>
+            )}
+            {zodiacSign && (
+              <p className="text-gray-700 dark:text-gray-300">♌ Signe astrologique : {zodiacSign}</p>
+            )}
+            {(hairColor || skinColor || eyeColor) && (
+              <p className="text-gray-700 dark:text-gray-300">
+                👤 Apparence : {hairColor && `Cheveux ${hairColor}`} {skinColor && `, Peau ${skinColor}`} {eyeColor && `, Yeux ${eyeColor}`}
+              </p>
+            )}
+            {birthCity && (
+              <p className="text-gray-700 dark:text-gray-300">🏙️ Ville de naissance : {birthCity}</p>
+            )}
+            {currentCity && (
+              <p className="text-gray-700 dark:text-gray-300">📍 Ville actuelle : {currentCity}</p>
+            )}
+            {job && (
+              <p className="text-gray-700 dark:text-gray-300">💼 Profession : {job}</p>
+            )}
           </div>
 
           {/* Bouton Signaler dans la bio */}
