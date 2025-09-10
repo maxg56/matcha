@@ -87,4 +87,39 @@ def create_app(config=None):
     def profile():
         return set_profile_image()
 
+    @app.route("/api/v1/media/uploads/<filename>", methods=["GET"])
+    def serve_upload(filename):
+        """Serve uploaded files directly from uploads folder"""
+        import os
+        import logging
+        from flask import send_from_directory, abort
+        from werkzeug.utils import secure_filename
+        from config.settings import UPLOAD_FOLDER
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"=== SERVING UPLOAD REQUEST FOR: {filename} ===")
+        
+        # Secure the filename to prevent directory traversal
+        safe_filename = secure_filename(filename)
+        file_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+        
+        logger.info(f"Upload folder: {UPLOAD_FOLDER}")
+        logger.info(f"Safe filename: {safe_filename}")
+        logger.info(f"Full file path: {file_path}")
+        logger.info(f"File exists: {os.path.exists(file_path)}")
+        
+        # List files in upload directory for debugging
+        if os.path.exists(UPLOAD_FOLDER):
+            files = os.listdir(UPLOAD_FOLDER)
+            logger.info(f"Files in upload folder: {files}")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            logger.error(f"File not found: {file_path}")
+            abort(404)
+            
+        logger.info(f"Serving file: {file_path}")
+        return send_from_directory(UPLOAD_FOLDER, safe_filename)
+    
+
     return app
