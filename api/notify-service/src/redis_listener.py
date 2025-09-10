@@ -1,6 +1,6 @@
 import asyncio
 import redis.asyncio as aioredis
-from src.types import Notification
+from src.notification_types import Notification
 from src.notification_manager import NotificationManager
 import json
 import os

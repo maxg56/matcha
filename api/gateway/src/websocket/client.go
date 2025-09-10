@@ -15,7 +15,8 @@ type Client struct {
 	Subscriptions map[string]bool    // Channels this client is subscribed to
 	Token         string             // JWT token for service calls
 	LastPing      time.Time          // Last ping timestamp
-	mu            sync.RWMutex       // Protect subscriptions map
+	closed        bool               // Flag to track if client is closed
+	mu            sync.RWMutex       // Protect subscriptions map and closed flag
 }
 
 // NewClient creates a new WebSocket client
@@ -78,6 +79,21 @@ func (c *Client) GetLastPing() time.Time {
 
 // Close closes the client connection and channel
 func (c *Client) Close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	
+	if c.closed {
+		return // Already closed
+	}
+	
+	c.closed = true
 	close(c.Send)
 	c.Conn.Close()
+}
+
+// IsClosed returns whether the client is closed
+func (c *Client) IsClosed() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.closed
 }
