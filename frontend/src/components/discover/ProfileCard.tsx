@@ -5,7 +5,7 @@ import { ProfileActions } from './ProfileActions';
 import { ProfileDetails } from './ProfileDetails';
 
 interface Profile {
-  id: string;
+  id: string | number;
   name: string;
   age: number;
   images: string[];
@@ -14,16 +14,29 @@ interface Profile {
   occupation: string;
   interests: string[];
   distance: number;
+  personalOpinion?: string;
+  educationLevel?: string;
+  socialActivityLevel?: string;
+  sportActivity?: string;
+  religion?: string;
+  childrenStatus?: string;
+  zodiacSign?: string;
+  hairColor?: string;
+  skinColor?: string;
+  eyeColor?: string;
+  birthCity?: string;
+  currentCity?: string;
+  job?: string;
 }
 
 interface ProfileCardProps {
   profile: Profile;
-  onLike: (id: string) => void;
-  onPass: (id: string) => void;
-  onSuperLike?: (id: string) => void;
-  onBoost?: (id: string) => void;
-  onMessage?: (id: string) => void;
-  onReport?: (id: string) => void;
+  onLike: (id: string | number) => void;
+  onPass: (id: string | number) => void;
+  onSuperLike?: (id: string | number) => void;
+  onBoost?: (id: string | number) => void;
+  onMessage?: (id: string | number) => void;
+  onReport?: (id: string | number) => void;
 }
 
 export function ProfileCard({
@@ -77,7 +90,7 @@ export function ProfileCard({
 
         {/* Boutons d'actions */}
         <ProfileActions
-          profileId={profile.id}
+          profileId={String(profile.id)}
           onLike={onLike}
           onPass={onPass}
           onSuperLike={onSuperLike}
@@ -90,11 +103,25 @@ export function ProfileCard({
       <ProfileDetails
         bio={profile.bio}
         interests={profile.interests}
-        profileId={profile.id}
+        personalOpinion={profile.personalOpinion}
+        educationLevel={profile.educationLevel}
+        socialActivityLevel={profile.socialActivityLevel}
+        sportActivity={profile.sportActivity}
+        religion={profile.religion}
+        childrenStatus={profile.childrenStatus}
+        zodiacSign={profile.zodiacSign}
+        hairColor={profile.hairColor}
+        skinColor={profile.skinColor}
+        eyeColor={profile.eyeColor}
+        birthCity={profile.birthCity}
+        currentCity={profile.currentCity}
+        job={profile.job}
+        profileId={String(profile.id)}
         isOpen={showDetails}
         onClose={handleCloseDetails}
         onReport={onReport}
       />
+
     </div>
   );
 }
