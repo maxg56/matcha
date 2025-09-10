@@ -50,6 +50,10 @@ func NewManager() *Manager {
 func InitManager() {
 	GlobalManager = NewManager()
 	go GlobalManager.Run()
+	
+	// Initialize notification client to receive notifications from notify-service
+	InitNotificationClient()
+	
 	log.Println("WebSocket Manager initialized and running")
 }
 
@@ -116,6 +120,8 @@ func (m *Manager) shutdown() {
 
 // Shutdown stops the manager gracefully
 func (m *Manager) Shutdown() {
+	// Stop notification client first
+	StopNotificationClient()
 	m.cancel()
 }
 

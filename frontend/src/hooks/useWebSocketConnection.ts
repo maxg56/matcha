@@ -46,7 +46,7 @@ export function useWebSocketConnection(options: UseWebSocketConnectionOptions = 
 
       return () => clearTimeout(timer);
     }
-  }, [user?.token, reconnectOnAuthChange]);
+  }, [user?.id, reconnectOnAuthChange]);
 
   // Nettoyage à la destruction du composant
   useEffect(() => {
@@ -92,11 +92,13 @@ export function useWebSocketNotifications() {
     addNotificationHandler: (handler: MessageHandler) => {
       // Handler pour tous les types de notifications
       ws.addMessageHandler('notification_event', handler);
+      ws.addMessageHandler(MessageType.NOTIFICATION_RECEIVED, handler);
       ws.addMessageHandler(MessageType.NOTIFICATION_READ, handler);
       ws.addMessageHandler(MessageType.ALL_NOTIFICATION_READ, handler);
     },
     removeNotificationHandler: (handler: MessageHandler) => {
       ws.removeMessageHandler('notification_event', handler);
+      ws.removeMessageHandler(MessageType.NOTIFICATION_RECEIVED, handler);
       ws.removeMessageHandler(MessageType.NOTIFICATION_READ, handler);
       ws.removeMessageHandler(MessageType.ALL_NOTIFICATION_READ, handler);
     }
