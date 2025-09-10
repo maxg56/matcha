@@ -14,11 +14,14 @@ func SetupMediaRoutes(r *gin.Engine) {
 	media.GET("/health", proxy.ProxyRequest("media", "/health"))
 	media.GET("/", proxy.ProxyRequest("media", "/health"))
 
-	media.Use(middleware.JWTMiddleware()) // All media routes require authentication
+	// Public image serving (no authentication required)
+	media.GET("/uploads/:filename", proxy.ProxyRequest("media", "/api/v1/media/uploads/:filename"))
+	media.GET("/get/:filename", proxy.ProxyRequest("media", "/api/v1/media/get/:filename"))
+
+	media.Use(middleware.JWTMiddleware()) // All other media routes require authentication
 
 	// File upload and management
 	media.POST("/upload", proxy.ProxyRequest("media", "/api/v1/media/upload"))
-	media.GET("/get/:filename", proxy.ProxyRequest("media", "/api/v1/media/get/:filename"))
 	media.DELETE("/delete/:filename", proxy.ProxyRequest("media", "/api/v1/media/delete/:filename"))
 
 	// Image processing

@@ -110,7 +110,7 @@ export default function InscriptionPage() {
               {currentStep < registrationSteps.length ? (
                 <Button
                   onClick={nextStep}
-                  disabled={!canContinue() || isLoading}
+                  disabled={!canContinue() || isLoading }
                   className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white disabled:opacity-50"
                 >
                   {currentStep === 1 ? 'Créer le compte' : 'Suivant'}

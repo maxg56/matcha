@@ -176,9 +176,11 @@ func (u *User) ToPublicProfile() *PublicProfile {
 		profile.Tags = append(profile.Tags, tag.Name)
 	}
 
-	// Convert images to URL array
+	// Convert images to URL array (only active images)
 	for _, image := range u.Images {
-		profile.Images = append(profile.Images, image.URL)
+		if image.IsActive {
+			profile.Images = append(profile.Images, image.URL())
+		}
 	}
 
 	return profile

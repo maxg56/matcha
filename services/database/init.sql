@@ -134,9 +134,14 @@ CREATE TABLE images (
     width INT,
     height INT,
     is_profile BOOLEAN DEFAULT FALSE,
+    file_path VARCHAR(500) NOT NULL,      -- full file path on disk
+    is_active BOOLEAN DEFAULT TRUE,       -- soft delete flag
+    description TEXT,                     -- optional description
+    alt_text VARCHAR(255),                -- accessibility alt text
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- ====================
 -- MATCHING SYSTEM TABLES
