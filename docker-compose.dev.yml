@@ -289,11 +289,11 @@ services:
 
 volumes:
   postgres_data_dev:
-    # driver: local
-    # driver_opts:
-    #   type: none
-    #   device: ./volumes/data
-    #   o: bind
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/data
+      o: bind
   redis_data_dev:
     driver: local
     driver_opts:
