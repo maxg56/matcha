@@ -20,14 +20,14 @@ const navItems = [
     href: '/app/messages',
   },
   {
-    label: 'Profil',
-    icon: User,
-    href: '/app/profile',
-  },
-  {
     label: 'Map',
     icon: Map,
     href: '/app/map',
+  },
+  {
+    label: 'Profil',
+    icon: User,
+    href: '/app/profile',
   },
   {
     label: 'Log Out',

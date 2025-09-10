@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { MapPin } from 'lucide-react';
 import { SettingSection, TextInput } from '../index';
 import type { UserProfile } from '@/data/UserProfileData';
@@ -23,9 +24,12 @@ export function LocationCareerSection({
 	const isEditing = editingSection === 'location';
 	const { city, getCityFromGeolocation } = useGeolocationCity();
 
-	if (city && getCurrentValue('currentCity') !== city) {
-		updateField('currentCity', city);
-	}
+	// ✅ Utilisation d’un effet pour mettre à jour le store
+	useEffect(() => {
+		if (city && getCurrentValue('currentCity') !== city) {
+			updateField('currentCity', city);
+		}
+	}, [city, getCurrentValue, updateField]);
 
 	const locationFields = [
 		{
