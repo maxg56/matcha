@@ -242,8 +242,15 @@ services:
     build:
       context: ./api/paiements-service
       target: development
-    env_file:
-      - ./.env
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      GIN_MODE: debug
     volumes:
       - ./api/paiements-service/src:/app/src
       - ./api/paiements-service/go.mod:/app/go.mod
