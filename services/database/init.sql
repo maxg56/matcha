@@ -13,6 +13,9 @@ DROP TABLE IF EXISTS user_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS stripe_events CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS subscriptions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ====================
@@ -405,3 +408,153 @@ JOIN users u1 ON m.user1_id = u1.id
 JOIN users u2 ON m.user2_id = u2.id
 WHERE m.is_active = TRUE
 ORDER BY m.matched_at DESC;
+
+-- ====================
+-- PAYMENT SYSTEM TABLES
+-- ====================
+
+-- Table for user subscriptions
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    stripe_customer_id VARCHAR(255) NOT NULL,
+    stripe_subscription_id VARCHAR(255) UNIQUE NOT NULL,
+    status VARCHAR(50) NOT NULL, -- active, canceled, incomplete, etc.
+    plan VARCHAR(50) NOT NULL, -- mensuel, annuel
+    current_period_start TIMESTAMP NOT NULL,
+    current_period_end TIMESTAMP NOT NULL,
+    cancel_at_period_end BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for payment transactions
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscription_id INTEGER REFERENCES subscriptions(id) ON DELETE SET NULL,
+    stripe_payment_intent_id VARCHAR(255) UNIQUE,
+    stripe_charge_id VARCHAR(255),
+    amount BIGINT NOT NULL, -- Amount in cents
+    currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+    status VARCHAR(50) NOT NULL, -- succeeded, pending, failed
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for Stripe webhook events (idempotency)
+CREATE TABLE IF NOT EXISTS stripe_events (
+    id SERIAL PRIMARY KEY,
+    stripe_event_id VARCHAR(255) UNIQUE NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    processed BOOLEAN DEFAULT FALSE,
+    processed_at TIMESTAMP,
+    data TEXT, -- JSON data from webhook
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ====================
+-- PAYMENT SYSTEM INDEXES
+-- ====================
+
+-- Subscription indexes
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer_id ON subscriptions(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_current_period_end ON subscriptions(current_period_end);
+
+-- Payment indexes
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_subscription_id ON payments(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_payments_stripe_payment_intent ON payments(stripe_payment_intent_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at);
+
+-- Stripe events indexes
+CREATE INDEX IF NOT EXISTS idx_stripe_events_event_type ON stripe_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_stripe_events_processed ON stripe_events(processed);
+CREATE INDEX IF NOT EXISTS idx_stripe_events_created_at ON stripe_events(created_at);
+
+-- ====================
+-- PAYMENT SYSTEM TRIGGERS
+-- ====================
+
+-- Trigger to update subscription updated_at
+CREATE TRIGGER trg_update_subscriptions_updated_at
+BEFORE UPDATE ON subscriptions
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to update payments updated_at
+CREATE TRIGGER trg_update_payments_updated_at
+BEFORE UPDATE ON payments
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to update stripe_events updated_at
+CREATE TRIGGER trg_update_stripe_events_updated_at
+BEFORE UPDATE ON stripe_events
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- ====================
+-- PAYMENT SYSTEM VIEWS
+-- ====================
+
+-- View for active subscriptions with user details
+CREATE OR REPLACE VIEW active_subscriptions AS
+SELECT 
+    s.id,
+    s.user_id,
+    u.username,
+    u.first_name,
+    u.last_name,
+    u.email,
+    s.stripe_customer_id,
+    s.stripe_subscription_id,
+    s.status,
+    s.plan,
+    s.current_period_start,
+    s.current_period_end,
+    s.cancel_at_period_end,
+    s.created_at,
+    s.updated_at,
+    -- Check if subscription is currently active
+    CASE 
+        WHEN s.status = 'active' AND s.current_period_end > NOW() 
+        THEN TRUE 
+        ELSE FALSE 
+    END as is_currently_active,
+    -- Days until expiration
+    EXTRACT(DAY FROM s.current_period_end - NOW()) as days_until_expiration
+FROM subscriptions s
+JOIN users u ON s.user_id = u.id
+WHERE s.status IN ('active', 'past_due', 'unpaid')
+ORDER BY s.current_period_end DESC;
+
+-- View for payment history with user and subscription details
+CREATE OR REPLACE VIEW payment_history AS
+SELECT 
+    p.id,
+    p.user_id,
+    u.username,
+    u.first_name,
+    u.email,
+    p.subscription_id,
+    s.plan,
+    p.stripe_payment_intent_id,
+    p.stripe_charge_id,
+    p.amount,
+    p.currency,
+    -- Format amount for display (convert cents to euros)
+    ROUND(p.amount::NUMERIC / 100, 2) as amount_formatted,
+    p.status,
+    p.description,
+    p.created_at,
+    p.updated_at
+FROM payments p
+JOIN users u ON p.user_id = u.id
+LEFT JOIN subscriptions s ON p.subscription_id = s.id
+ORDER BY p.created_at DESC;
