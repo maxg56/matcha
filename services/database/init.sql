@@ -416,11 +416,11 @@ ORDER BY m.matched_at DESC;
 -- Table for user subscriptions
 CREATE TABLE IF NOT EXISTS subscriptions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    stripe_customer_id VARCHAR(255) NOT NULL,
-    stripe_subscription_id VARCHAR(255) UNIQUE NOT NULL,
-    status VARCHAR(50) NOT NULL, -- active, canceled, incomplete, etc.
-    plan VARCHAR(50) NOT NULL, -- mensuel, annuel
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    stripe_customer_id TEXT NOT NULL,
+    stripe_subscription_id TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL, -- active, canceled, incomplete, etc.
+    plan TEXT NOT NULL, -- mensuel, annuel
     current_period_start TIMESTAMP NOT NULL,
     current_period_end TIMESTAMP NOT NULL,
     cancel_at_period_end BOOLEAN DEFAULT FALSE,
@@ -431,13 +431,13 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 -- Table for payment transactions
 CREATE TABLE IF NOT EXISTS payments (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    subscription_id INTEGER REFERENCES subscriptions(id) ON DELETE SET NULL,
-    stripe_payment_intent_id VARCHAR(255) UNIQUE,
-    stripe_charge_id VARCHAR(255),
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscription_id BIGINT REFERENCES subscriptions(id) ON DELETE SET NULL,
+    stripe_payment_intent_id TEXT UNIQUE,
+    stripe_charge_id TEXT,
     amount BIGINT NOT NULL, -- Amount in cents
-    currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
-    status VARCHAR(50) NOT NULL, -- succeeded, pending, failed
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    status TEXT NOT NULL, -- succeeded, pending, failed
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -446,8 +446,8 @@ CREATE TABLE IF NOT EXISTS payments (
 -- Table for Stripe webhook events (idempotency)
 CREATE TABLE IF NOT EXISTS stripe_events (
     id SERIAL PRIMARY KEY,
-    stripe_event_id VARCHAR(255) UNIQUE NOT NULL,
-    event_type VARCHAR(100) NOT NULL,
+    stripe_event_id TEXT UNIQUE NOT NULL,
+    event_type TEXT NOT NULL,
     processed BOOLEAN DEFAULT FALSE,
     processed_at TIMESTAMP,
     data TEXT, -- JSON data from webhook

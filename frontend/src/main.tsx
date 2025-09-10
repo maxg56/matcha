@@ -5,6 +5,7 @@ import './index.css'
 import "leaflet/dist/leaflet.css"
 import { ThemeProvider } from './contexts/ThemeContext'
 import { WebSocketProvider } from './contexts/WebSocketContext'
+import { StripeProvider } from './contexts/StripeContext'
 import InscriptionPage from './pages/InscriptionPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import DiscoverPage from './pages/DiscoverPage';
@@ -19,11 +20,14 @@ import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { RootRedirect } from './components/RootRedirect';
 import { NotificationButton } from './components/Notifications'
 import MapPage  from './pages/Map';
+import SubscriptionPage from './pages/SubscriptionPage';
+import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <WebSocketProvider>
+        <StripeProvider>
         <BrowserRouter>
           <NotificationButton />
             <div className="min-h-screen bg-background text-foreground">
@@ -43,12 +47,15 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="edit-profile" element={<EditProfilePage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="map" element={<MapPage />} />
+                  <Route path="subscription" element={<SubscriptionPage />} />
+                  <Route path="subscription/success" element={<SubscriptionSuccessPage />} />
                 </Route>
                 {/* Default redirect based on authentication status */}
                 <Route path="/" element={<RootRedirect />} />
               </Routes>
             </div>
           </BrowserRouter>
+        </StripeProvider>
       </WebSocketProvider>
     </ThemeProvider>
   </StrictMode>,

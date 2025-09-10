@@ -9,11 +9,11 @@ import (
 // SetupPaiementsRoutes configure les routes pour le service paiements
 func SetupPaiementsRoutes(r *gin.Engine) {
 	// Public endpoints (no auth required)
-	r.POST("/api/stripe/webhook", proxy.ProxyRequest("paiements", "/api/stripe/webhook"))
-	r.GET("/api/stripe/test", proxy.ProxyRequest("paiements", "/api/stripe/test"))
+	r.POST("/api/v1/stripe/webhook", proxy.ProxyRequest("paiements", "/api/stripe/webhook"))
+	r.GET("/api/v1/stripe/test", proxy.ProxyRequest("paiements", "/api/stripe/test"))
 
 	// Protected routes (require authentication)
-	paiements := r.Group("/api/stripe")
+	paiements := r.Group("/api/v1/stripe")
 	paiements.Use(middleware.JWTMiddleware())
 	{
 		paiements.POST("/create-checkout-session", proxy.ProxyRequest("paiements", "/api/stripe/create-checkout-session"))

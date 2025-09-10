@@ -106,7 +106,16 @@ func handleClientWrites(client *Client) {
 		case message, ok := <-client.Send:
 			if !ok {
 				LogConnection(client.ID, "send_channel_closed")
-				client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				// Don't try to write close message if client is already closed
+				if !client.IsClosed() {
+					client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				}
+				return
+			}
+			
+			// Check if client is closed before writing
+			if client.IsClosed() {
+				LogConnection(client.ID, "client_already_closed")
 				return
 			}
 			
@@ -116,6 +125,12 @@ func handleClientWrites(client *Client) {
 			}
 			
 		case <-ticker.C:
+			// Check if client is closed before sending ping
+			if client.IsClosed() {
+				LogConnection(client.ID, "client_closed_during_ping")
+				return
+			}
+			
 			// Send ping to keep connection alive and update last ping
 			client.UpdateLastPing()
 			if err := client.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v76"
@@ -72,8 +73,8 @@ func CreateCheckoutSession(c *gin.Context) {
 		priceID = os.Getenv("STRIPE_PRICE_ANNUEL")
 	}
 
-	if priceID == "" {
-		log.Printf("Price ID not found for plan: %s", req.Plan)
+	if priceID == "" || strings.Contains(priceID, "placeholder") {
+		log.Printf("Price ID not configured for plan: %s (value: %s)", req.Plan, priceID)
 		utils.RespondError(c, http.StatusInternalServerError, "Plan configuration error")
 		return
 	}
