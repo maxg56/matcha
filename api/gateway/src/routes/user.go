@@ -19,6 +19,8 @@ func SetupUserRoutes(r *gin.Engine) {
 	protected := user.Group("")
 	protected.Use(middleware.JWTMiddleware())
 	{
+		// Current user profile (no ID needed, uses JWT token)
+		protected.GET("/profile", proxy.ProxyRequest("user", "/api/v1/users/profile"))
 		protected.POST("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
 		protected.PUT("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
 		protected.DELETE("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))

@@ -35,6 +35,7 @@ func main() {
 		protected := users.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
+			protected.GET("/profile", handlers.GetOwnProfileHandler)
 			protected.POST("/profile/:id", handlers.UpdateProfileHandler)
 			protected.PUT("/profile/:id", handlers.UpdateProfileHandler)
 			protected.DELETE("/profile/:id", handlers.DeleteProfileHandler)

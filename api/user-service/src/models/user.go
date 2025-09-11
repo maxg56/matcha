@@ -182,6 +182,9 @@ func (u *User) ToPublicProfile() *PublicProfile {
 			profile.Images = append(profile.Images, image.URL())
 		}
 	}
+	if len(profile.Images) == 0 {
+		profile.Images = append(profile.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
+	}
 
 	return profile
 }
