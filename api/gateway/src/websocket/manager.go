@@ -6,6 +6,9 @@ import (
 	"log"
 	"sync"
 	"time"
+	"fmt"
+	"net/http"
+	"io/ioutil"
 )
 
 // Manager maintains the set of active clients and broadcasts messages to them
@@ -164,6 +167,24 @@ func (m *Manager) registerClient(client *Client) {
 		close(client.Send)
 		delete(m.clients, client.ID)
 	}
+	// Fetch existing notifications for the user from notify-service
+	url := fmt.Sprintf("http://notify-service:8005/api/v1/notifications/get?user_id=%s", client.ID)
+	
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("Erreur requête : %v", err)
+	}
+	defer resp.Body.Close()
+	
+	
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Erreur lecture réponse : %v", err)
+	}
+	
+	fmt.Println("Réponse FastAPI:", string(body))
+	// endpoint to fetch notifications
 }
 
 // unregisterClient removes a client from the manager
