@@ -9,7 +9,7 @@ interface ProfileModalProps {
     id: string;
     name: string;
     age: number;
-    images: string[];
+    images?: string[];
     bio?: string;
     location?: string;
     occupation?: string;
@@ -23,14 +23,18 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: ProfileModalProps) {
+  const safeImages = profile.images && profile.images.length > 0 ? profile.images : [];
+  const hasImages = safeImages.length > 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!isOpen) return null;
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev < profile.images.length - 1 ? prev + 1 : prev
-    );
+    if (hasImages) {
+      setCurrentImageIndex((prev) => 
+        prev < safeImages.length - 1 ? prev + 1 : prev
+      );
+    }
   };
 
   const prevImage = () => {
@@ -38,7 +42,9 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
   };
 
   const goToImage = (index: number) => {
-    setCurrentImageIndex(index);
+    if (hasImages && index >= 0 && index < safeImages.length) {
+      setCurrentImageIndex(index);
+    }
   };
 
   const handleLike = () => {
@@ -66,14 +72,27 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
 
         {/* Image Container with Carousel */}
         <div className="relative aspect-[3/4] overflow-hidden">
-          <img
-            src={profile.images[currentImageIndex]}
-            alt={`${profile.name} - Photo ${currentImageIndex + 1}`}
-            className="w-full h-full object-cover"
-          />
+          {hasImages ? (
+            <img
+              src={safeImages[Math.min(currentImageIndex, safeImages.length - 1)]}
+              alt={`${profile.name} - Photo ${currentImageIndex + 1}`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <div className="text-center text-gray-500 dark:text-gray-400">
+                <div className="w-24 h-24 mx-auto mb-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                  <span className="text-4xl font-bold">
+                    {(profile.name && profile.name.length > 0 ? profile.name : 'Utilisateur').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-sm">Aucune photo disponible</p>
+              </div>
+            </div>
+          )}
 
           {/* Navigation buttons */}
-          {profile.images.length > 1 && (
+          {hasImages && safeImages.length > 1 && (
             <>
               <button
                 onClick={prevImage}
@@ -89,11 +108,11 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
               
               <button
                 onClick={nextImage}
-                disabled={currentImageIndex === profile.images.length - 1}
+                disabled={currentImageIndex === safeImages.length - 1}
                 className={cn(
                   "absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full",
                   "bg-black/30 text-white flex items-center justify-center transition-opacity",
-                  currentImageIndex === profile.images.length - 1 ? "opacity-30" : "opacity-70 hover:opacity-100"
+                  currentImageIndex === safeImages.length - 1 ? "opacity-30" : "opacity-70 hover:opacity-100"
                 )}
               >
                 <ChevronRight className="h-6 w-6" />
@@ -102,9 +121,9 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
           )}
 
           {/* Image indicators */}
-          {profile.images.length > 1 && (
+          {hasImages && safeImages.length > 1 && (
             <div className="absolute top-4 left-4 right-12 flex gap-1">
-              {profile.images.map((_, index) => (
+              {safeImages.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => goToImage(index)}

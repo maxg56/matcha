@@ -64,6 +64,14 @@ export function useToast() {
     return addToast({ variant: 'info', message, ...options });
   }, [addToast]);
 
+  const toast = useCallback((toast: Omit<Toast, 'id'> & { description?: string }) => {
+    const { description, ...toastData } = toast;
+    return addToast({ 
+      ...toastData,
+      message: description || toastData.message
+    });
+  }, [addToast]);
+
   return {
     toasts: state.toasts,
     addToast,
@@ -72,6 +80,7 @@ export function useToast() {
     success,
     error,
     warning,
-    info
+    info,
+    toast
   };
 }

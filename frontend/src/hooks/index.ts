@@ -7,6 +7,7 @@ export { useTokenRefresh } from './auth/useTokenRefresh';
 export { useDiscoverProfiles } from './api/useDiscoverProfiles';
 export { useEditProfile } from './api/useEditProfile';
 export { useFilters } from './api/useFilters';
+export { useMatches } from './useMatches';
 
 // Registration hooks
 export { useAvailabilityCheck } from './registration/useAvailabilityCheck';
