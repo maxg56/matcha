@@ -87,14 +87,24 @@ func (p *PreferencesService) RecordInteraction(userID, targetUserID int, action 
 		return nil, err
 	}
 
-	// Create interaction record
+	// Create or update interaction record using upsert
 	interaction := models.UserInteraction{
 		UserID:          uint(userID),
 		TargetUserID:    uint(targetUserID),
 		InteractionType: action,
 	}
 
-	if err := conf.DB.Create(&interaction).Error; err != nil {
+	// Use ON CONFLICT clause to handle duplicate interactions
+	dbResult := conf.DB.Exec(`
+		INSERT INTO user_interactions (user_id, target_user_id, interaction_type, created_at)
+		VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT (user_id, target_user_id)
+		DO UPDATE SET 
+			interaction_type = EXCLUDED.interaction_type,
+			created_at = CURRENT_TIMESTAMP
+	`, userID, targetUserID, action)
+
+	if dbResult.Error != nil {
 		return nil, errors.New("failed to record interaction")
 	}
 
