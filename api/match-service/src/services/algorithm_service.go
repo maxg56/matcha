@@ -75,6 +75,25 @@ func (a *AlgorithmService) RunMatchingAlgorithm(request *MatchingRequest) ([]Mat
 	return results, nil
 }
 
+// GetMatchingCandidates executes the specified matching algorithm and returns only IDs with scores
+func (a *AlgorithmService) GetMatchingCandidates(request *MatchingRequest) ([]MatchCandidate, error) {
+	// Validate request
+	if err := a.validateMatchingRequest(request); err != nil {
+		return nil, err
+	}
+
+	// Check cache first for cacheable algorithms (we could implement separate caching for candidates)
+	// For now, we skip caching to keep it simple
+
+	// Execute the appropriate algorithm
+	candidates, err := a.executeCandidateAlgorithm(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return candidates, nil
+}
+
 // executeAlgorithm routes to the appropriate matching algorithm
 func (a *AlgorithmService) executeAlgorithm(request *MatchingRequest) ([]MatchResult, error) {
 	switch request.Algorithm {
@@ -113,6 +132,29 @@ func (a *AlgorithmService) executeAlgorithm(request *MatchingRequest) ([]MatchRe
 	default:
 		return nil, fmt.Errorf("unknown algorithm type: %s", request.Algorithm)
 	}
+}
+
+// executeCandidateAlgorithm routes to the appropriate matching algorithm and returns only candidates
+func (a *AlgorithmService) executeCandidateAlgorithm(request *MatchingRequest) ([]MatchCandidate, error) {
+	// For now, we'll convert full results to candidates
+	// This is a temporary solution until we implement dedicated candidate methods in each service
+	results, err := a.executeAlgorithm(request)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert MatchResult to MatchCandidate
+	candidates := make([]MatchCandidate, len(results))
+	for i, result := range results {
+		candidates[i] = MatchCandidate{
+			ID:                 result.ID,
+			AlgorithmType:      result.AlgorithmType,
+			CompatibilityScore: result.CompatibilityScore,
+			Distance:           result.Distance,
+		}
+	}
+
+	return candidates, nil
 }
 
 // validateMatchingRequest validates the matching request parameters
