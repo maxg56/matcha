@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useAuthStore } from '@/stores/authStore';
 
 export interface Notification {
   id: string;
@@ -45,16 +46,18 @@ export const useNotificationStore = create<NotificationStore>()(
           read: false,
           ...notificationData,
         };
-
-        set((state) => {
-          const updated = [...state.notifications, newNotification];
-          const unreadCount = updated.filter(n => !n.read).length;
-          return {
-            notifications: updated,
-            unreadCount,
-            error: null,
-          };
-        });
+        const { user } = useAuthStore.getState();
+        if (notificationData.userId && user && notificationData.userId === user.id) {
+          set((state) => {
+            const updated = [...state.notifications, newNotification];
+            const unreadCount = updated.filter(n => !n.read).length;
+            return {
+              notifications: updated,
+              unreadCount,
+              error: null,
+            };
+          });
+        }
       },
 
       markAsRead: (id) => {

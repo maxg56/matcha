@@ -109,9 +109,12 @@ async def send_notification(payload: dict):
       "message": "Tu as reçu un like ❤️"
     }
     """
-    redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+    try:
+        redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
-    await redis.publish("notifications", json.dumps(payload))
-    await redis.close()
-
+        await redis.publish("notifications", json.dumps(payload))
+        await redis.close()
+    except Exception as e:
+        print(f"❌ Failed to publish notification to Redis: {e}")
+        return {"status": "error", "message": "Failed to publish notification"}
     return {"status": "sent", "data": payload}
