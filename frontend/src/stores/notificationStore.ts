@@ -47,7 +47,7 @@ export const useNotificationStore = create<NotificationStore>()(
         };
 
         set((state) => {
-          const updated = [newNotification, ...state.notifications];
+          const updated = [...state.notifications, newNotification];
           const unreadCount = updated.filter(n => !n.read).length;
           return {
             notifications: updated,
