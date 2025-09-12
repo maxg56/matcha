@@ -8,7 +8,7 @@ import { useMatches, useFilters } from '@/hooks';
 import { useToast } from '@/hooks/ui/useToast';
 
 export default function DiscoverPage() {
-  const { currentProfile, actions, loading, error } = useMatches();
+  const { currentProfile, currentCandidate, actions, loading, error, isProfileLoading } = useMatches();
   const { showFilters, onOpenFilters, onCloseFilters, onFiltersChange } = useFilters();
   const { toast } = useToast();
 
@@ -164,18 +164,49 @@ export default function DiscoverPage() {
       <div className="flex-1 p-4 overflow-hidden bg-gradient-to-br 
                       from-purple-50 via-violet-50 to-indigo-50 
                       dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        {currentProfile ? (
-          <ProfileCard
-            profile={currentProfile}
-            onLike={handleLike}
-            onPass={handlePass}
-            onSuperLike={() => {}} // Pas implémenté dans l'API
-            onBoost={() => {}} // Pas implémenté dans l'API
-            onMessage={() => {}} // À implémenter avec chat-service
-            onReport={handleBlock} // Utilise block pour l'instant
-          />
+        {currentCandidate ? (
+          // Affichage conditionnel : profil ou loading
+          currentProfile ? (
+            <ProfileCard
+              profile={currentProfile}
+              candidate={currentCandidate}
+              onLike={handleLike}
+              onPass={handlePass}
+              onSuperLike={() => {}} // Pas implémenté dans l'API
+              onBoost={() => {}} // Pas implémenté dans l'API
+              onMessage={() => {}} // À implémenter avec chat-service
+              onReport={handleBlock} // Utilise block pour l'instant
+            />
+          ) : isProfileLoading ? (
+            // Skeleton loader pour le profil en cours de chargement
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">Chargement du profil...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                  Score de compatibilité : {currentCandidate.compatibility_score ? (currentCandidate.compatibility_score * 100).toFixed(0) + '%' : 'N/A'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Erreur de chargement du profil
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-red-600 dark:text-red-400 mb-4">Erreur lors du chargement du profil</p>
+                <button
+                  onClick={handlePass}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Passer au suivant
+                </button>
+              </div>
+            </div>
+          )
         ) : (
-          <NoMoreProfiles onOpenFilters={onOpenFilters} />
+          <NoMoreProfiles 
+            onOpenFilters={onOpenFilters}
+            onRefresh={actions.refresh}
+          />
         )}
       </div>
     </div>

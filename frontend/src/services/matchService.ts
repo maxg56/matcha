@@ -15,16 +15,39 @@ export interface UserProfile {
   id: number;
   username: string;
   first_name: string;
-  last_name: string;
   age: number;
+  height?: number;
+  alcohol_consumption?: string;
+  smoking?: string;
+  cannabis?: string;
+  drugs?: string;
+  pets?: string;
+  social_activity_level?: string;
+  sport_activity?: string;
+  education_level?: string;
+  personal_opinion?: string;
+  bio: string;
+  current_city?: string;
+  job?: string;
+  religion?: string;
+  relationship_type: string;
+  children_status?: string;
+  zodiac_sign?: string;
+  hair_color?: string;
+  skin_color?: string;
+  eye_color?: string;
+  fame: number;
   gender: string;
-  bio?: string;
-  profile_photos?: string[];
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-  interests?: string[];
+  political_view?: string;
+  tags?: string[];
+  images?: string[];
+  created_at: string;
+  
+  // Propriétés calculées/héritées pour compatibilité
+  profile_photos?: string[]; // alias pour images
+  interests?: string[]; // alias pour tags
+  location?: string; // sera mappé depuis current_city
+  occupation?: string; // alias pour job
 }
 
 export interface MatchingAlgorithmParams {
@@ -39,6 +62,24 @@ export interface MatchesResponse {
   matches: Match[];
   count: number;
   user_id: number;
+}
+
+export interface MatchCandidate {
+  id: number;
+  algorithm_type: string;
+  compatibility_score?: number;
+  distance?: number;
+}
+
+export interface CandidatesResponse {
+  candidates: MatchCandidate[];
+  count: number;
+  algorithm_type: string;
+  parameters: {
+    limit: number;
+    max_distance?: number;
+    age_range?: { min: number; max: number };
+  };
 }
 
 export interface AlgorithmResponse {
@@ -116,9 +157,9 @@ class MatchService {
   }
 
   /**
-   * Lance l'algorithme de matching pour trouver de nouveaux profils
+   * Lance l'algorithme de matching pour récupérer les candidats (IDs seulement)
    */
-  async getMatchingAlgorithm(params: MatchingAlgorithmParams = {}): Promise<AlgorithmResponse> {
+  async getMatchingCandidates(params: MatchingAlgorithmParams = {}): Promise<CandidatesResponse> {
     return this.withRetry(async () => {
       const queryParams = new URLSearchParams();
       
@@ -129,8 +170,48 @@ class MatchService {
       if (params.algorithm_type) queryParams.append('algorithm_type', params.algorithm_type);
 
       const endpoint = `${this.baseEndpoint}/algorithm${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      return apiService.get<CandidatesResponse>(endpoint);
+    });
+  }
+
+  /**
+   * Lance l'algorithme de matching pour trouver de nouveaux profils (comportement legacy)
+   */
+  async getMatchingAlgorithm(params: MatchingAlgorithmParams = {}): Promise<AlgorithmResponse> {
+    return this.withRetry(async () => {
+      const queryParams = new URLSearchParams();
+      
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.max_distance) queryParams.append('max_distance', params.max_distance.toString());
+      if (params.age_min) queryParams.append('age_min', params.age_min.toString());
+      if (params.age_max) queryParams.append('age_max', params.age_max.toString());
+      if (params.algorithm_type) queryParams.append('algorithm_type', params.algorithm_type);
+      
+      // Forcer le mode profils complets
+      queryParams.append('full_profiles', 'true');
+
+      const endpoint = `${this.baseEndpoint}/algorithm${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       return apiService.get<AlgorithmResponse>(endpoint);
     });
+  }
+
+  /**
+   * Récupère un profil utilisateur par ID
+   */
+  async getUserProfile(userId: number): Promise<UserProfile> {
+    return apiService.get<{profile: UserProfile}>(`/api/v1/users/profile/${userId}`)
+      .then(response => {
+        const profile = response.profile;
+        
+        // Ajouter les alias pour compatibilité avec les composants existants
+        return {
+          ...profile,
+          profile_photos: profile.images,
+          interests: profile.tags,
+          location: profile.current_city,
+          occupation: profile.job,
+        };
+      });
   }
 
   /**

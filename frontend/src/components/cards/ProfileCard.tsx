@@ -20,6 +20,12 @@ interface ProfileCardProps {
     interests?: string[];
     distance?: number;
   };
+  candidate?: {
+    id: number;
+    algorithm_type: string;
+    compatibility_score?: number;
+    distance?: number;
+  };
   onLike?: () => void;
   onPass?: () => void;
   onSuperLike?: () => void;
@@ -29,7 +35,7 @@ interface ProfileCardProps {
   className?: string;
 }
 
-export function ProfileCard({ profile, onLike, onPass, onSuperLike, onBoost, onMessage, onReport, className }: ProfileCardProps) {
+export function ProfileCard({ profile, candidate, onLike, onPass, onSuperLike, onBoost, onMessage, onReport, className }: ProfileCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const displayName = getDisplayName(profile);
@@ -126,15 +132,36 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, onBoost, onM
         
         {/* Name overlay */}
         <div className="absolute bottom-4 left-4 right-4 text-white">
-          <h3 className="text-2xl font-bold">
-            {displayName}, {profile.age}
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold">
+              {displayName}, {profile.age}
+            </h3>
+            {candidate?.compatibility_score && (
+              <div className="flex items-center gap-1 bg-purple-600 px-2 py-1 rounded-full">
+                <Star className="h-3 w-3" />
+                <span className="text-xs font-medium">
+                  {(candidate.compatibility_score * 100).toFixed(0)}%
+                </span>
+              </div>
+            )}
+          </div>
           {profile.location && (
             <div className="flex items-center gap-1 text-white/90">
               <MapPin className="h-4 w-4" />
               <span className="text-sm">
                 {profile.location}
-                {profile.distance && ` • ${profile.distance}km`}
+                {(candidate?.distance || profile.distance) && ` • ${candidate?.distance || profile.distance}km`}
+              </span>
+            </div>
+          )}
+          {candidate?.algorithm_type && (
+            <div className="flex items-center gap-1 text-white/70 mt-1">
+              <Zap className="h-3 w-3" />
+              <span className="text-xs">
+                {candidate.algorithm_type === 'vector_based' ? 'Match intelligent' : 
+                 candidate.algorithm_type === 'proximity' ? 'À proximité' : 
+                 candidate.algorithm_type === 'random' ? 'Découverte' : 
+                 candidate.algorithm_type}
               </span>
             </div>
           )}
@@ -143,13 +170,36 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, onBoost, onM
 
       {/* Profile details section below image */}
       <div className="p-6 space-y-4">
-        {/* Occupation */}
-        {profile.occupation && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Briefcase className="h-4 w-4" />
-            <span className="text-sm font-medium">{profile.occupation}</span>
-          </div>
-        )}
+        {/* Basic Info Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {profile.height && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="text-xs">📏</span>
+              <span className="text-sm">{profile.height}cm</span>
+            </div>
+          )}
+          
+          {profile.occupation && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Briefcase className="h-4 w-4" />
+              <span className="text-sm">{profile.occupation}</span>
+            </div>
+          )}
+          
+          {profile.education_level && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="text-xs">🎓</span>
+              <span className="text-sm">{profile.education_level}</span>
+            </div>
+          )}
+          
+          {profile.relationship_type && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="text-xs">💕</span>
+              <span className="text-sm">{profile.relationship_type}</span>
+            </div>
+          )}
+        </div>
 
         {/* Bio */}
         {profile.bio && (
@@ -157,25 +207,49 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, onBoost, onM
             {profile.bio}
           </p>
         )}
+
+        {/* Lifestyle Info */}
+        <div className="flex flex-wrap gap-2">
+          {profile.smoking && (
+            <Badge variant="outline" className="text-xs">
+              🚬 {profile.smoking}
+            </Badge>
+          )}
+          {profile.alcohol_consumption && (
+            <Badge variant="outline" className="text-xs">
+              🍷 {profile.alcohol_consumption}
+            </Badge>
+          )}
+          {profile.sport_activity && (
+            <Badge variant="outline" className="text-xs">
+              🏃 {profile.sport_activity}
+            </Badge>
+          )}
+          {profile.pets && (
+            <Badge variant="outline" className="text-xs">
+              🐕 {profile.pets}
+            </Badge>
+          )}
+        </div>
         
-        {/* Interests */}
+        {/* Interests/Tags */}
         {profile.interests && profile.interests.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {profile.interests.slice(0, 4).map((interest) => (
+            {profile.interests.slice(0, 6).map((interest) => (
               <Badge
                 key={interest}
-                variant="outline"
+                variant="secondary"
                 className="text-xs"
               >
                 {interest}
               </Badge>
             ))}
-            {profile.interests.length > 4 && (
+            {profile.interests.length > 6 && (
               <Badge
                 variant="outline"
                 className="text-xs"
               >
-                +{profile.interests.length - 4}
+                +{profile.interests.length - 6}
               </Badge>
             )}
           </div>
