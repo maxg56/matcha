@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { apiService , type ApiResponse } from '@/services/api';
+import { apiService } from '@/services/api';
 import { useAuthStore } from './authStore';
 
 interface UserProfile {
@@ -31,6 +31,9 @@ interface UserState {
   profile: UserProfile | null;
   isLoading: boolean;
   error: string | null;
+}
+interface Userdata {
+  profile: UserProfile;
 }
 
 interface UserActions {
@@ -64,11 +67,10 @@ export const useUserStore = create<UserStore>()(
         try {
           
           const endpoint = userId ? `/api/v1/users/profile/${userId}` : '/api/v1/users/profile';
-          const data = await apiService.get<ApiResponse<UserProfile>>(endpoint);
-          console.log('Fetched profile:', data.profile.id);
-          const p = data?.profile ;
+          const data = await apiService.get<Userdata>(endpoint);
+          const profile = data?.profile || null;
           set({
-            profile: p,
+            profile,
             isLoading: false,
             error: null,
           });
