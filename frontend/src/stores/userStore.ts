@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { apiService } from '@/services/api';
+import { apiService , type ApiResponse } from '@/services/api';
 import { useAuthStore } from './authStore';
 
 interface UserProfile {
@@ -64,10 +64,11 @@ export const useUserStore = create<UserStore>()(
         try {
           
           const endpoint = userId ? `/api/v1/users/profile/${userId}` : '/api/v1/users/profile';
-          const profile = await apiService.get<UserProfile>(endpoint);
-          console.log('Fetched profile:', profile);
+          const data = await apiService.get<ApiResponse<UserProfile>>(endpoint);
+          console.log('Fetched profile:', data.profile.id);
+          const p = data?.profile ;
           set({
-            profile,
+            profile: p,
             isLoading: false,
             error: null,
           });
