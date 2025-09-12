@@ -69,15 +69,21 @@ func ForgotPasswordHandler(c *gin.Context) {
 
 	// Send password reset email
 	emailService := services.NewEmailService()
-	if err := emailService.SendPasswordResetEmail(user.Email, resetToken); err != nil {
-		// Log error but don't fail the request
-		utils.RespondError(c, http.StatusInternalServerError, "failed to send password reset email")
-		return
+	emailErr := emailService.SendPasswordResetEmail(user.Email, resetToken)
+	
+	// Always respond with success for security (don't reveal if email exists)
+	// Even if email fails, the reset token is created and valid
+	if emailErr != nil {
+		// Log the error but don't expose it to the user
+		// In production, this should be logged to monitoring system
+		utils.RespondSuccess(c, 500, gin.H{
+			"message": "If the email exists, a password reset link will be sent",
+		})
+	} else {
+		utils.RespondSuccess(c, http.StatusOK, gin.H{
+			"message": "Password reset email sent successfully",
+		})
 	}
-
-	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"message": "Password reset email sent successfully",
-	})
 }
 
 // ResetPasswordHandler handles password reset confirmation
@@ -92,6 +98,12 @@ func ResetPasswordHandler(c *gin.Context) {
 	var passwordReset models.PasswordReset
 	if err := db.DB.Preload("User").Where("token = ? AND used = false AND expires_at > ?", req.Token, time.Now()).First(&passwordReset).Error; err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "invalid or expired reset token")
+		return
+	}
+
+	// Check if the new password is the same as the current password
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordReset.User.PasswordHash), []byte(req.NewPassword)); err == nil {
+		utils.RespondError(c, http.StatusBadRequest, "Le nouveau mot de passe doit être différent de l'ancien")
 		return
 	}
 

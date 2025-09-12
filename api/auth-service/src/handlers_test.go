@@ -681,6 +681,14 @@ func TestResetPasswordHandler(t *testing.T) {
 			},
 			statusCode: http.StatusBadRequest,
 		},
+		{
+			name: "same password as current",
+			payload: map[string]interface{}{
+				"token":        "valid-token-123",
+				"new_password": "password", // Same as the user's current password
+			},
+			statusCode: http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {
