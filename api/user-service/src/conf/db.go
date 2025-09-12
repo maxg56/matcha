@@ -51,6 +51,9 @@ func autoMigrate() error {
 		&models.Tag{},
 		&models.UserTag{},
 		&models.Image{},
+		&models.UserPreference{},
+		&models.UserReport{},
+		&models.ProfileView{},
 	)
 }
 
