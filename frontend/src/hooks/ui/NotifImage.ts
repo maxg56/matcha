@@ -55,6 +55,7 @@ export function Notification() {
                 type: notifType as 'like' | 'match' | 'message' | 'visit' | 'unlike',
                 message: notifData.message || 'New notification',
                 userId: notifData.to_user_id || notifData.from_user_id,
+                db: notifData.db || false,
             });
             setSeen(false); // Marquer comme non vu
         } else if (data.type === 'notification_event') {
