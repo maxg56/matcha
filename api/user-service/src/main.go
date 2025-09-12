@@ -30,15 +30,43 @@ func main() {
 	{
 		// Public routes
 		users.GET("/profile/:id", handlers.GetProfileHandler)
+		users.GET("/:id/images", handlers.GetUserImagesHandler)
 
 		// Protected routes
 		protected := users.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
+			// Profile management
 			protected.GET("/profile", handlers.GetOwnProfileHandler)
 			protected.POST("/profile/:id", handlers.UpdateProfileHandler)
 			protected.PUT("/profile/:id", handlers.UpdateProfileHandler)
 			protected.DELETE("/profile/:id", handlers.DeleteProfileHandler)
+
+			// Location management
+			protected.PUT("/:id/location", handlers.UpdateLocationHandler)
+			protected.GET("/nearby", handlers.GetNearbyUsersHandler)
+
+			// Search functionality
+			protected.GET("/search", handlers.SearchUsersHandler)
+
+			// Matching preferences
+			protected.GET("/:id/preferences", handlers.GetPreferencesHandler)
+			protected.PUT("/:id/preferences", handlers.UpdatePreferencesHandler)
+
+			// User reporting
+			protected.POST("/reports", handlers.CreateReportHandler)
+			protected.GET("/reports", handlers.GetUserReportsHandler)
+
+			// Profile view tracking
+			protected.POST("/profile/:id/view", handlers.TrackProfileViewHandler)
+			protected.GET("/profile/viewers", handlers.GetProfileViewersHandler)
+			protected.GET("/profile/views/stats", handlers.GetProfileViewStatsHandler)
+			protected.GET("/profile/views/history", handlers.GetMyProfileViewsHandler)
+
+			// Media management
+			protected.PUT("/:id/images/order", handlers.UpdateImageOrderHandler)
+			protected.DELETE("/:id/images/:image_id", handlers.DeleteImageHandler)
+			protected.PUT("/:id/images/:image_id", handlers.UpdateImageDetailsHandler)
 		}
 	}
 

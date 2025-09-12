@@ -12,18 +12,46 @@ func SetupUserRoutes(r *gin.Engine) {
 
 	// Public routes
 	user.GET("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
+	user.GET("/:id/images", proxy.ProxyRequest("user", "/api/v1/users/:id/images"))
+	
 	// Health check endpoint
 	user.GET("/", proxy.ProxyRequest("user", "/health"))
 	user.GET("/health", proxy.ProxyRequest("user", "/health"))
+	
 	// Protected routes (authentication required)
 	protected := user.Group("")
 	protected.Use(middleware.JWTMiddleware())
 	{
-		// Current user profile (no ID needed, uses JWT token)
+		// Profile management
 		protected.GET("/profile", proxy.ProxyRequest("user", "/api/v1/users/profile"))
 		protected.POST("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
 		protected.PUT("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
 		protected.DELETE("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
-	}
 
+		// Location management
+		protected.PUT("/:id/location", proxy.ProxyRequest("user", "/api/v1/users/:id/location"))
+		protected.GET("/nearby", proxy.ProxyRequest("user", "/api/v1/users/nearby"))
+
+		// Search functionality
+		protected.GET("/search", proxy.ProxyRequest("user", "/api/v1/users/search"))
+
+		// Matching preferences
+		protected.GET("/:id/preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/preferences"))
+		protected.PUT("/:id/preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/preferences"))
+
+		// User reporting
+		protected.POST("/reports", proxy.ProxyRequest("user", "/api/v1/users/reports"))
+		protected.GET("/reports", proxy.ProxyRequest("user", "/api/v1/users/reports"))
+
+		// Profile view tracking
+		protected.POST("/profile/:id/view", proxy.ProxyRequest("user", "/api/v1/users/profile/:id/view"))
+		protected.GET("/profile/viewers", proxy.ProxyRequest("user", "/api/v1/users/profile/viewers"))
+		protected.GET("/profile/views/stats", proxy.ProxyRequest("user", "/api/v1/users/profile/views/stats"))
+		protected.GET("/profile/views/history", proxy.ProxyRequest("user", "/api/v1/users/profile/views/history"))
+
+		// Media management
+		protected.PUT("/:id/images/order", proxy.ProxyRequest("user", "/api/v1/users/:id/images/order"))
+		protected.DELETE("/:id/images/:image_id", proxy.ProxyRequest("user", "/api/v1/users/:id/images/:image_id"))
+		protected.PUT("/:id/images/:image_id", proxy.ProxyRequest("user", "/api/v1/users/:id/images/:image_id"))
+	}
 }
