@@ -42,7 +42,8 @@ async def get_notifications(user_id: str):
             notif = Notification(
                 notif_type=row[2],
                 message=row[3],
-                to_user_id=row[1]
+                to_user_id=row[1],
+                _db=True
             )
             if manager.gateway_connection:
                 try:

@@ -9,6 +9,7 @@ export interface Notification {
   timestamp: number;
   read: boolean;
   userId?: number;
+  db?: boolean;
 }
 
 interface NotificationState {
@@ -46,21 +47,32 @@ export const useNotificationStore = create<NotificationStore>()(
           read: false,
           ...notificationData,
         };
-        const { user } = useAuthStore.getState();
-        if (notificationData.userId && user && notificationData.userId === user.id) {
-          set((state) => {
-            const updated = [...state.notifications, newNotification];
-            const unreadCount = updated.filter(n => !n.read).length;
-            return {
-              notifications: updated,
-              unreadCount,
-              error: null,
-            };
-          });
-        }
-      },
 
-      markAsRead: (id) => {
+        const oldNotifications = useNotificationStore.getState().notifications;
+        const { user } = useAuthStore.getState();
+
+        if (notificationData.userId && user && notificationData.userId === user.id) {
+          
+          if (oldNotifications[oldNotifications.length - 1]?.timestamp + 100 < newNotification.timestamp || newNotification.db ||
+            oldNotifications.length === 0
+          ) {
+            set((state) => {
+              const updated = [...state.notifications, newNotification];
+              console.log("Updated notifications:", updated);
+              const unreadCount = updated.filter(n => !n.read).length;
+              return {
+                notifications: updated,
+                unreadCount,
+                error: null,
+              };
+            });
+          } else {
+            console.log("Notification ignored due to timestamp proximity", oldNotifications[oldNotifications.length - 1]?.timestamp, newNotification.timestamp);
+          }
+        } else {
+          console.log("Notification ignored due to wrong id", user?.id, notificationData.userId);
+        }
+      },arkAsRead: (id) => {
         set((state) => {
           const updated = state.notifications.map(notification =>
             notification.id === id ? { ...notification, read: true } : notification
