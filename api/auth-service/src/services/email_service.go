@@ -84,6 +84,60 @@ func (es *EmailService) SendVerificationEmail(toEmail, verificationCode string) 
 	return es.sendEmail(toEmail, subject, body)
 }
 
+// SendPasswordResetEmail sends a password reset email
+func (es *EmailService) SendPasswordResetEmail(toEmail, resetToken string) error {
+	// Skip sending email if SMTP is not configured (development mode)
+	if es.SMTPUsername == "" || es.SMTPPassword == "" {
+		fmt.Printf("🔑 Password reset token for %s: %s\n", toEmail, resetToken)
+		fmt.Printf("   (SMTP not configured - email not sent)\n")
+		return nil
+	}
+
+	// Email content
+	subject := "Réinitialisation de votre mot de passe - Matcha"
+	body := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Réinitialisation mot de passe</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 30px; text-align: center; border-radius: 10px;">
+        <h1 style="color: white; margin: 0;">💖 Matcha</h1>
+        <p style="color: white; margin: 10px 0 0 0;">Réinitialisation de mot de passe</p>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #333; margin-top: 0;">Réinitialiser votre mot de passe</h2>
+        <p style="color: #666; line-height: 1.6;">
+            Vous avez demandé une réinitialisation de mot de passe. Utilisez le token suivant pour créer un nouveau mot de passe :
+        </p>
+        
+        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+            <h3 style="margin: 0; color: #667eea;">Token de réinitialisation</h3>
+            <div style="font-size: 24px; font-weight: bold; color: #333; word-break: break-all; margin: 10px 0;">
+                %s
+            </div>
+        </div>
+        
+        <p style="color: #666; line-height: 1.6;">
+            Ce token est valide pendant <strong>1 heure</strong>. Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.
+        </p>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <p style="color: #999; font-size: 14px; text-align: center; margin: 0;">
+                Cet email a été envoyé par Matcha. Si vous avez des questions, contactez notre support.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+	`, resetToken)
+
+	return es.sendEmail(toEmail, subject, body)
+}
+
 // sendEmail sends an email using SMTP
 func (es *EmailService) sendEmail(to, subject, body string) error {
 	// Set up authentication information
