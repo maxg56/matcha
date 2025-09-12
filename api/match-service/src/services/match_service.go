@@ -1,6 +1,6 @@
 package services
 
-// MatchResult represents the result of a matching operation
+// MatchResult represents the result of a matching operation with full profile data
 type MatchResult struct {
 	ID                 int      `json:"id"`
 	Username           string   `json:"username"`
@@ -8,6 +8,14 @@ type MatchResult struct {
 	Age                int      `json:"age"`
 	Bio                string   `json:"bio"`
 	Fame               int      `json:"fame"`
+	AlgorithmType      string   `json:"algorithm_type"`
+	CompatibilityScore *float64 `json:"compatibility_score,omitempty"`
+	Distance           *float64 `json:"distance,omitempty"`
+}
+
+// MatchCandidate represents a simplified matching result with only essential data
+type MatchCandidate struct {
+	ID                 int      `json:"id"`
 	AlgorithmType      string   `json:"algorithm_type"`
 	CompatibilityScore *float64 `json:"compatibility_score,omitempty"`
 	Distance           *float64 `json:"distance,omitempty"`
@@ -55,10 +63,16 @@ func (s *MatchService) BlockUser(userID, targetUserID int) (map[string]interface
 	return s.interactionService.BlockUser(userID, targetUserID)
 }
 
-// RunMatchingAlgorithm executes the specified matching algorithm
+// RunMatchingAlgorithm executes the specified matching algorithm and returns full profile data
 func (s *MatchService) RunMatchingAlgorithm(userID int, algorithmType string, limit int, maxDistance *int, ageRange *AgeRange) ([]MatchResult, error) {
 	request := BuildMatchingRequest(userID, algorithmType, limit, maxDistance, ageRange)
 	return s.algorithmService.RunMatchingAlgorithm(request)
+}
+
+// GetMatchingCandidates executes the specified matching algorithm and returns only user IDs with scores
+func (s *MatchService) GetMatchingCandidates(userID int, algorithmType string, limit int, maxDistance *int, ageRange *AgeRange) ([]MatchCandidate, error) {
+	request := BuildMatchingRequest(userID, algorithmType, limit, maxDistance, ageRange)
+	return s.algorithmService.GetMatchingCandidates(request)
 }
 
 // GetUserInteractions retrieves all interactions for a user

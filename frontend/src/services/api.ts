@@ -81,7 +81,21 @@ class ApiService {
 
       if (!response.ok) {
         console.error('API error response:', data);
-        const error: ApiError = new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+        let errorMessage = data.error || `HTTP ${response.status}: ${response.statusText}`;
+        
+        // Messages d'erreur plus explicites
+        if (response.status === 401) {
+          errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
+        } else if (response.status === 429) {
+          errorMessage = 'Trop de requêtes. Veuillez patienter quelques secondes avant de réessayer.';
+        } else if (response.status === 500 && data.error && 
+                  (data.error.includes('duplicate key') || 
+                   data.error.includes('unique constraint') ||
+                   data.error.includes('SQLSTATE 23505'))) {
+          errorMessage = 'duplicate_interaction';
+        }
+        
+        const error: ApiError = new Error(errorMessage);
         error.status = response.status;
         throw error;
       }

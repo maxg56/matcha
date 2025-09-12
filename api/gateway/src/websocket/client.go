@@ -87,8 +87,19 @@ func (c *Client) Close() {
 	}
 	
 	c.closed = true
+	
+	// Close the Send channel safely
+	defer func() {
+		if r := recover(); r != nil {
+			// Channel was already closed, ignore the panic
+		}
+	}()
 	close(c.Send)
-	c.Conn.Close()
+	
+	// Close the WebSocket connection
+	if c.Conn != nil {
+		c.Conn.Close()
+	}
 }
 
 // IsClosed returns whether the client is closed

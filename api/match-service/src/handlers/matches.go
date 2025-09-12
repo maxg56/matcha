@@ -145,22 +145,47 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 	algorithmType := c.DefaultQuery("algorithm_type", "vector_based")
 
 	matchService := services.NewMatchService()
-	matches, err := matchService.RunMatchingAlgorithm(userID, algorithmType, limit, maxDistance, ageRange)
-	if err != nil {
-		utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	
+	// Check if client wants only candidate IDs (default behavior now)
+	fullProfiles := c.DefaultQuery("full_profiles", "false") == "true"
+	
+	if fullProfiles {
+		// Return full profile data (legacy behavior)
+		matches, err := matchService.RunMatchingAlgorithm(userID, algorithmType, limit, maxDistance, ageRange)
+		if err != nil {
+			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"matches":        matches,
-		"count":          len(matches),
-		"algorithm_type": algorithmType,
-		"parameters": gin.H{
-			"limit":        limit,
-			"max_distance": maxDistance,
-			"age_range":    ageRange,
-		},
-	})
+		utils.RespondSuccess(c, http.StatusOK, gin.H{
+			"matches":        matches,
+			"count":          len(matches),
+			"algorithm_type": algorithmType,
+			"parameters": gin.H{
+				"limit":        limit,
+				"max_distance": maxDistance,
+				"age_range":    ageRange,
+			},
+		})
+	} else {
+		// Return only candidate IDs with scores (new default behavior)
+		candidates, err := matchService.GetMatchingCandidates(userID, algorithmType, limit, maxDistance, ageRange)
+		if err != nil {
+			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		utils.RespondSuccess(c, http.StatusOK, gin.H{
+			"candidates":     candidates,
+			"count":          len(candidates),
+			"algorithm_type": algorithmType,
+			"parameters": gin.H{
+				"limit":        limit,
+				"max_distance": maxDistance,
+				"age_range":    ageRange,
+			},
+		})
+	}
 }
 
 // GetUserPreferencesHandler returns the learned preferences for a user

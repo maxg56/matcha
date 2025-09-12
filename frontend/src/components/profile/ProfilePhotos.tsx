@@ -1,31 +1,57 @@
 import { useState } from 'react';
 
 interface ProfilePhotosProps {
-  images: string[];
+  images?: string[];
   userName: string;
 }
 
-export function ProfilePhotos({ images, userName }: ProfilePhotosProps) {
+export function ProfilePhotos({ images = [], userName }: ProfilePhotosProps) {
+  const safeImages = images && images.length > 0 ? images : [];
+  const hasImages = safeImages.length > 0;
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const prevImage = () => {
-    setActiveImageIndex((i) => (i === 0 ? images.length - 1 : i - 1));
+    if (hasImages) {
+      setActiveImageIndex((i) => (i === 0 ? safeImages.length - 1 : i - 1));
+    }
   };
 
   const nextImage = () => {
-    setActiveImageIndex((i) => (i === images.length - 1 ? 0 : i + 1));
+    if (hasImages) {
+      setActiveImageIndex((i) => (i === safeImages.length - 1 ? 0 : i + 1));
+    }
   };
+
+  // Si pas d'images, afficher un placeholder
+  if (!hasImages) {
+    return (
+      <div className="relative mx-auto max-w-sm md:max-w-md lg:max-w-lg">
+        <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+          <div className="text-center text-gray-500 dark:text-gray-400">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-3xl font-bold">
+                {(userName && userName.length > 0 ? userName : 'Utilisateur').charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <p className="text-sm">Aucune photo</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const safeIndex = Math.min(activeImageIndex, safeImages.length - 1);
 
   return (
     <div className="relative mx-auto max-w-sm md:max-w-md lg:max-w-lg">
       <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-gray-50 dark:bg-gray-700 cursor-pointer group shadow-lg border border-gray-200 dark:border-gray-600">
         <img
-          src={images[activeImageIndex]}
+          src={safeImages[safeIndex]}
           alt={userName}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
         />
 
-        {images.length > 1 && (
+        {safeImages.length > 1 && (
           <>
             {/* Previous Button */}
             <button
@@ -45,7 +71,7 @@ export function ProfilePhotos({ images, userName }: ProfilePhotosProps) {
             </button>
             {/* Dots */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-              {images.map((_, index) => (
+              {safeImages.map((_, index) => (
                 <button
                   key={index}
                   onClick={(e) => {
@@ -53,7 +79,7 @@ export function ProfilePhotos({ images, userName }: ProfilePhotosProps) {
                     setActiveImageIndex(index);
                   }}
                   className={`w-3 h-3 rounded-full transition-all ${
-                    index === activeImageIndex 
+                    index === safeIndex 
                       ? 'bg-white shadow-lg' 
                       : 'bg-white/50'
                   }`}
