@@ -1,10 +1,13 @@
 package services
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
+	"html/template"
 	"net/smtp"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -30,6 +33,11 @@ func NewEmailService() *EmailService {
 	}
 }
 
+// VerificationEmailData contains data for verification email template
+type VerificationEmailData struct {
+	VerificationCode string
+}
+
 // SendVerificationEmail sends a verification code email
 func (es *EmailService) SendVerificationEmail(toEmail, verificationCode string) error {
 	// Skip sending email if SMTP is not configured (development mode)
@@ -39,103 +47,67 @@ func (es *EmailService) SendVerificationEmail(toEmail, verificationCode string) 
 		return nil
 	}
 
-	// Email content
-	subject := "Vérification de votre email - Matcha"
-	body := fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Vérification Email</title>
-</head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 30px; text-align: center; border-radius: 10px;">
-        <h1 style="color: white; margin: 0;">💖 Matcha</h1>
-        <p style="color: white; margin: 10px 0 0 0;">Vérification de votre compte</p>
-    </div>
-    
-    <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #333; margin-top: 0;">Vérifiez votre email</h2>
-        <p style="color: #666; line-height: 1.6;">
-            Bienvenue sur Matcha ! Pour finaliser votre inscription, veuillez utiliser le code de vérification suivant :
-        </p>
-        
-        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-            <h3 style="margin: 0; color: #667eea;">Code de vérification</h3>
-            <div style="font-size: 32px; font-weight: bold; color: #333; letter-spacing: 8px; margin: 10px 0;">
-                %s
-            </div>
-        </div>
-        
-        <p style="color: #666; line-height: 1.6;">
-            Ce code est valide pendant <strong>15 minutes</strong>. Si vous n'avez pas demandé cette vérification, vous pouvez ignorer cet email.
-        </p>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-            <p style="color: #999; font-size: 14px; text-align: center; margin: 0;">
-                Cet email a été envoyé par Matcha. Si vous avez des questions, contactez notre support.
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-	`, verificationCode)
+	// Load and parse template
+	templatePath := filepath.Join("templates", "email", "verification_email.html")
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to parse email template: %v", err)
+	}
 
-	return es.sendEmail(toEmail, subject, body)
+	// Execute template with data
+	var body bytes.Buffer
+	data := VerificationEmailData{
+		VerificationCode: verificationCode,
+	}
+	if err := tmpl.Execute(&body, data); err != nil {
+		return fmt.Errorf("failed to execute email template: %v", err)
+	}
+
+	// Email subject
+	subject := "Vérification de votre email - Matcha"
+
+	return es.sendEmail(toEmail, subject, body.String())
+}
+
+// PasswordResetData contains data for password reset email template
+type PasswordResetData struct {
+	ResetURL string
 }
 
 // SendPasswordResetEmail sends a password reset email
 func (es *EmailService) SendPasswordResetEmail(toEmail, resetToken string) error {
+	// Get frontend URL from environment
+	frontendURL := getEnvOrDefault("FRONTEND_URL", "http://localhost:3000")
+	resetURL := fmt.Sprintf("%s/reinitialiser-mot-de-passe?token=%s", frontendURL, resetToken)
+	
 	// Skip sending email if SMTP is not configured (development mode)
 	if es.SMTPUsername == "" || es.SMTPPassword == "" {
-		fmt.Printf("🔑 Password reset token for %s: %s\n", toEmail, resetToken)
+		fmt.Printf("🔑 Password reset for %s:\n", toEmail)
+		fmt.Printf("   Link: %s\n", resetURL)
 		fmt.Printf("   (SMTP not configured - email not sent)\n")
 		return nil
 	}
 
-	// Email content
-	subject := "Réinitialisation de votre mot de passe - Matcha"
-	body := fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Réinitialisation mot de passe</title>
-</head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); padding: 30px; text-align: center; border-radius: 10px;">
-        <h1 style="color: white; margin: 0;">💖 Matcha</h1>
-        <p style="color: white; margin: 10px 0 0 0;">Réinitialisation de mot de passe</p>
-    </div>
-    
-    <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #333; margin-top: 0;">Réinitialiser votre mot de passe</h2>
-        <p style="color: #666; line-height: 1.6;">
-            Vous avez demandé une réinitialisation de mot de passe. Utilisez le token suivant pour créer un nouveau mot de passe :
-        </p>
-        
-        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-            <h3 style="margin: 0; color: #667eea;">Token de réinitialisation</h3>
-            <div style="font-size: 24px; font-weight: bold; color: #333; word-break: break-all; margin: 10px 0;">
-                %s
-            </div>
-        </div>
-        
-        <p style="color: #666; line-height: 1.6;">
-            Ce token est valide pendant <strong>1 heure</strong>. Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.
-        </p>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-            <p style="color: #999; font-size: 14px; text-align: center; margin: 0;">
-                Cet email a été envoyé par Matcha. Si vous avez des questions, contactez notre support.
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-	`, resetToken)
+	// Load and parse template
+	templatePath := filepath.Join("templates", "email", "password_reset.html")
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to parse email template: %v", err)
+	}
 
-	return es.sendEmail(toEmail, subject, body)
+	// Execute template with data
+	var body bytes.Buffer
+	data := PasswordResetData{
+		ResetURL: resetURL,
+	}
+	if err := tmpl.Execute(&body, data); err != nil {
+		return fmt.Errorf("failed to execute email template: %v", err)
+	}
+
+	// Email subject
+	subject := "Réinitialisation de votre mot de passe - Matcha"
+
+	return es.sendEmail(toEmail, subject, body.String())
 }
 
 // sendEmail sends an email using SMTP

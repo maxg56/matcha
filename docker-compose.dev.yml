@@ -92,6 +92,8 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-your-app-password}
       FROM_EMAIL: ${FROM_EMAIL}
       FROM_NAME: ${FROM_NAME}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CLEANUP_INTERVAL_MINUTES: ${CLEANUP_INTERVAL_MINUTES:-30}
     volumes:
       - ./api/auth-service/src:/app/src
       - ./api/auth-service/go.mod:/app/go.mod

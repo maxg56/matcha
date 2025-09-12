@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Vérification Email</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px;">
+        <h1 style="color: white; margin: 0;">💖 Matcha</h1>
+        <p style="color: white; margin: 10px 0 0 0;">Vérification de votre compte</p>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #333; margin-top: 0;">Vérifiez votre email</h2>
+        <p style="color: #666; line-height: 1.6;">
+            Bienvenue sur Matcha ! Pour finaliser votre inscription, veuillez utiliser le code de vérification suivant :
+        </p>
+        
+        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+            <h3 style="margin: 0; color: #667eea;">Code de vérification</h3>
+            <div style="font-size: 32px; font-weight: bold; color: #333; letter-spacing: 8px; margin: 10px 0;">
+                {{.VerificationCode}}
+            </div>
+        </div>
+        
+        <p style="color: #666; line-height: 1.6;">
+            Ce code est valide pendant <strong>15 minutes</strong>. Si vous n'avez pas demandé cette vérification, vous pouvez ignorer cet email.
+        </p>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <p style="color: #999; font-size: 14px; text-align: center; margin: 0;">
+                Cet email a été envoyé par Matcha. Si vous avez des questions, contactez notre support.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

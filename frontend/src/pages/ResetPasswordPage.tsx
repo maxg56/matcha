@@ -309,8 +309,7 @@ export default function ResetPasswordPage() {
                   isLoading || 
                   !password || 
                   !confirmPassword || 
-                  (!token && !manualToken) ||
-                  !!fieldErrors.token ||
+                  !token ||
                   !!fieldErrors.password || 
                   !!fieldErrors.confirmPassword
                 }

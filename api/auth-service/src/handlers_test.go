@@ -608,6 +608,7 @@ func TestResetPasswordHandler(t *testing.T) {
 	db.DB.Create(&validToken)
 	defer db.DB.Delete(&validToken)
 
+
 	// Create expired token
 	expiredToken := models.PasswordReset{
 		UserID:    user.ID,
@@ -702,7 +703,8 @@ func TestResetPasswordHandler(t *testing.T) {
 				
 				// Verify token is marked as used
 				var updatedToken models.PasswordReset
-				db.DB.Where("token = ?", tt.payload["token"]).First(&updatedToken)
+				token := tt.payload["token"].(string)
+				db.DB.Where("token = ?", token).First(&updatedToken)
 				assert.Equal(t, true, updatedToken.Used)
 			} else {
 				assert.Equal(t, false, response["success"])
