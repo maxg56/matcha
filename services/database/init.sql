@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS images CASCADE;
 DROP TABLE IF EXISTS user_tags CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS email_verifications CASCADE;
+DROP TABLE IF EXISTS password_resets CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
@@ -103,6 +104,22 @@ CREATE TABLE email_verifications (
 );
 
 CREATE INDEX idx_email_verifications_email ON email_verifications(email);
+
+-- ====================
+-- TABLE : password_resets
+-- ====================
+CREATE TABLE password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_password_resets_token ON password_resets(token);
+CREATE INDEX idx_password_resets_user_id ON password_resets(user_id);
+CREATE INDEX idx_password_resets_expires_at ON password_resets(expires_at);
 
 -- ====================
 -- TABLE : tags
