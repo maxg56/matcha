@@ -72,6 +72,7 @@ createRoot(document.getElementById('root')!).render(
             </Routes>
           </div>
         </BrowserRouter>
+        </StripeProvider>
       </WebSocketProvider>
     </ThemeProvider>
   </StrictMode>,
