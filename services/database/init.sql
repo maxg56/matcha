@@ -150,20 +150,19 @@ CREATE TABLE images (
 -- MATCHING SYSTEM TABLES
 -- ====================
 
--- Table to store user preference vectors and weights
+-- Table to store user preferences for matching
 CREATE TABLE IF NOT EXISTS user_preferences (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-    preference_vector TEXT NOT NULL, -- JSON string storing the preference vector
-    age_weight REAL DEFAULT 0.2,
-    distance_weight REAL DEFAULT 0.3,
-    interests_weight REAL DEFAULT 0.25,
-    habits_weight REAL DEFAULT 0.15,
-    relationship_weight REAL DEFAULT 0.1,
-    total_likes INTEGER DEFAULT 0,
-    total_passes INTEGER DEFAULT 0,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    age_min INTEGER DEFAULT 18,
+    age_max INTEGER DEFAULT 99,
+    max_distance REAL DEFAULT 50,
+    min_fame INTEGER DEFAULT 0,
+    preferred_genders TEXT NOT NULL, -- JSON array of genders
+    required_tags TEXT, -- JSON array of tag names
+    blocked_tags TEXT, -- JSON array of tag names
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table to track user interactions
@@ -198,6 +197,16 @@ CREATE TABLE relations (
     user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     value_user1 relation_value_enum DEFAULT 'pass' NOT NULL,
     value_user2 relation_value_enum DEFAULT 'pass' NOT NULL
+);
+
+-- ====================
+-- TABLE : profile_views
+-- ====================
+CREATE TABLE profile_views (
+    id SERIAL PRIMARY KEY,
+    viewer_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    viewed_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ====================
@@ -298,21 +307,13 @@ FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
 
--- Function to update last_updated for preferences
-CREATE OR REPLACE FUNCTION update_last_updated_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.last_updated = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+-- Trigger for user preferences updated_at
+CREATE TRIGGER trg_update_user_preferences_updated_at
+BEFORE UPDATE ON user_preferences
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger for user preferences
-DROP TRIGGER IF EXISTS update_user_preferences_last_updated ON user_preferences;
-CREATE TRIGGER update_user_preferences_last_updated
-    BEFORE UPDATE ON user_preferences
-    FOR EACH ROW
-    EXECUTE FUNCTION update_last_updated_column();
+-- Trigger for profile views (no updated_at field, so no trigger needed)
 
 -- ====================
 -- INSERTS DE TEST
@@ -362,6 +363,11 @@ CREATE INDEX IF NOT EXISTS idx_users_location ON users(latitude, longitude);
 CREATE INDEX IF NOT EXISTS idx_users_age_gender ON users(age, gender);
 CREATE INDEX IF NOT EXISTS idx_users_gender_sex_pref ON users(gender, sex_pref);
 CREATE INDEX IF NOT EXISTS idx_users_fame ON users(fame);
+
+-- Profile views indexes
+CREATE INDEX IF NOT EXISTS idx_profile_views_viewer_id ON profile_views(viewer_id);
+CREATE INDEX IF NOT EXISTS idx_profile_views_viewed_id ON profile_views(viewed_id);
+CREATE INDEX IF NOT EXISTS idx_profile_views_created_at ON profile_views(created_at);
 
 -- ====================
 -- ANALYTICAL VIEWS FOR MATCHING

@@ -8,14 +8,16 @@ import (
 // User maps to table `users` - synchronized with auth-service
 type User struct {
 	ID           uint          `gorm:"primaryKey;column:id" json:"id"`
-	Username     string        `gorm:"column:username;uniqueIndex;not null" json:"username"`
-	FirstName    string        `gorm:"column:first_name;not null" json:"first_name"`
-	LastName     string        `gorm:"column:last_name;not null" json:"last_name"`
-	Email        string        `gorm:"column:email;uniqueIndex;not null" json:"email"`
-	PasswordHash string        `gorm:"column:password_hash;not null" json:"-"`
-	BirthDate    time.Time     `gorm:"column:birth_date;not null" json:"birth_date"`
-	Age          int           `gorm:"column:age" json:"age"`
-	Height       sql.NullInt64 `gorm:"column:height" json:"height"`
+	Username      string        `gorm:"column:username;uniqueIndex;not null" json:"username"`
+	FirstName     string        `gorm:"column:first_name;not null" json:"first_name"`
+	LastName      string        `gorm:"column:last_name;not null" json:"last_name"`
+	Email         string        `gorm:"column:email;uniqueIndex;not null" json:"email"`
+	EmailVerified bool          `gorm:"column:email_verified;default:false" json:"email_verified"`
+	PasswordHash  string        `gorm:"column:password_hash;not null" json:"-"`
+	BirthDate    time.Time        `gorm:"column:birth_date;not null" json:"birth_date"`
+	Age          int              `gorm:"column:age" json:"age"`
+	Height       sql.NullInt64    `gorm:"column:height" json:"height"`
+	Premium      sql.NullTime     `gorm:"column:premium" json:"premium"`
 
 	AlcoholConsumption sql.NullString `gorm:"column:alcohol_consumption" json:"alcohol_consumption"`
 	Smoking            sql.NullString `gorm:"column:smoking" json:"smoking"`
