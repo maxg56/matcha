@@ -44,6 +44,7 @@ func ConnectDatabase() {
 		if err := DB.AutoMigrate(
 			&models.Users{},
 			&models.EmailVerification{},
+			&models.PasswordReset{},
 			&models.Tag{},
 			&models.UserTag{},
 			&models.Image{},

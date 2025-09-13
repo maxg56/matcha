@@ -6,6 +6,7 @@ COPY go.mod ./
 RUN go mod download
 
 COPY src/ ./src/
+COPY templates/ ./templates
 # Ensure go.sum is generated
 RUN go mod tidy && go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -o auth-service ./src

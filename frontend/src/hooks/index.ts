@@ -2,6 +2,8 @@
 export { useAuth } from './auth/useAuth';
 export { useLogin } from './auth/useLogin';
 export { useTokenRefresh } from './auth/useTokenRefresh';
+export { usePasswordReset } from './auth/usePasswordReset';
+export { useForgotPassword } from './auth/useForgotPassword';
 
 // API hooks
 export { useDiscoverProfiles } from './api/useDiscoverProfiles';

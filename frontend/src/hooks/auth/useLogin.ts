@@ -95,7 +95,7 @@ export function useLogin() {
   };
 
   const handleForgotPassword = () => {
-    console.log('Forgot password');
+    navigate('/mot-de-passe-oublie');
   };
 
   const handleNavigateToSignup = () => {
