@@ -25,13 +25,4 @@ func SetupMatchRoutes(r *gin.Engine) {
 		match.POST("/unlike", proxy.ProxyRequest("match", "/api/v1/matches/unlike"))
 		match.POST("/block", proxy.ProxyRequest("match", "/api/v1/matches/block"))
 	}
-
-	// Matrix routes (require authentication)
-	matrix := r.Group("/api/v1/matrix")
-	matrix.Use(middleware.JWTMiddleware())
-	{
-		matrix.GET("/users", proxy.ProxyRequest("match", "/api/v1/matrix/users"))
-		matrix.GET("/compatible/:user_id", proxy.ProxyRequest("match", "/api/v1/matrix/compatible/:user_id"))
-		matrix.POST("/export", proxy.ProxyRequest("match", "/api/v1/matrix/export"))
-	}
 }
