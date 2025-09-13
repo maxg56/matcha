@@ -14,6 +14,8 @@ import MessagesPage from './pages/MessagesPage';
 import ChatPage from './pages/ChatPage';
 import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import SettingsPage from './pages/SettingsPage';
 import EditProfilePage from './pages/EditProfilePage';
 import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
@@ -34,7 +36,10 @@ createRoot(document.getElementById('root')!).render(
               <Routes>
                 {/* Auth routes */}
                 <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
+                <Route path="/connexion" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
                 <Route path="/inscription" element={<InscriptionPage />} />
+                <Route path="/mot-de-passe-oublie" element={<ProtectedRoute requireAuth={false}><ForgotPasswordPage /></ProtectedRoute>} />
+                <Route path="/reinitialiser-mot-de-passe" element={<ProtectedRoute requireAuth={false}><ResetPasswordPage /></ProtectedRoute>} />
               
                 {/* Main app routes */}
                 <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
