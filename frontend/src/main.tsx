@@ -36,47 +36,15 @@ createRoot(document.getElementById('root')!).render(
         <StripeProvider>
         <BrowserRouter>
           <NotificationButton />
-<<<<<<< HEAD
-            <div className="min-h-screen bg-background text-foreground">
-              <Routes>
-                {/* Auth routes */}
-                <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
-                <Route path="/connexion" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
-                <Route path="/inscription" element={<InscriptionPage />} />
-                <Route path="/mot-de-passe-oublie" element={<ProtectedRoute requireAuth={false}><ForgotPasswordPage /></ProtectedRoute>} />
-                <Route path="/reinitialiser-mot-de-passe" element={<ProtectedRoute requireAuth={false}><ResetPasswordPage /></ProtectedRoute>} />
-
-                <Route path="/admin/login" element={<AdminProtectedRoute requireAuth={false}><AdminLoginPage /></AdminProtectedRoute>} />
-                <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
-                < <Route index element={<Navigate to="dashboard" replace />} />
-                < <Route path="dashboard" element={<AdminPage />} />
-                </Route>
-                {/* Main app routes */}
-                <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
-                  <Route index element={<Navigate to="discover" replace />} />
-                  <Route path="discover" element={<DiscoverPage />} />
-                  <Route path="matches" element={<MatchesPage />} />
-                  <Route path="messages" element={<MessagesPage />} />
-                  <Route path="chat/:matchId" element={<ChatPage />} />
-                  <Route path="profile" element={<ProfilePage />} />
-                  <Route path="edit-profile" element={<EditProfilePage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="map" element={<MapPage />} />
-                  <Route path="subscription" element={<SubscriptionPage />} />
-                  <Route path="subscription/success" element={<SubscriptionSuccessPage />} />
-                </Route>
-                {/* Default redirect based on authentication status */}
-                <Route path="/" element={<RootRedirect />} />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </StripeProvider>
-=======
           <div className="min-h-screen bg-background text-foreground">
             <Routes>
               {/* Auth routes */}
               <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
+              <Route path="/connexion" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
               <Route path="/inscription" element={<InscriptionPage />} />
+              <Route path="/mot-de-passe-oublie" element={<ProtectedRoute requireAuth={false}><ForgotPasswordPage /></ProtectedRoute>} />
+              <Route path="/reinitialiser-mot-de-passe" element={<ProtectedRoute requireAuth={false}><ResetPasswordPage /></ProtectedRoute>} />
+              
 
               {/* Admin routes - completely separate from user app */}
               <Route path="/admin/login" element={<AdminProtectedRoute requireAuth={false}><AdminLoginPage /></AdminProtectedRoute>} />
@@ -96,13 +64,14 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="edit-profile" element={<EditProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="map" element={<MapPage />} />
+                <Route path="subscription" element={<SubscriptionPage />} />
+                <Route path="subscription/success" element={<SubscriptionSuccessPage />} />
               </Route>
               {/* Default redirect based on authentication status */}
               <Route path="/" element={<RootRedirect />} />
             </Routes>
           </div>
         </BrowserRouter>
->>>>>>> origin/ademid
       </WebSocketProvider>
     </ThemeProvider>
   </StrictMode>,
