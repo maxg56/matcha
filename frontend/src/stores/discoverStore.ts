@@ -52,6 +52,7 @@ interface DiscoverActions {
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   clearError: () => void;
+  reset: () => void;
 }
 
 type DiscoverStore = DiscoverState & DiscoverActions;
@@ -207,6 +208,17 @@ export const useDiscoverStore = create<DiscoverStore>()(
           currentIndex: 0,
           hasMoreProfiles: true,
           error: null,
+        });
+      },
+
+      reset: () => {
+        set({
+          profiles: [],
+          currentIndex: 0,
+          matches: [],
+          isLoading: false,
+          error: null,
+          hasMoreProfiles: true,
         });
       },
     }),

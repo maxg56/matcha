@@ -1,5 +1,10 @@
-import React, { createContext, useReducer, useEffect } from 'react';
+import React, { createContext, useReducer, useEffect, type ReactNode } from 'react';
 import { authService } from '@/services/auth';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { useUserStore } from '@/stores/userStore';
+import { useChatStore } from '@/stores/chatStore';
+import { useDiscoverStore } from '@/stores/discoverStore';
+import { webSocketService } from '@/services/websocket';
 
 interface AuthResponse {
   message: string;
@@ -159,6 +164,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Always clear local storage and state
       authService.clearTokens();
       dispatch({ type: 'AUTH_LOGOUT' });
+
+      // Disconnect WebSocket connections
+      webSocketService.disconnect();
+
+      // Clear all user-specific stores
+      useNotificationStore.getState().reset();
+      useUserStore.getState().reset();
+      useChatStore.getState().reset();
+      useDiscoverStore.getState().reset();
+      // Note: We don't reset filters as users may want to keep their filter preferences
     }
   };
 
