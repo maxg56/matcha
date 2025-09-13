@@ -1,5 +1,5 @@
 # ---------- Builder stage ----------
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 COPY go.mod  go.sum ./
@@ -8,7 +8,7 @@ COPY src/ ./src/
 RUN CGO_ENABLED=0 GOOS=linux go build -o admin-service ./src
 
 # ---------- Development stage ----------
-FROM golang:1.24-alpine AS development
+FROM golang:1.25-alpine AS development
 
 WORKDIR /app
 
