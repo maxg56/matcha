@@ -45,7 +45,12 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/inscription" element={<InscriptionPage />} />
                 <Route path="/mot-de-passe-oublie" element={<ProtectedRoute requireAuth={false}><ForgotPasswordPage /></ProtectedRoute>} />
                 <Route path="/reinitialiser-mot-de-passe" element={<ProtectedRoute requireAuth={false}><ResetPasswordPage /></ProtectedRoute>} />
-              
+
+                <Route path="/admin/login" element={<AdminProtectedRoute requireAuth={false}><AdminLoginPage /></AdminProtectedRoute>} />
+                <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+                < <Route index element={<Navigate to="dashboard" replace />} />
+                < <Route path="dashboard" element={<AdminPage />} />
+                </Route>
                 {/* Main app routes */}
                 <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
                   <Route index element={<Navigate to="discover" replace />} />
