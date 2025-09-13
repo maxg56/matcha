@@ -17,7 +17,7 @@ interface ImageDeleteResponse {
 class ImageService {
   private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8443';
 
-  async uploadImage(file: File, onProgress?: (progress: number) => void): Promise<ImageUploadResponse> {
+  async uploadImage(file: File): Promise<ImageUploadResponse> {
     const formData = new FormData();
     formData.append('image', file);
 

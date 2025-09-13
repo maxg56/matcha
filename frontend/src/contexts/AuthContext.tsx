@@ -1,4 +1,5 @@
 import React, { createContext, useReducer, useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { authService } from '@/services/auth';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useUserStore } from '@/stores/userStore';

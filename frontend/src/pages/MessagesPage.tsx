@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { ProfileModal } from '@/components/demo/ProfileModal';
 import { NewMatchesSection, ConversationsList } from '@/components/messages';
 
+// Import the Match type from ConversationsList
+type Match = {
+  id: string;
+  name: string;
+  age: number;
+  image: string;
+  images?: string[];
+  lastMessage?: string | null;
+  timestamp?: string | null;
+  unread: boolean;
+  commonInterests: string[];
+  matchedAt?: string;
+  isNew?: boolean;
+  bio?: string;
+  location?: string;
+  occupation?: string;
+  interests?: string[];
+  distance?: number;
+};
+
 const mockMatches = [
   {
     id: '1',
@@ -68,7 +88,7 @@ const mockMatches = [
 export default function MessagesPage() {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<typeof mockMatches[0] | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<Match | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -85,7 +105,7 @@ export default function MessagesPage() {
     navigate(`/app/chat/${matchId}`);
   };
 
-  const handleProfileClick = (match: typeof mockMatches[0]) => {
+  const handleProfileClick = (match: Match) => {
     setSelectedProfile(match);
     setIsModalOpen(true);
   };
@@ -100,7 +120,7 @@ export default function MessagesPage() {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-full bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Nouveaux matchs en haut */}
         <div className="p-4 border-b border-border">
           <NewMatchesSection 
@@ -126,7 +146,7 @@ export default function MessagesPage() {
   // Desktop layout
   return (
     <>
-      <div className="flex min-h-full bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900  min-h-screen">
+      <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <NewMatchesSection 
           matches={newMatches} 
           onMatchClick={handleMatchClick} 
@@ -142,7 +162,10 @@ export default function MessagesPage() {
     
       {selectedProfile && (
         <ProfileModal
-          profile={selectedProfile}
+          profile={{
+            ...selectedProfile,
+            images: selectedProfile.images || [selectedProfile.image]
+          }}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onLike={(id) => console.log('Liked:', id)}

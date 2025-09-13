@@ -63,6 +63,77 @@ func JWTMiddleware() gin.HandlerFunc {
 	}
 }
 
+// AdminJWTMiddleware validates JWT tokens for admin routes (supports both user and admin tokens)
+func AdminJWTMiddleware() gin.HandlerFunc {
+	userSecret := os.Getenv("JWT_SECRET")
+	adminSecret := os.Getenv("ADMIN_JWT_SECRET")
+	if adminSecret == "" {
+		adminSecret = userSecret // fallback to user secret if admin secret not set
+	}
+	if userSecret == "" && adminSecret == "" {
+		log.Println("[gateway] WARNING: JWT_SECRET and ADMIN_JWT_SECRET are not set; admin routes will reject requests")
+	}
+
+	return func(c *gin.Context) {
+		if c.Request.Method == http.MethodOptions {
+			c.Next()
+			return
+		}
+
+		tokenString := utils.ExtractToken(c)
+		if tokenString == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+			return
+		}
+
+		// Check if token is blacklisted before parsing
+		if utils.IsTokenBlacklisted(tokenString) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token revoked"})
+			return
+		}
+
+		var claims jwt.MapClaims
+		var err error
+
+		// Try to parse as admin token first
+		if adminSecret != "" {
+			claims, err = parseJWT(tokenString, adminSecret)
+			if err == nil {
+				// Check if it's actually an admin token by looking for admin scope
+				if scope, ok := claims["scope"].(string); ok && scope == "admin" {
+					log.Printf("Admin token validated for user: %v", claims["sub"])
+				}
+			}
+		}
+
+		// If admin token parsing failed, try user token
+		if err != nil && userSecret != "" {
+			claims, err = parseJWT(tokenString, userSecret)
+			if err == nil {
+				log.Printf("User token validated for admin access: %v", claims["sub"])
+			}
+		}
+
+		if err != nil {
+			errorMsg := "invalid token"
+			if strings.Contains(err.Error(), "expired") {
+				errorMsg = "token expired"
+			} else if strings.Contains(err.Error(), "not yet valid") {
+				errorMsg = "token not yet valid"
+			}
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": errorMsg})
+			return
+		}
+
+		// Extract common identifiers
+		if sub, ok := claims["sub"].(string); ok && sub != "" {
+			c.Set(CtxUserIDKey, sub)
+		}
+
+		c.Next()
+	}
+}
+
 // parseJWT parses and validates a JWT token
 func parseJWT(tokenString, secret string) (jwt.MapClaims, error) {
 	if tokenString == "" {

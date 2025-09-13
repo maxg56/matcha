@@ -118,7 +118,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
         // }
       },
 
-      likeProfile: async (profileId: number) => {
+      likeProfile: async (_profileId: number) => {
         
         try {
           // const response = await apiService.post<{ is_match: boolean }>('/api/v1/matches/like', {
@@ -138,7 +138,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
         }
       },
 
-      dislikeProfile: async (profileId: number) => {
+      dislikeProfile: async (_profileId: number) => {
         try {
           // await apiService.post('/api/v1/matches/like', {
           //   user_id: profileId,
@@ -173,7 +173,7 @@ export const useDiscoverStore = create<DiscoverStore>()(
         }
       },
 
-      reportProfile: async (profileId: number, reason: string) => {
+      reportProfile: async (_profileId: number, _reason: string) => {
         try {
           // await apiService.post('/api/v1/users/report', {
           //   reported_user_id: profileId,

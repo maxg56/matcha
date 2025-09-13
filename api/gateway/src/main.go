@@ -72,6 +72,7 @@ func main() {
 	routes.SetupNotifyRoutes(r)
 	routes.SetupPaiementsRoutes(r)
 	routes.SetupWebSocketRoutes(r)
+	routes.RegisterAdminRoutes(r)
 
 	// Start server
 	log.Printf("Gateway starting on port %s", cfg.Port)

@@ -140,7 +140,7 @@ export function ProfileCard({
 
         {/* Boutons d'actions */}
         <ProfileActions
-          profileId={String(profile.id)}
+          profileId={profile.id}
           onLike={onLike}
           onPass={onPass}
           onSuperLike={onSuperLike}

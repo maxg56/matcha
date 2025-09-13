@@ -34,19 +34,4 @@ func SetupMatchRoutes(r *gin.Engine) {
 		matrix.GET("/compatible/:user_id", proxy.ProxyRequest("match", "/api/v1/matrix/compatible/:user_id"))
 		matrix.POST("/export", proxy.ProxyRequest("match", "/api/v1/matrix/export"))
 	}
-
-	// Admin routes (require authentication and admin privileges)
-	admin := r.Group("/api/v1/admin")
-	admin.Use(middleware.JWTMiddleware())
-	admin.Use(middleware.AdminMiddleware())
-	{
-		// Performance monitoring
-		admin.GET("/performance", proxy.ProxyRequest("match", "/api/v1/admin/performance"))
-		
-		// Cache management
-		admin.POST("/cache/clear", proxy.ProxyRequest("match", "/api/v1/admin/cache/clear"))
-		
-		// Database optimization
-		admin.POST("/indexes/create", proxy.ProxyRequest("match", "/api/v1/admin/indexes/create"))
-	}
 }

@@ -42,7 +42,6 @@ func main() {
 			"cache_stats": cacheStats,
 		})
 	})
-
 	// API routes
 	api := r.Group("/api/v1")
 	{

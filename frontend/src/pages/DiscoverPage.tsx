@@ -8,7 +8,7 @@ import { useMatches, useFilters } from '@/hooks';
 import { useToast } from '@/hooks/ui/useToast';
 
 export default function DiscoverPage() {
-  const { currentProfile, currentCandidate, actions, loading, error, isProfileLoading } = useMatches();
+  const { currentProfile, actions } = useDiscoverProfiles(mockProfiles);
   const { showFilters, onOpenFilters, onCloseFilters, onFiltersChange } = useFilters();
   const { toast } = useToast();
 

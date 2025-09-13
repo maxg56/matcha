@@ -17,13 +17,12 @@ export function useProfileUpdate() {
     await updateProfile(profileUpdatePayload);
   }, [updateProfile, user]);
 
-  const updateUserProfileWithImages = useCallback(async (profileData: RegistrationData, imageUrls: string[]) => {
+  const updateUserProfileWithImages = useCallback(async (profileData: RegistrationData, _imageUrls: string[]) => {
     if (!user?.id) {
       throw new Error('User not found, please login again');
     }
 
     const profileUpdatePayload = RegistrationValidator.prepareProfilePayload(profileData);
-    profileUpdatePayload.images = imageUrls;
     
     await updateProfile(profileUpdatePayload);
   }, [updateProfile, user]);

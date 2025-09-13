@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Search, User, Settings, LogOut, Map } from 'lucide-react';
+import { Heart, MessageCircle, Search, User, Settings, LogOut, Map, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
@@ -44,6 +44,9 @@ type MockUser = {
 export function SideNavigation() {
   const location = useLocation();
   const { logout, user } = useAuth();
+  
+  // Check if user is admin
+  const isAdmin = user && (user.username.toLowerCase() === 'admin' || user.username.toLowerCase() === 'administrator' || user.id === 1);
   
   const [mockUser, setMockUser] = useState<MockUser>({
     name: 'Alex',
@@ -155,6 +158,15 @@ export function SideNavigation() {
             Paramètres
           </Button>
         </Link>
+        
+        {isAdmin && (
+          <Link to="/app/admin">
+            <Button variant="ghost" className="w-full justify-start gap-3 text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/20">
+              <Shield className="h-5 w-5" />
+              Administration
+            </Button>
+          </Link>
+        )}
         
         <Button 
           variant="ghost" 

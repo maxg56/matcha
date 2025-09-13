@@ -2,10 +2,10 @@ package services
 
 // ServiceConfig represents the configuration for an upstream service
 type ServiceConfig struct {
-	Name     string
-	URL      string
+	Name      string
+	URL       string
 	WebSocket bool
-	URL_WS   string
+	URL_WS    string
 }
 
 var services map[string]ServiceConfig
@@ -13,6 +13,10 @@ var services map[string]ServiceConfig
 // InitServices initializes the service configuration map
 func InitServices() {
 	services = map[string]ServiceConfig{
+		"admin": {
+			Name: "admin-service",
+			URL:  "http://admin-service:8007",
+		},
 		"auth": {
 			Name: "auth-service",
 			URL:  "http://auth-service:8001",
@@ -30,16 +34,16 @@ func InitServices() {
 			URL:  "http://match-service:8003",
 		},
 		"chat": {
-			Name: "chat-service",
-			URL:  "http://chat-service:8004",
+			Name:      "chat-service",
+			URL:       "http://chat-service:8004",
 			WebSocket: true,
-			URL_WS: "ws://chat-service:8004",
+			URL_WS:    "ws://chat-service:8004",
 		},
 		"notify": {
-			Name: "notify-service",
-			URL:  "http://notify-service:8005",
+			Name:      "notify-service",
+			URL:       "http://notify-service:8005",
 			WebSocket: true,
-			URL_WS: "ws://notify-service:8005",
+			URL_WS:    "ws://notify-service:8005",
 		},
 		"paiements": {
 			Name: "paiements-service",
