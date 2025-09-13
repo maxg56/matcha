@@ -70,13 +70,13 @@ func ForgotPasswordHandler(c *gin.Context) {
 	// Send password reset email
 	emailService := services.NewEmailService()
 	emailErr := emailService.SendPasswordResetEmail(user.Email, resetToken)
-	
+
 	// Always respond with success for security (don't reveal if email exists)
 	// Even if email fails, the reset token is created and valid
 	if emailErr != nil {
 		// Log the error but don't expose it to the user
 		// In production, this should be logged to monitoring system
-		utils.RespondSuccess(c, 500, gin.H{
+		utils.RespondSuccess(c, http.StatusOK, gin.H{
 			"message": "If the email exists, a password reset link will be sent",
 		})
 	} else {

@@ -47,7 +47,7 @@ func (es *EmailService) SendVerificationEmail(toEmail, verificationCode string) 
 		return nil
 	}
 
-	// Load and parse template
+	// Load and parse template (assuming working dir is /app)
 	templatePath := filepath.Join("templates", "email", "verification_email.html")
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {

@@ -96,6 +96,7 @@ services:
       CLEANUP_INTERVAL_MINUTES: ${CLEANUP_INTERVAL_MINUTES:-30}
     volumes:
       - ./api/auth-service/src:/app/src
+      - ./api/auth-service/templates:/app/templates
       - ./api/auth-service/go.mod:/app/go.mod
       - ./api/auth-service/go.sum:/app/go.sum
       - ./api/auth-service/.air.toml:/app/.air.toml
