@@ -242,8 +242,18 @@ services:
     build:
       context: ./api/paiements-service
       target: development
-    env_file:
-      - ./.env
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha_dev}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRICE_MENSUEL: ${STRIPE_PRICE_MENSUEL}
+      STRIPE_PRICE_ANNUEL: ${STRIPE_PRICE_ANNUEL}
+      AUTO_MIGRATE: "true"
+      GIN_MODE: debug
     volumes:
       - ./api/paiements-service/src:/app/src
       - ./api/paiements-service/go.mod:/app/go.mod

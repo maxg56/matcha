@@ -4,8 +4,8 @@ export { useDiscoverStore } from './discoverStore';
 export { useChatStore } from './chatStore';
 export { useFiltersStore, defaultFilters } from './filtersStore';
 export { useRegistrationStore } from './registrationStore';
-export { useNewRegistrationStore } from './newRegistrationStore';
-export { useImageUploadStore } from './imageUploadStore';
+// export { useNewRegistrationStore } from './newRegistrationStore';
+// export { useImageUploadStore } from './imageUploadStore';
 
 export type { User, RegisterData, AuthResponse } from './authStore';
 export type { UserProfile } from './userStore';

@@ -62,10 +62,11 @@ export const useUserStore = create<UserStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          
+
           const endpoint = userId ? `/api/v1/users/profile/${userId}` : '/api/v1/users/profile';
           const profile = await apiService.get<UserProfile>(endpoint);
           console.log('Fetched profile:', profile);
+
           set({
             profile,
             isLoading: false,
