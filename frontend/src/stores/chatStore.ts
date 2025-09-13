@@ -58,6 +58,7 @@ interface ChatActions {
   initializeWebSocket: () => void;
   subscribeToConversation: (conversationId: number) => void;
   unsubscribeFromConversation: (conversationId: number) => void;
+  reset: () => void;
 }
 
 type ChatStore = ChatState & ChatActions;
@@ -275,6 +276,19 @@ export const useChatStore = create<ChatStore>()(
         } else {
           set({ isConnected: true });
         }
+      },
+
+      reset: () => {
+        set({
+          conversations: [],
+          activeConversation: null,
+          messages: [],
+          isLoading: false,
+          error: null,
+          isConnected: false,
+          isTyping: false,
+          typingUser: null,
+        });
       },
     }),
     { name: 'ChatStore' }

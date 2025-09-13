@@ -42,6 +42,7 @@ interface UserActions {
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   clearError: () => void;
+  reset: () => void;
 }
 
 type UserStore = UserState & UserActions;
@@ -175,6 +176,14 @@ export const useUserStore = create<UserStore>()(
           });
           throw error;
         }
+      },
+
+      reset: () => {
+        set({
+          profile: null,
+          isLoading: false,
+          error: null,
+        });
       },
     }),
     { name: 'UserStore' }

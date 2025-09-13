@@ -28,6 +28,7 @@ interface NotificationActions {
   setNotifications: (notifications: Notification[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  reset: () => void;
 }
 
 type NotificationStore = NotificationState & NotificationActions;
@@ -72,7 +73,9 @@ export const useNotificationStore = create<NotificationStore>()(
         } else {
           console.log("Notification ignored due to wrong id", user?.id, notificationData.userId);
         }
-      },arkAsRead: (id) => {
+      },
+
+      markAsRead: (id) => {
         set((state) => {
           const updated = state.notifications.map(notification =>
             notification.id === id ? { ...notification, read: true } : notification
@@ -127,6 +130,15 @@ export const useNotificationStore = create<NotificationStore>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       setError: (error) => set({ error, isLoading: false }),
+
+      reset: () => {
+        set({
+          notifications: [],
+          unreadCount: 0,
+          isLoading: false,
+          error: null,
+        });
+      },
     }),
     { name: 'NotificationStore' }
   )
