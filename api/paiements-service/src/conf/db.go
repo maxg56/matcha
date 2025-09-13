@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -17,15 +16,8 @@ var DB *gorm.DB
 func InitDB() {
 	var err error
 
-	// Database configuration
-	host := getEnvWithDefault("DB_HOST", "localhost")
-	port := getEnvWithDefault("DB_PORT", "5432")
-	user := getEnvWithDefault("DB_USER", "postgres")
-	password := getEnvWithDefault("DB_PASSWORD", "password")
-	dbname := getEnvWithDefault("DB_NAME", "matcha_dev")
-
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	// Use centralized environment configuration
+	dsn := Env.GetDatabaseDSN()
 
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -36,13 +28,18 @@ func InitDB() {
 	}
 
 	// Auto-migrate tables if environment variable is set
-	if getEnvWithDefault("AUTO_MIGRATE", "false") == "true" {
+	if Env.AutoMigrate == "true" {
+		log.Println("Running DB AutoMigrate (AUTO_MIGRATE=true)")
 		if err := autoMigrate(); err != nil {
-			log.Fatal("Failed to auto-migrate:", err)
+			log.Fatal("❌ AutoMigrate failed:", err)
+		} else {
+			log.Println("✅ Database tables migrated successfully")
 		}
+	} else {
+		log.Println("Skipping AutoMigrate (set AUTO_MIGRATE=true to enable)")
 	}
 
-	log.Println("Payment service database connection established successfully")
+	log.Println("✅ Payment service database connection established successfully")
 }
 
 func autoMigrate() error {

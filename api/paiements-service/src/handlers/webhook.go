@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -28,14 +27,19 @@ func HandleStripeWebhook(c *gin.Context) {
 	}
 
 	// Verify webhook signature
-	endpointSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
+	endpointSecret := conf.Env.StripeWebhookSecret
 	if endpointSecret == "" {
 		log.Printf("STRIPE_WEBHOOK_SECRET not configured")
 		utils.RespondError(c, http.StatusInternalServerError, "Webhook configuration error")
 		return
 	}
 
-	event, err := webhook.ConstructEvent(body, c.GetHeader("Stripe-Signature"), endpointSecret)
+	// Use ConstructEventWithOptions to handle API version mismatch
+	// This allows compatibility between different Stripe API versions
+	options := webhook.ConstructEventOptions{
+		IgnoreAPIVersionMismatch: true,
+	}
+	event, err := webhook.ConstructEventWithOptions(body, c.GetHeader("Stripe-Signature"), endpointSecret, options)
 	if err != nil {
 		log.Printf("Webhook signature verification failed: %v", err)
 		utils.RespondError(c, http.StatusBadRequest, "Invalid signature")
@@ -261,9 +265,9 @@ func handlePaymentFailed(event stripe.Event) error {
 func getSubscriptionPlan(subscription stripe.Subscription) string {
 	if len(subscription.Items.Data) > 0 {
 		priceID := subscription.Items.Data[0].Price.ID
-		if priceID == os.Getenv("STRIPE_PRICE_MENSUEL") {
+		if priceID == conf.Env.StripePriceMensuel {
 			return "mensuel"
-		} else if priceID == os.Getenv("STRIPE_PRICE_ANNUEL") {
+		} else if priceID == conf.Env.StripePriceAnnuel {
 			return "annuel"
 		}
 	}

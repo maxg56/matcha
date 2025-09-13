@@ -58,9 +58,9 @@ func CreateCheckoutSession(c *gin.Context) {
 		}
 	}
 
-	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-	if stripe.Key == "" {
-		log.Printf("STRIPE_SECRET_KEY not found in environment")
+	stripe.Key = conf.Env.StripeSecretKey
+	if stripe.Key == "" || strings.Contains(stripe.Key, "placeholder") {
+		log.Printf("STRIPE_SECRET_KEY not configured properly")
 		utils.RespondError(c, http.StatusInternalServerError, "Payment service configuration error")
 		return
 	}
@@ -68,9 +68,9 @@ func CreateCheckoutSession(c *gin.Context) {
 	// Get price ID based on plan
 	var priceID string
 	if req.Plan == "mensuel" {
-		priceID = os.Getenv("STRIPE_PRICE_MENSUEL")
+		priceID = conf.Env.StripePriceMensuel
 	} else {
-		priceID = os.Getenv("STRIPE_PRICE_ANNUEL")
+		priceID = conf.Env.StripePriceAnnuel
 	}
 
 	if priceID == "" || strings.Contains(priceID, "placeholder") {

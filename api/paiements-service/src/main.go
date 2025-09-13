@@ -2,73 +2,34 @@ package main
 
 import (
     "log"
-    "os"
-    "strings"
-    "time"
 
     "github.com/gin-gonic/gin"
-    "github.com/joho/godotenv"
-    "github.com/gin-contrib/cors"
-    
-    "github.com/matcha/api/paiements-service/src/stripe"
+    "github.com/matcha/api/paiements-service/src/handlers"
     "github.com/matcha/api/paiements-service/src/conf"
+    "github.com/matcha/api/paiements-service/src/middleware"
 )
 
 func main() {
-    // Load environment variables
-    if err := godotenv.Load(); err != nil {
-        log.Println("No .env file found, relying on environment variables")
-    }
-
-    // Validate required environment variables (only in production)
-    if os.Getenv("GIN_MODE") == "release" {
-        requiredEnvVars := []string{
-            "STRIPE_SECRET_KEY",
-            "STRIPE_PRICE_MENSUEL", 
-            "STRIPE_PRICE_ANNUEL",
-            "STRIPE_WEBHOOK_SECRET",
-        }
-        
-        for _, envVar := range requiredEnvVars {
-            if os.Getenv(envVar) == "" {
-                log.Fatalf("Required environment variable %s is not set", envVar)
-            }
-        }
-    } else {
-        // In development, just warn about missing Stripe keys
-        if os.Getenv("STRIPE_SECRET_KEY") == "" || strings.Contains(os.Getenv("STRIPE_SECRET_KEY"), "placeholder") {
-            log.Println("WARNING: STRIPE_SECRET_KEY not configured - payment functionality will not work")
-        }
-    }
+    // Initialize environment configuration
+    conf.InitEnv()
 
     // Initialize database
     conf.InitDB()
 
     // Set Gin mode based on environment
-    if os.Getenv("GIN_MODE") == "release" {
+    if conf.Env.IsProduction() {
         gin.SetMode(gin.ReleaseMode)
     }
 
     r := gin.Default()
 
-    // Configure CORS
-    frontendURL := os.Getenv("FRONTEND_URL")
-    if frontendURL == "" {
-        frontendURL = "http://localhost:3000"
-    }
-    
-    allowedOrigins := strings.Split(os.Getenv("CORS_ALLOWED_ORIGINS"), ",")
-    if len(allowedOrigins) == 1 && allowedOrigins[0] == "" {
-        allowedOrigins = []string{frontendURL, "http://localhost:5173"}
+    // Configure trusted proxies for security
+    if conf.Env.IsProduction() {
+        r.SetTrustedProxies([]string{"127.0.0.1"}) // Only trust localhost in production
+    } else {
+        r.SetTrustedProxies([]string{"127.0.0.1", "172.16.0.0/12", "192.168.0.0/16"}) // Docker networks
     }
 
-    r.Use(cors.New(cors.Config{
-        AllowOrigins:     allowedOrigins,
-        AllowMethods:     []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-User-ID", "X-JWT-Token"},
-        AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
-    }))
 
     // Health check endpoint
     r.GET("/health", func(c *gin.Context) {
@@ -76,18 +37,36 @@ func main() {
     })
 
     // Register Stripe routes
-    stripe.RegisterRoutes(r)
+    r.POST("/api/stripe/webhook", handlers.HandleStripeWebhook)
+	
+	// Test endpoint (no auth required) - remove in production
+	r.GET("/api/stripe/test", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"success": true,
+			"message": "Payment service is working",
+			"data": gin.H{
+				"service": "paiements-service",
+				"version": "2.0",
+				"endpoints": []string{
+					"POST /api/stripe/create-checkout-session",
+					"GET /api/stripe/subscription/status",
+					"POST /api/stripe/webhook",
+				},
+			},
+		})
+	})
 
-    port := os.Getenv("PAYOUT_SERVICE_PORT")
-    if port == "" {
-        port = "8085"
-    }
+	// Protected routes (require authentication)
+	stripeGroup := r.Group("/api/stripe")
+	stripeGroup.Use(middleware.AuthMiddleware())
+	{
+		stripeGroup.POST("/create-checkout-session", handlers.CreateCheckoutSession)
+		stripeGroup.GET("/subscription/status", handlers.GetSubscriptionStatus)
+	}
 
-    log.Printf("Payment service running on port %s", port)
-    log.Printf("Frontend URL: %s", frontendURL)
-    log.Printf("CORS origins: %v", allowedOrigins)
-    
-    if err := r.Run(":" + port); err != nil {
-        log.Fatalf("Failed to start server: %v", err)
+    log.Printf("🚀 Payment service running on port %s (mode: %s)", conf.Env.Port, conf.Env.GinMode)
+
+    if err := r.Run(":" + conf.Env.Port); err != nil {
+        log.Fatalf("❌ Failed to start server: %v", err)
     }
 }

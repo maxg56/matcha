@@ -1,5 +1,12 @@
 :80 {
-  redir https://{host}{uri} permanent
+  # In development, allow HTTP access to API endpoints
+  handle /api/* {
+    reverse_proxy gateway:8080
+  }
+  # Redirect other requests to HTTPS
+  handle {
+    redir https://{host}{uri} permanent
+  }
 }
 
 localhost:443, {$VITE_HOSTNAME}:443 {
