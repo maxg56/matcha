@@ -109,7 +109,14 @@ func HandleStripeWebhook(c *gin.Context) {
 func handleCheckoutSessionCompleted(event stripe.Event) error {
 	var session stripe.CheckoutSession
 	if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
+		log.Printf("Failed to unmarshal checkout session: %v", err)
 		return err
+	}
+
+	// Validate session data
+	if session.ID == "" {
+		log.Printf("Invalid checkout session: missing ID")
+		return nil
 	}
 
 	userIDStr, exists := session.Metadata["user_id"]
@@ -129,7 +136,12 @@ func handleCheckoutSessionCompleted(event stripe.Event) error {
 		return nil
 	}
 
-	log.Printf("Checkout completed for user %d, plan: %s, subscription: %s", userID, plan, session.Subscription.ID)
+	// Validate session data before logging
+	subscriptionID := "unknown"
+	if session.Subscription != nil {
+		subscriptionID = session.Subscription.ID
+	}
+	log.Printf("Checkout completed for user %d, plan: %s, subscription: %s", userID, plan, subscriptionID)
 	return nil
 }
 
@@ -219,7 +231,20 @@ func handleSubscriptionDeleted(event stripe.Event) error {
 func handlePaymentSucceeded(event stripe.Event) error {
 	var invoice stripe.Invoice
 	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+		log.Printf("Failed to unmarshal invoice: %v", err)
 		return err
+	}
+
+	// Validate invoice data
+	if invoice.ID == "" {
+		log.Printf("Invalid invoice: missing ID")
+		return nil
+	}
+
+	// Validate invoice data
+	if invoice.Subscription == nil {
+		log.Printf("Invoice has no subscription data: %s", invoice.ID)
+		return nil
 	}
 
 	// Find the subscription
@@ -254,10 +279,22 @@ func handlePaymentSucceeded(event stripe.Event) error {
 func handlePaymentFailed(event stripe.Event) error {
 	var invoice stripe.Invoice
 	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+		log.Printf("Failed to unmarshal invoice for payment failed: %v", err)
 		return err
 	}
 
-	log.Printf("Payment failed for subscription: %s", invoice.Subscription.ID)
+	// Validate invoice data
+	if invoice.ID == "" {
+		log.Printf("Invalid invoice in payment failed: missing ID")
+		return nil
+	}
+
+	// Validate invoice data before logging
+	subscriptionID := "unknown"
+	if invoice.Subscription != nil {
+		subscriptionID = invoice.Subscription.ID
+	}
+	log.Printf("Payment failed for subscription: %s", subscriptionID)
 	// You might want to notify the user or take other actions here
 	return nil
 }

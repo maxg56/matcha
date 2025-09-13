@@ -110,6 +110,13 @@ func CreateCheckoutSession(c *gin.Context) {
 			"user_id": strconv.Itoa(int(userIDUint)),
 			"plan":    req.Plan,
 		},
+		// Ensure metadata is transferred to the subscription
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			Metadata: map[string]string{
+				"user_id": strconv.Itoa(int(userIDUint)),
+				"plan":    req.Plan,
+			},
+		},
 	}
 
 	s, err := session.New(params)
