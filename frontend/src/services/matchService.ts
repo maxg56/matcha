@@ -117,6 +117,33 @@ export interface UserPreferences {
   };
 }
 
+export interface ReceivedLike {
+  id: number;
+  user_id: number;
+  target_user_id: number;
+  user_profile: UserProfile;
+  created_at: string;
+  is_mutual: boolean;
+}
+
+export interface ReceivedLikePreview {
+  id: string;
+  created_at: string;
+  // Données floutées pour utilisateurs gratuits
+  blurred_image: string;
+  timestamp_relative: string; // "Il y a 2h", "Hier", etc.
+}
+
+export interface LikeStats {
+  total_likes_received: number;
+  likes_today: number;
+  likes_this_week: number;
+  likes_this_month: number;
+  most_liked_photo?: string;
+  like_rate_trend: 'increasing' | 'decreasing' | 'stable';
+  average_likes_per_day: number;
+}
+
 class MatchService {
   private readonly baseEndpoint = '/api/v1/matches';
 
@@ -252,6 +279,33 @@ class MatchService {
    */
   async getUserPreferences(): Promise<UserPreferences> {
     return apiService.get<UserPreferences>(`${this.baseEndpoint}/preferences`);
+  }
+
+  /**
+   * Récupère les likes reçus (pour la fonctionnalité "Who Liked Me")
+   */
+  async getReceivedLikes(): Promise<ReceivedLike[]> {
+    return this.withRetry(async () => {
+      return apiService.get<ReceivedLike[]>(`${this.baseEndpoint}/received-likes`);
+    });
+  }
+
+  /**
+   * Récupère les statistiques des likes reçus
+   */
+  async getLikeStats(): Promise<LikeStats> {
+    return this.withRetry(async () => {
+      return apiService.get<LikeStats>(`${this.baseEndpoint}/like-stats`);
+    });
+  }
+
+  /**
+   * Récupère un aperçu limité des likes reçus pour les utilisateurs gratuits
+   */
+  async getReceivedLikesPreview(limit: number = 3): Promise<ReceivedLikePreview[]> {
+    return this.withRetry(async () => {
+      return apiService.get<ReceivedLikePreview[]>(`${this.baseEndpoint}/received-likes/preview?limit=${limit}`);
+    });
   }
 }
 

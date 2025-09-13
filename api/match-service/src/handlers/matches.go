@@ -204,3 +204,60 @@ func GetUserPreferencesHandler(c *gin.Context) {
 		"preferences": preferences,
 	})
 }
+
+// GetReceivedLikesHandler returns likes received by the user (Premium feature)
+func GetReceivedLikesHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	// TODO: Check if user has Premium subscription
+	// isPremium := checkPremiumStatus(userID)
+	// if !isPremium {
+	//     utils.RespondError(c, "Premium subscription required", http.StatusForbidden)
+	//     return
+	// }
+
+	matchService := services.NewMatchService()
+	receivedLikes, err := matchService.GetReceivedLikes(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to get received likes: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, receivedLikes)
+}
+
+// GetReceivedLikesPreviewHandler returns limited preview of received likes for free users
+func GetReceivedLikesPreviewHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	// Parse limit parameter (default 3 for free users)
+	limit := 3
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	matchService := services.NewMatchService()
+	previewLikes, err := matchService.GetReceivedLikesPreview(userID, limit)
+	if err != nil {
+		utils.RespondError(c, "Failed to get received likes preview: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, previewLikes)
+}
+
+// GetLikeStatsHandler returns like statistics for the user
+func GetLikeStatsHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	matchService := services.NewMatchService()
+	stats, err := matchService.GetLikeStats(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to get like stats: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, stats)
+}

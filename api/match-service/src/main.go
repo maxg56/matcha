@@ -55,6 +55,11 @@ func main() {
 			matches.POST("/block", handlers.BlockUserHandler)
 			matches.GET("/algorithm", handlers.MatchingAlgorithmHandler)
 			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
+
+			// Premium features - likes received
+			matches.GET("/received-likes", handlers.GetReceivedLikesHandler)
+			matches.GET("/received-likes/preview", handlers.GetReceivedLikesPreviewHandler)
+			matches.GET("/like-stats", handlers.GetLikeStatsHandler)
 		}
 
 

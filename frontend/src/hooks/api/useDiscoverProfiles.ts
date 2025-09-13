@@ -89,6 +89,15 @@ export function useDiscoverProfiles(initialProfiles = []) {
     }
   };
 
+  const handleRefresh = () => {
+    if (!isMockMode) {
+      fetchProfiles();
+    } else {
+      // En mode mock, on peut juste remettre l'index à 0
+      setMockIndex(0);
+    }
+  };
+
   return {
     currentProfile,
     hasMoreProfiles: isMockMode ? mockIndex < initialProfiles.length - 1 : hasMoreProfiles,
@@ -101,6 +110,7 @@ export function useDiscoverProfiles(initialProfiles = []) {
       onBoost: handleBoost,
       onMessage: handleMessage,
       onReport: handleReport,
+      refresh: handleRefresh,
     },
   };
 }
