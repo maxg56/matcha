@@ -172,3 +172,23 @@ Use Stripe CLI for webhook testing:
 ```bash
 stripe listen --forward-to localhost:8085/api/stripe/webhook
 ```
+### **Cartes de test classiques**
+
+| Type             | Numéro de carte     | Expiration | CVC       | Résultat attendu |
+| ---------------- | ------------------- | ---------- | --------- | ---------------- |
+| Visa             | 4242 4242 4242 4242 | n’importe  | n’importe | Paiement réussi  |
+| Mastercard       | 5555 5555 5555 4444 | n’importe  | n’importe | Paiement réussi  |
+| American Express | 3782 822463 10005   | n’importe  | n’importe | Paiement réussi  |
+| Diners Club      | 3056 930902 5904    | n’importe  | n’importe | Paiement réussi  |
+| Discover         | 6011 1111 1111 1117 | n’importe  | n’importe | Paiement réussi  |
+| JCB              | 3566 1111 1111 1113 | n’importe  | n’importe | Paiement réussi  |
+
+---
+
+### **Cartes pour simuler des erreurs**
+
+| Numéro de carte     | Expiration | CVC       | Résultat                                        |
+| ------------------- | ---------- | --------- | ----------------------------------------------- |
+| 4000 0000 0000 0002 | n’importe  | n’importe | Carte refusée                                   |
+| 4000 0000 0000 9995 | n’importe  | n’importe | Solde insuffisant                               |
+| 4000 0000 0000 0069 | n’importe  | n’importe | Paiement nécessite authentification (3D Secure) |
