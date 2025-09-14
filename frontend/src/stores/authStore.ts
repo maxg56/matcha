@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { authService, type RegisterRequest } from '@/services/auth';
+import { useNotificationStore } from './notificationStore';
+import { useUserStore } from './userStore';
+import { useChatStore } from './chatStore';
+import { useDiscoverStore } from './discoverStore';
+import { webSocketService } from '@/services/websocket';
 
 interface User {
   id: number;
@@ -129,6 +134,16 @@ export const useAuthStore = create<AuthStore>()(
               isLoading: false,
               error: null,
             });
+
+            // Disconnect WebSocket connections
+            webSocketService.disconnect();
+
+            // Clear all user-specific stores
+            useNotificationStore.getState().reset();
+            useUserStore.getState().reset();
+            useChatStore.getState().reset();
+            useDiscoverStore.getState().reset();
+            // Note: We don't reset filters as users may want to keep their filter preferences
           }
         },
 
@@ -184,6 +199,16 @@ export const useAuthStore = create<AuthStore>()(
               }
             } catch {
               authService.clearTokens();
+
+              // Disconnect WebSocket connections
+              webSocketService.disconnect();
+
+              // Clear all user-specific stores
+              useNotificationStore.getState().reset();
+              useUserStore.getState().reset();
+              useChatStore.getState().reset();
+              useDiscoverStore.getState().reset();
+
               set({
                 user: null,
                 isAuthenticated: false,
