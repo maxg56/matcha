@@ -15,6 +15,7 @@ export interface UserProfile {
   id: number;
   username: string;
   first_name: string;
+  last_name: string;
   age: number;
   height?: number;
   alcohol_consumption?: string;

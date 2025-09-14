@@ -26,8 +26,7 @@ import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminProtectedRoute } from './components/admin/AdminProtectedRoute';
-import SubscriptionPage from './pages/SubscriptionPage';
-import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
+import PricingPage from './pages/PricingPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -64,8 +63,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="edit-profile" element={<EditProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="map" element={<MapPage />} />
-                <Route path="subscription" element={<SubscriptionPage />} />
-                <Route path="subscription/success" element={<SubscriptionSuccessPage />} />
+                <Route path="pricing" element={<PricingPage />} />
               </Route>
               {/* Default redirect based on authentication status */}
               <Route path="/" element={<RootRedirect />} />

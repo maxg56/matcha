@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { matchService, type Match, type MatchesResponse, type ReceivedLikePreview, type LikeStats } from '@/services/matchService';
+import { matchService, type Match, type ReceivedLikePreview, type LikeStats } from '@/services/matchService';
 import { mockDataService } from '@/services/mockDataService';
 import { useToast } from '@/hooks/ui/useToast';
 import { BlurredLikesGrid } from '@/components/cards/BlurredLikeCard';
@@ -85,7 +85,7 @@ export default function MatchesPage() {
   const { toast } = useToast();
 
   // Simuler le statut premium (à remplacer par vraie logique)
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -141,24 +141,6 @@ export default function MatchesPage() {
     }
   };
 
-  const fetchMatches = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response: MatchesResponse = await matchService.getMatches();
-      setMatches(response.matches);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erreur lors du chargement des matches';
-      setError(message);
-      toast({
-        variant: 'error',
-        message: message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleUnmatch = async () => {
     // Pour l'instant, on ne peut pas "unmatch" via l'API
@@ -193,7 +175,7 @@ export default function MatchesPage() {
   };
 
   // Convertir les données pour BlurredLikesGrid
-  const blurredLikesData = receivedLikes.map(like => ({
+  const blurredLikesData = (receivedLikes || []).map(like => ({
     id: like.id,
     name: isPremium ? undefined : undefined, // Masquer le nom pour les gratuits
     image: like.blurred_image,
@@ -261,9 +243,9 @@ export default function MatchesPage() {
             <div className="flex items-center justify-center gap-2">
               <Eye className="w-4 h-4" />
               <span>Qui me like</span>
-              {receivedLikes.length > 0 && (
+              {(receivedLikes || []).length > 0 && (
                 <Badge className="bg-red-500 text-white text-xs">
-                  {receivedLikes.length}+
+                  {(receivedLikes || []).length}+
                 </Badge>
               )}
             </div>
@@ -279,9 +261,9 @@ export default function MatchesPage() {
             <div className="flex items-center justify-center gap-2">
               <Heart className="w-4 h-4" />
               <span>Mes matches</span>
-              {matches.length > 0 && (
+              {(matches || []).length > 0 && (
                 <Badge className="bg-green-500 text-white text-xs">
-                  {matches.length}
+                  {(matches || []).length}
                 </Badge>
               )}
             </div>
@@ -351,14 +333,14 @@ export default function MatchesPage() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Qui vous a liké
                 </h3>
-                {receivedLikes.length > 0 && !isPremium && (
+                {(receivedLikes || []).length > 0 && !isPremium && (
                   <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-                    {receivedLikes.length}+ nouveaux likes
+                    {(receivedLikes || []).length}+ nouveaux likes
                   </Badge>
                 )}
               </div>
 
-              {receivedLikes.length === 0 ? (
+              {(receivedLikes || []).length === 0 ? (
                 <div className="text-center py-12">
                   <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                     <Eye className="h-12 w-12 text-gray-400" />
@@ -386,7 +368,7 @@ export default function MatchesPage() {
                   {!isPremium && (
                     <div className="text-center">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        {receivedLikes.length > 3 && `+${receivedLikes.length - 3} autres personnes vous ont liké`}
+                        {(receivedLikes || []).length > 3 && `+${(receivedLikes || []).length - 3} autres personnes vous ont liké`}
                       </p>
                       <Button
                         onClick={() => setShowPremiumModal(true)}
@@ -405,9 +387,9 @@ export default function MatchesPage() {
           /* Matches Tab */
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Vos matches ({matches.length})
+              Vos matches ({(matches || []).length})
             </h3>
-            {matches.length === 0 ? (
+            {(matches || []).length === 0 ? (
               <div className="text-center py-12">
                 <div className="mb-4">
                   <Heart className="mx-auto h-12 w-12 text-gray-400" />
@@ -427,7 +409,7 @@ export default function MatchesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {matches.map((match) => (
+                {(matches || []).map((match) => (
                   <MatchCard
                     key={match.id}
                     match={match}

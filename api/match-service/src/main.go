@@ -60,6 +60,16 @@ func main() {
 			matches.GET("/received-likes", handlers.GetReceivedLikesHandler)
 			matches.GET("/received-likes/preview", handlers.GetReceivedLikesPreviewHandler)
 			matches.GET("/like-stats", handlers.GetLikeStatsHandler)
+
+			// Premium features - rewind functionality
+			premium := matches.Group("/premium")
+			{
+				rewind := premium.Group("/rewind")
+				{
+					rewind.GET("/availability", handlers.GetRewindAvailabilityHandler)
+					rewind.POST("/perform", handlers.PerformRewindHandler)
+				}
+			}
 		}
 
 

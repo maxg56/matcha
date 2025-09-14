@@ -261,3 +261,34 @@ func GetLikeStatsHandler(c *gin.Context) {
 
 	utils.RespondSuccess(c, http.StatusOK, stats)
 }
+
+// GetRewindAvailabilityHandler checks if user can rewind their last action
+func GetRewindAvailabilityHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	rewindService := services.NewRewindService()
+	availability, err := rewindService.GetRewindAvailability(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to check rewind availability: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, availability)
+}
+
+// PerformRewindHandler executes the rewind action
+func PerformRewindHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	rewindService := services.NewRewindService()
+	err := rewindService.PerformRewind(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to perform rewind: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{
+		"message": "Rewind performed successfully",
+		"user_id": userID,
+	})
+}

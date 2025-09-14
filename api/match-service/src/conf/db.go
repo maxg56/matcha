@@ -52,6 +52,7 @@ func InitDB() {
 			&models.UserInteraction{},
 			&models.Match{},
 			&models.UserPreference{},
+			&models.Rewind{},
 		)
 		if err != nil {
 			log.Fatalf("Failed to auto-migrate: %v", err)
