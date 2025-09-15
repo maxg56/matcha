@@ -86,10 +86,8 @@ export const useUserStore = create<UserStore>()(
         try {
           
           const endpoint = userId ? `/api/v1/users/profile/${userId}` : '/api/v1/users/profile';
-          const response = await apiService.get<{ profile: UserProfile }>(endpoint);
-          console.log('Fetched response:', response);
+          const response = await apiService.get<{ message?: string, profile: UserProfile }>(endpoint);
           const profile = response.profile;
-          console.log('Extracted profile:', profile);
           set({
             profile,
             isLoading: false,
@@ -119,7 +117,10 @@ export const useUserStore = create<UserStore>()(
             throw new Error('User ID not found');
           }
           
-          const response = await apiService.put<{ profile: UserProfile }>(`/api/v1/users/profile/${profileId}`, profileData);
+          const endpoint = `/api/v1/users/profile/${profileId}`;
+          
+          const response = await apiService.put<{ message?: string, profile: UserProfile }>(endpoint, profileData);
+          
           const updatedProfile = response.profile;
           
           set({
@@ -127,6 +128,7 @@ export const useUserStore = create<UserStore>()(
             isLoading: false,
             error: null,
           });
+          
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
           set({

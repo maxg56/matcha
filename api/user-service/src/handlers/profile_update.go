@@ -47,6 +47,12 @@ func UpdateProfileHandler(c *gin.Context) {
 	}
 
 	// Update fields if provided
+	if req.FirstName != nil {
+		user.FirstName = *req.FirstName
+	}
+	if req.LastName != nil {
+		user.LastName = *req.LastName
+	}
 	if req.Height != nil {
 		user.Height.Int64 = int64(*req.Height)
 		user.Height.Valid = true
