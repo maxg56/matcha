@@ -29,7 +29,7 @@ func TrackProfileViewHandler(c *gin.Context) {
 		return
 	}
 
-	viewerID := authenticatedUserID.(uint)
+	viewerID := uint(authenticatedUserID.(int))
 
 	// Users cannot track viewing their own profile
 	if uint(viewedID) == viewerID {
@@ -79,7 +79,7 @@ func GetProfileViewersHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	// Parse limit parameter
 	limitStr := c.DefaultQuery("limit", "20")
@@ -145,7 +145,7 @@ func GetProfileViewStatsHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	// Get total views
 	var totalViews int64
@@ -203,7 +203,7 @@ func GetMyProfileViewsHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	// Parse limit parameter
 	limitStr := c.DefaultQuery("limit", "20")

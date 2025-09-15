@@ -41,7 +41,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
 
   const loadMoreViewers = async () => {
     try {
-      const response = await getProfileViewers(20, viewers.length);
+      const response = await getProfileViewers(20, viewers?.length || 0);
       setHasMore(response.viewers.length === 20);
     } catch (err) {
       console.error('Failed to load more viewers:', err);
@@ -123,7 +123,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
             Qui a vu votre profil récemment
           </h4>
 
-          {isLoading && viewers.length === 0 ? (
+          {isLoading && (!viewers || viewers.length === 0) ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex items-center gap-3 p-2 animate-pulse">
@@ -135,7 +135,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
                 </div>
               ))}
             </div>
-          ) : viewers.length === 0 ? (
+          ) : !viewers || viewers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Eye className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Aucune vue de profil récente</p>
@@ -145,7 +145,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
             </div>
           ) : (
             <div className="space-y-2">
-              {(showAll ? viewers : viewers.slice(0, 6)).map((view) => (
+              {(showAll ? (viewers || []) : (viewers || []).slice(0, 6)).map((view) => (
                 <div
                   key={`${view.viewer.id}-${view.viewed_at}`}
                   className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-lg transition-colors"
@@ -174,7 +174,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
               ))}
 
               {/* Show More/Less Button */}
-              {viewers.length > 6 && (
+              {viewers && viewers.length > 6 && (
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -186,7 +186,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
                   className="w-full mt-3"
                   disabled={isLoading}
                 >
-                  {showAll ? 'Voir moins' : `Voir plus (${viewers.length} total)`}
+                  {showAll ? 'Voir moins' : `Voir plus (${viewers?.length || 0} total)`}
                 </Button>
               )}
             </div>
