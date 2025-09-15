@@ -47,7 +47,6 @@ export default function MapPage() {
         <div className="flex-1 flex flex-col">
           {/* En-tête */}
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
@@ -59,26 +58,8 @@ export default function MapPage() {
                 </button>
                 <h1 className="text-2xl font-bold">Carte des utilisateurs</h1>
               </div>
-
-              {/* Contrôles rapides */}
-              <div className="flex items-center gap-4">
-                <label htmlFor="radius" className="text-sm font-medium">
-                  Rayon:
-                </label>
-                <select
-                  id="radius"
-                  value={searchRadius}
-                  onChange={(e) => setSearchRadius(Number(e.target.value))}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value={10}>10 km</option>
-                  <option value={25}>25 km</option>
-                  <option value={50}>50 km</option>
-                  <option value={100}>100 km</option>
-                </select>
-              </div>
-            </div>
-
+        
+          
             {/* Informations utilisateur sélectionné */}
             {selectedUser && (
               <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">

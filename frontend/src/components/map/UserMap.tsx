@@ -1,6 +1,48 @@
 import { useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import L from "leaflet";
 import { locationService, type NearbyUser } from "@/services/locationService";
+
+// Créer des icônes personnalisées
+const currentUserIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41" width="25" height="41">
+      <path fill="#e74c3c" stroke="#c0392b" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z"/>
+      <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
+      <circle fill="#e74c3c" cx="12.5" cy="12.5" r="3"/>
+    </svg>
+  `),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" width="41" height="41">
+      <ellipse fill="#000" opacity="0.3" cx="20.5" cy="37" rx="18" ry="4"/>
+    </svg>
+  `),
+  shadowSize: [41, 41],
+  shadowAnchor: [12, 40]
+});
+
+const otherUserIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41" width="25" height="41">
+      <path fill="#3498db" stroke="#2980b9" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z"/>
+      <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
+      <circle fill="#3498db" cx="12.5" cy="12.5" r="3"/>
+    </svg>
+  `),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" width="41" height="41">
+      <ellipse fill="#000" opacity="0.3" cx="20.5" cy="37" rx="18" ry="4"/>
+    </svg>
+  `),
+  shadowSize: [41, 41],
+  shadowAnchor: [12, 40]
+});
 
 interface UserMapProps {
   searchRadius?: number;
@@ -33,10 +75,11 @@ export function UserMap({
   showCurrentLocation = true
 }: UserMapProps) {
   const [nearbyUsers, setNearbyUsers] = useState<NearbyUser[]>([]);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([48.8566, 2.3522]); // Paris par défaut
+  const [mapCenter, setMapCenter] = useState<[number, number]>([48.8566, 2.3522]); // Paris par défaut (fallback)
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
 
   const loadNearbyUsers = useCallback(async (radius: number = searchRadius) => {
     try {
@@ -74,7 +117,20 @@ export function UserMap({
   const updateUserLocation = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Récupérer la nouvelle position et centrer la carte
+      const position = await locationService.getBrowserLocation();
+      const newCoords: [number, number] = [
+        position.coords.latitude,
+        position.coords.longitude
+      ];
+
+      setCurrentLocation(newCoords);
+      setMapCenter(newCoords);
+
+      // Mettre à jour la localisation sur le serveur
       await locationService.updateLocationFromBrowser();
+
       // Recharger les utilisateurs à proximité après la mise à jour
       await loadNearbyUsers();
     } catch (err) {
@@ -90,11 +146,41 @@ export function UserMap({
     setMapCenter([lat, lng]);
   }, []);
 
+  // Initialiser la carte avec la géolocalisation de l'utilisateur
+  const initializeMapWithUserLocation = useCallback(async () => {
+    if (isMapInitialized) return;
+
+    try {
+      // Essayer d'obtenir la géolocalisation
+      const position = await locationService.getBrowserLocation();
+      const userCoords: [number, number] = [
+        position.coords.latitude,
+        position.coords.longitude
+      ];
+
+      setCurrentLocation(userCoords);
+      setMapCenter(userCoords);
+      setIsMapInitialized(true);
+
+      console.log('Carte centrée sur la position de l\'utilisateur:', userCoords);
+    } catch (err) {
+      console.log('Impossible d\'obtenir la géolocalisation, utilisation de Paris par défaut:', err);
+      // Laisser la carte centrée sur Paris par défaut
+      setIsMapInitialized(true);
+    }
+  }, [isMapInitialized]);
+
   useEffect(() => {
-    // Essayer de charger les utilisateurs à proximité
-    // Si cela échoue (pas de géolocalisation), c'est normal, l'utilisateur peut toujours rechercher par ville
-    loadNearbyUsers();
-  }, [loadNearbyUsers]);
+    // Initialiser la carte avec la position de l'utilisateur
+    initializeMapWithUserLocation();
+  }, [initializeMapWithUserLocation]);
+
+  useEffect(() => {
+    // Charger les utilisateurs à proximité seulement après l'initialisation de la carte
+    if (isMapInitialized) {
+      loadNearbyUsers();
+    }
+  }, [isMapInitialized, loadNearbyUsers]);
 
   const formatDistance = (distance: number): string => {
     if (distance < 1) {
@@ -152,11 +238,26 @@ export function UserMap({
         </div>
       )}
 
+      {/* Indicateur de centrage automatique */}
+      {!isMapInitialized && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000] bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <p className="text-sm font-medium">🌍 Centrage sur votre position...</p>
+          </div>
+        </div>
+      )}
+
       {/* Compteur d'utilisateurs */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-white dark:bg-gray-800 px-3 py-2 rounded-md shadow-lg">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {nearbyUsers?.length || 0} utilisateur{(nearbyUsers?.length || 0) !== 1 ? 's' : ''} à proximité
         </p>
+        {currentLocation && (
+          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+            📍 Carte centrée sur votre position
+          </p>
+        )}
       </div>
 
       <MapContainer
@@ -175,11 +276,15 @@ export function UserMap({
         {showCurrentLocation && currentLocation && (
           <Marker
             position={currentLocation}
-            // Vous pouvez ajouter une icône différente pour la position actuelle
+            icon={currentUserIcon}
           >
             <Popup>
               <div className="text-center">
-                <strong>Votre position</strong>
+                <strong className="text-red-600">🚀 Votre position</strong>
+                <br />
+                <span className="text-sm text-gray-600">
+                  📍 Vous êtes ici
+                </span>
               </div>
             </Popup>
           </Marker>
@@ -190,17 +295,18 @@ export function UserMap({
           <Marker
             key={user.id}
             position={[user.latitude, user.longitude]}
+            icon={otherUserIcon}
             eventHandlers={{
               click: () => onUserClick?.(user)
             }}
           >
             <Popup>
               <div className="text-center max-w-xs">
-                <div className="font-bold text-lg">{user.first_name}</div>
+                <div className="font-bold text-lg text-blue-700">👤 {user.first_name}</div>
                 <div className="text-gray-600 text-sm">@{user.username}</div>
-                <div className="text-gray-600 text-sm">{user.age} ans</div>
+                <div className="text-gray-600 text-sm">🎂 {user.age} ans</div>
                 <div className="text-blue-600 font-medium text-sm">
-                  📍 {formatDistance(user.distance)}
+                  📍 À {formatDistance(user.distance)} de vous
                 </div>
                 {user.compatibility_score && (
                   <div className="text-green-600 font-medium text-sm">
