@@ -14,7 +14,7 @@ export function LocationFilters({
   className = ""
 }: LocationFiltersProps) {
   const [filters, setFilters] = useState<SearchFilters>({
-    max_distance: 50,
+    max_distance: 200,
     age_min: 18,
     age_max: 50,
     limit: 50,
@@ -57,7 +57,7 @@ export function LocationFilters({
 
   const handleReset = () => {
     const defaultFilters: SearchFilters = {
-      max_distance: 50,
+      max_distance: 200,
       age_min: 18,
       age_max: 50,
       limit: 50
@@ -130,7 +130,7 @@ export function LocationFilters({
           min="5"
           max="200"
           step="5"
-          value={filters.max_distance || 50}
+          value={filters.max_distance || 200}
           onChange={(e) => handleDistanceChange(Number(e.target.value))}
           className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
         />

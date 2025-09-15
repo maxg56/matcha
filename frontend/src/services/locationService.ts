@@ -77,9 +77,18 @@ class LocationService {
   private lastGeolocationAttempt: number = 0;
 
   /**
-   * Récupère les utilisateurs à proximité
+   * Récupère les utilisateurs matchés avec leur localisation
    */
-  async getNearbyUsers(radius: number = 50, limit: number = 50): Promise<NearbyUsersResponse> {
+  async getMatchedUsers(): Promise<NearbyUsersResponse> {
+    return apiService.get<NearbyUsersResponse>(
+      `${this.baseEndpoint}/nearby`
+    );
+  }
+
+  /**
+   * Récupère les utilisateurs à proximité (ancien endpoint, garde pour compatibilité)
+   */
+  async getNearbyUsers(radius: number = 200, limit: number = 50): Promise<NearbyUsersResponse> {
     const queryParams = new URLSearchParams({
       radius: radius.toString(),
       limit: limit.toString()

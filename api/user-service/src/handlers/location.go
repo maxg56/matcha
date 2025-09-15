@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -72,8 +71,8 @@ func UpdateLocationHandler(c *gin.Context) {
 	})
 }
 
-// GetNearbyUsersHandler finds users within a specified radius
-func GetNearbyUsersHandler(c *gin.Context) {
+// GetMatchedUsersHandler finds users that the current user has matched with and have location data
+func GetMatchedUsersHandler(c *gin.Context) {
 	// Get authenticated user ID
 	authenticatedUserID, exists := c.Get("user_id")
 	if !exists {
@@ -95,94 +94,79 @@ func GetNearbyUsersHandler(c *gin.Context) {
 		return
 	}
 
-	// Parse radius parameter (default 50km)
-	radiusStr := c.DefaultQuery("radius", "50")
-	radius, err := strconv.ParseFloat(radiusStr, 64)
-	if err != nil || radius <= 0 {
-		utils.RespondError(c, http.StatusBadRequest, "invalid radius parameter")
+	// Query to get matched users with their location data
+	// We need to join with matches table to get only matched users
+	var matchedUsers []models.User
+	err := conf.DB.Preload("Tags").Preload("Images", "is_active = ?", true).
+		Joins(`JOIN matches ON
+			(matches.user1_id = ? AND matches.user2_id = users.id AND matches.is_active = true) OR
+			(matches.user2_id = ? AND matches.user1_id = users.id AND matches.is_active = true)`, userID, userID).
+		Where("users.latitude IS NOT NULL AND users.longitude IS NOT NULL").
+		Find(&matchedUsers).Error
+
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "failed to get matched users")
 		return
 	}
 
-	// Parse limit parameter (default 20)
-	limitStr := c.DefaultQuery("limit", "20")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 20
-	}
-
-	// Get all users with location data (excluding current user)
-	var users []models.User
-	if err := conf.DB.Preload("Tags").Preload("Images", "is_active = ?", true).
-		Where("id != ? AND latitude IS NOT NULL AND longitude IS NOT NULL", userID).
-		Find(&users).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "failed to get users")
-		return
-	}
-
-	// Filter by distance and create results matching frontend interface
-	nearbyUsers := make([]NearbyUserResponse, 0) // Initialize empty slice instead of nil
-	for _, user := range users {
+	// Create results matching frontend interface
+	matchedUsersList := make([]NearbyUserResponse, 0)
+	for _, user := range matchedUsers {
 		if !user.Latitude.Valid || !user.Longitude.Valid {
 			continue
 		}
 
+		// Calculate distance for display purposes
 		distance := utils.CalculateDistance(
 			currentUser.Latitude.Float64, currentUser.Longitude.Float64,
 			user.Latitude.Float64, user.Longitude.Float64,
 		)
 
-		if distance <= radius {
-			nearbyUser := NearbyUserResponse{
-				ID:        user.ID,
-				Username:  user.Username,
-				FirstName: user.FirstName,
-				Age:       user.Age,
-				Bio:       user.Bio,
-				Latitude:  user.Latitude.Float64,
-				Longitude: user.Longitude.Float64,
-				Distance:  distance,
-			}
-
-			// Add city if available
-			if user.CurrentCity.Valid {
-				nearbyUser.CurrentCity = &user.CurrentCity.String
-			}
-
-			// Convert tags to string array
-			for _, tag := range user.Tags {
-				nearbyUser.Tags = append(nearbyUser.Tags, tag.Name)
-			}
-
-			// Convert images to URL array (only active images)
-			for _, image := range user.Images {
-				if image.IsActive {
-					nearbyUser.Images = append(nearbyUser.Images, image.URL())
-				}
-			}
-
-			// Add default image if none available
-			if len(nearbyUser.Images) == 0 {
-				nearbyUser.Images = append(nearbyUser.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
-			}
-
-			nearbyUsers = append(nearbyUsers, nearbyUser)
+		matchedUser := NearbyUserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			Age:       user.Age,
+			Bio:       user.Bio,
+			Latitude:  user.Latitude.Float64,
+			Longitude: user.Longitude.Float64,
+			Distance:  distance,
 		}
 
-		// Limit results
-		if len(nearbyUsers) >= limit {
-			break
+		// Add city if available
+		if user.CurrentCity.Valid {
+			matchedUser.CurrentCity = &user.CurrentCity.String
 		}
+
+		// Convert tags to string array
+		for _, tag := range user.Tags {
+			matchedUser.Tags = append(matchedUser.Tags, tag.Name)
+		}
+
+		// Convert images to URL array (only active images)
+		for _, image := range user.Images {
+			if image.IsActive {
+				matchedUser.Images = append(matchedUser.Images, image.URL())
+			}
+		}
+
+		// Add default image if none available
+		if len(matchedUser.Images) == 0 {
+			matchedUser.Images = append(matchedUser.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
+		}
+
+		matchedUsersList = append(matchedUsersList, matchedUser)
 	}
 
 	// Response matching frontend NearbyUsersResponse interface
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"users": nearbyUsers,
-		"count": len(nearbyUsers),
+		"users": matchedUsersList,
+		"count": len(matchedUsersList),
 		"center_location": gin.H{
 			"latitude":  currentUser.Latitude.Float64,
 			"longitude": currentUser.Longitude.Float64,
 		},
-		"search_radius": radius,
+		"matches_only": true, // Indicate this is matches-only mode
 	})
 }
 

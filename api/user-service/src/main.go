@@ -44,7 +44,7 @@ func main() {
 
 			// Location management
 			protected.PUT("/:id/location", handlers.UpdateLocationHandler)
-			protected.GET("/nearby", handlers.GetNearbyUsersHandler)
+			protected.GET("/nearby", handlers.GetMatchedUsersHandler)
 
 			// Search functionality
 			protected.GET("/search", handlers.SearchUsersHandler)
@@ -74,7 +74,7 @@ func main() {
 	location := r.Group("/api/v1/location")
 	location.Use(middleware.AuthMiddleware())
 	{
-		location.GET("/nearby", handlers.GetNearbyUsersHandler)
+		location.GET("/nearby", handlers.GetMatchedUsersHandler) // Now returns only matched users
 		location.GET("/search", handlers.SearchUsersHandler)
 		location.PUT("/location", handlers.UpdateLocationHandler)
 		location.GET("/location", handlers.GetCurrentLocationHandler)

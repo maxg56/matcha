@@ -45,7 +45,6 @@ const otherUserIcon = new L.Icon({
 });
 
 interface UserMapProps {
-  searchRadius?: number;
   onUserClick?: (user: NearbyUser) => void;
   showCurrentLocation?: boolean;
 }
@@ -70,7 +69,6 @@ function MapEvents({ onLocationUpdate }: MapEventsProps) {
 }
 
 export function UserMap({
-  searchRadius = 50,
   onUserClick,
   showCurrentLocation = true
 }: UserMapProps) {
@@ -81,15 +79,15 @@ export function UserMap({
   const [error, setError] = useState<string | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
 
-  const loadNearbyUsers = useCallback(async (radius: number = searchRadius) => {
+  const loadMatchedUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await locationService.getNearbyUsers(radius);
+      const response = await locationService.getMatchedUsers();
       setNearbyUsers(response.users || []); // Fallback to empty array if null/undefined
 
-      // Centrer la carte sur la localisation de recherche
+      // Centrer la carte sur la localisation de l'utilisateur
       if (response.center_location) {
         const center: [number, number] = [
           response.center_location.latitude,
@@ -99,20 +97,20 @@ export function UserMap({
         setCurrentLocation(center);
       }
     } catch (err) {
-      console.error('Erreur lors du chargement des utilisateurs à proximité:', err);
+      console.error('Erreur lors du chargement des matches:', err);
 
       // Gestion spécifique des erreurs d'authentification
       if (err instanceof Error && err.message.includes('session a expiré')) {
-        setError('Votre session a expiré. Veuillez vous reconnecter pour voir les utilisateurs à proximité.');
+        setError('Votre session a expiré. Veuillez vous reconnecter pour voir vos matches.');
       } else if (err instanceof Error && err.message.includes('not authenticated')) {
-        setError('Vous devez être connecté pour voir les utilisateurs à proximité.');
+        setError('Vous devez être connecté pour voir vos matches.');
       } else {
-        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des utilisateurs');
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des matches');
       }
     } finally {
       setLoading(false);
     }
-  }, [searchRadius]);
+  }, []);
 
   const updateUserLocation = useCallback(async () => {
     try {
@@ -131,15 +129,15 @@ export function UserMap({
       // Mettre à jour la localisation sur le serveur
       await locationService.updateLocationFromBrowser();
 
-      // Recharger les utilisateurs à proximité après la mise à jour
-      await loadNearbyUsers();
+      // Recharger les matches après la mise à jour
+      await loadMatchedUsers();
     } catch (err) {
       console.error('Erreur lors de la mise à jour de la localisation:', err);
       setError(err instanceof Error ? err.message : 'Erreur de localisation');
     } finally {
       setLoading(false);
     }
-  }, [loadNearbyUsers]);
+  }, [loadMatchedUsers]);
 
   const handleLocationUpdate = useCallback((lat: number, lng: number) => {
     setCurrentLocation([lat, lng]);
@@ -176,11 +174,11 @@ export function UserMap({
   }, [initializeMapWithUserLocation]);
 
   useEffect(() => {
-    // Charger les utilisateurs à proximité seulement après l'initialisation de la carte
+    // Charger les matches seulement après l'initialisation de la carte
     if (isMapInitialized) {
-      loadNearbyUsers();
+      loadMatchedUsers();
     }
-  }, [isMapInitialized, loadNearbyUsers]);
+  }, [isMapInitialized, loadMatchedUsers]);
 
   const formatDistance = (distance: number): string => {
     if (distance < 1) {
@@ -202,11 +200,11 @@ export function UserMap({
         </button>
 
         <button
-          onClick={() => loadNearbyUsers()}
+          onClick={() => loadMatchedUsers()}
           disabled={loading}
           className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
         >
-          {loading ? 'Chargement...' : 'Actualiser'}
+          {loading ? 'Chargement...' : 'Actualiser matches'}
         </button>
       </div>
 
@@ -231,9 +229,9 @@ export function UserMap({
       {/* Aide pour l'utilisateur */}
       {(nearbyUsers?.length === 0 || !nearbyUsers) && !loading && !error && (
         <div className="absolute top-4 left-4 z-[1000] bg-blue-500 text-white px-4 py-2 rounded-md shadow-lg max-w-sm">
-          <p className="text-sm">Aucun utilisateur trouvé à proximité.</p>
+          <p className="text-sm">Aucun match trouvé.</p>
           <p className="text-xs mt-1 text-blue-200">
-            💡 Cliquez sur "Ma position" ou cliquez sur la carte pour définir votre localisation
+            💡 Vos matches apparaîtront ici lorsque vous en aurez
           </p>
         </div>
       )}
@@ -248,10 +246,10 @@ export function UserMap({
         </div>
       )}
 
-      {/* Compteur d'utilisateurs */}
+      {/* Compteur de matches */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-white dark:bg-gray-800 px-3 py-2 rounded-md shadow-lg">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {nearbyUsers?.length || 0} utilisateur{(nearbyUsers?.length || 0) !== 1 ? 's' : ''} à proximité
+          {nearbyUsers?.length || 0} match{(nearbyUsers?.length || 0) !== 1 ? 's' : ''} sur la carte
         </p>
         {currentLocation && (
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
@@ -290,7 +288,7 @@ export function UserMap({
           </Marker>
         )}
 
-        {/* Marqueurs des utilisateurs à proximité */}
+        {/* Marqueurs des utilisateurs matchés */}
         {nearbyUsers?.map((user) => (
           <Marker
             key={user.id}
