@@ -73,7 +73,7 @@ export function UserMap({
   showCurrentLocation = true
 }: UserMapProps) {
   const [nearbyUsers, setNearbyUsers] = useState<NearbyUser[]>([]);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([48.8566, 2.3522]); // Paris par défaut (fallback)
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null); // Sera défini par la position de l'utilisateur
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,27 +144,46 @@ export function UserMap({
     setMapCenter([lat, lng]);
   }, []);
 
-  // Initialiser la carte avec la géolocalisation de l'utilisateur
+  // Initialiser la carte avec la position de l'utilisateur depuis l'API
   const initializeMapWithUserLocation = useCallback(async () => {
     if (isMapInitialized) return;
 
     try {
-      // Essayer d'obtenir la géolocalisation
-      const position = await locationService.getBrowserLocation();
+      // D'abord, essayer de récupérer la position de l'utilisateur depuis l'API
+      const currentLocation = await locationService.getCurrentLocation();
       const userCoords: [number, number] = [
-        position.coords.latitude,
-        position.coords.longitude
+        currentLocation.latitude,
+        currentLocation.longitude
       ];
 
       setCurrentLocation(userCoords);
       setMapCenter(userCoords);
       setIsMapInitialized(true);
 
-      console.log('Carte centrée sur la position de l\'utilisateur:', userCoords);
+      console.log('Carte centrée sur la position de l\'utilisateur (API):', userCoords);
     } catch (err) {
-      console.log('Impossible d\'obtenir la géolocalisation, utilisation de Paris par défaut:', err);
-      // Laisser la carte centrée sur Paris par défaut
-      setIsMapInitialized(true);
+      console.log('Position de l\'utilisateur non disponible via API, essai géolocalisation navigateur:', err);
+
+      try {
+        // Fallback: essayer la géolocalisation du navigateur
+        const position = await locationService.getBrowserLocation();
+        const userCoords: [number, number] = [
+          position.coords.latitude,
+          position.coords.longitude
+        ];
+
+        setCurrentLocation(userCoords);
+        setMapCenter(userCoords);
+        setIsMapInitialized(true);
+
+        console.log('Carte centrée sur la géolocalisation du navigateur:', userCoords);
+      } catch (geoErr) {
+        console.log('Impossible d\'obtenir la géolocalisation, utilisation de Paris par défaut:', geoErr);
+        // Dernier fallback: Paris
+        const parisCoords: [number, number] = [48.8566, 2.3522];
+        setMapCenter(parisCoords);
+        setIsMapInitialized(true);
+      }
     }
   }, [isMapInitialized]);
 
@@ -258,12 +277,14 @@ export function UserMap({
         )}
       </div>
 
-      <MapContainer
-        center={mapCenter}
-        zoom={12}
-        style={{ width: "100%", height: "100%" }}
-        className="rounded-lg"
-      >
+      {/* Afficher la carte seulement quand la position est connue */}
+      {mapCenter && (
+        <MapContainer
+          center={mapCenter}
+          zoom={12}
+          style={{ width: "100%", height: "100%" }}
+          className="rounded-lg"
+        >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
@@ -338,6 +359,7 @@ export function UserMap({
           </Marker>
         ))}
       </MapContainer>
+      )}
     </div>
   );
 }
