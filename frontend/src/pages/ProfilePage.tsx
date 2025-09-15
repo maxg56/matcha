@@ -5,6 +5,7 @@ import { ProfileBasicInfo } from '@/components/profile/ProfileBasicInfo';
 import { ProfileBio } from '@/components/profile/ProfileBio';
 import { ProfileSections } from '@/components/profile/ProfileSections';
 import { ProfileInterests } from '@/components/profile/ProfileInterests';
+import { ProfileViewers } from '@/components/profile/ProfileViewers';
 // import { ProfileStats } from '@/components/profile/ProfileStats';
 import { useUserStore } from '@/stores/userStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -51,6 +52,7 @@ export default function ProfilePage() {
             <ProfileBio bio={profile?.bio || ''} user={profile} photos={profile?.images || []} />
             {profile && <ProfileSections user={profile} />}
             <ProfileInterests interests={profile?.interests || []} />
+            <ProfileViewers />
             {/* <ProfileStats stats={profile?.stats || {}} /> */}
           </div>
         </div>
