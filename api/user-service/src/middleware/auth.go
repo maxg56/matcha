@@ -20,7 +20,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		fmt.Printf("[AUTH] X-User-ID header: '%s'\n", userIDStr)
 		
 		if userIDStr == "" {
-			utils.RespondError(c, http.StatusUnauthorized, "User ID header missing")
+			utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")
 			c.Abort()
 			return
 		}
@@ -28,13 +28,13 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Validate user ID
 		userID, err := strconv.Atoi(userIDStr)
 		if err != nil || userID <= 0 {
-			utils.RespondError(c, http.StatusBadRequest, "Invalid user ID")
+			utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")
 			c.Abort()
 			return
 		}
 
-		// Store user ID in context
-		c.Set("userID", userID)
+		// Store user ID in context (using uint to match handlers expectation)
+		c.Set("user_id", uint(userID))
 		c.Next()
 	}
 }

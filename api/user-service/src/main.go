@@ -70,6 +70,16 @@ func main() {
 		}
 	}
 
+	// Location API routes (matching frontend expectations)
+	location := r.Group("/api/v1/location")
+	location.Use(middleware.AuthMiddleware())
+	{
+		location.GET("/nearby", handlers.GetNearbyUsersHandler)
+		location.GET("/search", handlers.SearchUsersHandler)
+		location.PUT("/location", handlers.UpdateLocationHandler)
+		location.GET("/location", handlers.GetCurrentLocationHandler)
+	}
+
 	log.Println("User service starting on port 8002")
 	log.Fatal(http.ListenAndServe(":8002", r))
 }

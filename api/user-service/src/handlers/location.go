@@ -11,22 +11,9 @@ import (
 	"user-service/src/utils"
 )
 
-// LocationUpdateRequest represents location update payload
-type LocationUpdateRequest struct {
-	Latitude  float64 `json:"latitude" binding:"required,min=-90,max=90"`
-	Longitude float64 `json:"longitude" binding:"required,min=-180,max=180"`
-}
 
 // UpdateLocationHandler updates user's current location
 func UpdateLocationHandler(c *gin.Context) {
-	userIDParam := c.Param("id")
-
-	id, err := strconv.ParseUint(userIDParam, 10, 32)
-	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "invalid user ID")
-		return
-	}
-
 	// Get authenticated user ID from JWT middleware
 	authenticatedUserID, exists := c.Get("user_id")
 	if !exists {
@@ -34,11 +21,7 @@ func UpdateLocationHandler(c *gin.Context) {
 		return
 	}
 
-	// Users can only update their own location
-	if uint(id) != authenticatedUserID.(uint) {
-		utils.RespondError(c, http.StatusForbidden, "cannot update another user's location")
-		return
-	}
+	userID := authenticatedUserID.(uint)
 
 	var req LocationUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -47,7 +30,7 @@ func UpdateLocationHandler(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := conf.DB.First(&user, id).Error; err != nil {
+	if err := conf.DB.First(&user, userID).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "user not found")
 		return
 	}
@@ -58,15 +41,34 @@ func UpdateLocationHandler(c *gin.Context) {
 	user.Longitude.Float64 = req.Longitude
 	user.Longitude.Valid = true
 
+	// Update city and country if provided
+	if req.City != nil {
+		user.CurrentCity.String = *req.City
+		user.CurrentCity.Valid = true
+	}
+
 	if err := conf.DB.Save(&user).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "failed to update location")
 		return
 	}
 
+	// Create response matching frontend interface
+	locationResp := UserLocation{
+		ID:        user.ID,
+		UserID:    user.ID,
+		Latitude:  user.Latitude.Float64,
+		Longitude: user.Longitude.Float64,
+		UpdatedAt: user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if user.CurrentCity.Valid {
+		locationResp.City = &user.CurrentCity.String
+	}
+
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"message":   "Location updated successfully",
-		"latitude":  user.Latitude.Float64,
-		"longitude": user.Longitude.Float64,
+		"success":  true,
+		"location": locationResp,
+		"message":  "Location updated successfully",
 	})
 }
 
@@ -117,24 +119,53 @@ func GetNearbyUsersHandler(c *gin.Context) {
 		return
 	}
 
-	// Filter by distance and create results
-	var nearbyUsers []map[string]interface{}
+	// Filter by distance and create results matching frontend interface
+	nearbyUsers := make([]NearbyUserResponse, 0) // Initialize empty slice instead of nil
 	for _, user := range users {
 		if !user.Latitude.Valid || !user.Longitude.Valid {
 			continue
 		}
 
-		distance := calculateDistance(
+		distance := utils.CalculateDistance(
 			currentUser.Latitude.Float64, currentUser.Longitude.Float64,
 			user.Latitude.Float64, user.Longitude.Float64,
 		)
 
 		if distance <= radius {
-			profile := user.ToPublicProfile()
-			nearbyUsers = append(nearbyUsers, map[string]interface{}{
-				"profile":     profile,
-				"distance_km": distance,
-			})
+			nearbyUser := NearbyUserResponse{
+				ID:        user.ID,
+				Username:  user.Username,
+				FirstName: user.FirstName,
+				Age:       user.Age,
+				Bio:       user.Bio,
+				Latitude:  user.Latitude.Float64,
+				Longitude: user.Longitude.Float64,
+				Distance:  distance,
+			}
+
+			// Add city if available
+			if user.CurrentCity.Valid {
+				nearbyUser.CurrentCity = &user.CurrentCity.String
+			}
+
+			// Convert tags to string array
+			for _, tag := range user.Tags {
+				nearbyUser.Tags = append(nearbyUser.Tags, tag.Name)
+			}
+
+			// Convert images to URL array (only active images)
+			for _, image := range user.Images {
+				if image.IsActive {
+					nearbyUser.Images = append(nearbyUser.Images, image.URL())
+				}
+			}
+
+			// Add default image if none available
+			if len(nearbyUser.Images) == 0 {
+				nearbyUser.Images = append(nearbyUser.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
+			}
+
+			nearbyUsers = append(nearbyUsers, nearbyUser)
 		}
 
 		// Limit results
@@ -143,13 +174,55 @@ func GetNearbyUsersHandler(c *gin.Context) {
 		}
 	}
 
+	// Response matching frontend NearbyUsersResponse interface
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"users":       nearbyUsers,
-		"radius_km":   radius,
-		"total_found": len(nearbyUsers),
-		"user_location": gin.H{
+		"users": nearbyUsers,
+		"count": len(nearbyUsers),
+		"center_location": gin.H{
 			"latitude":  currentUser.Latitude.Float64,
 			"longitude": currentUser.Longitude.Float64,
 		},
+		"search_radius": radius,
 	})
 }
+
+// GetCurrentLocationHandler returns the current user's location
+func GetCurrentLocationHandler(c *gin.Context) {
+	// Get authenticated user ID
+	authenticatedUserID, exists := c.Get("user_id")
+	if !exists {
+		utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	userID := authenticatedUserID.(uint)
+
+	// Get current user
+	var user models.User
+	if err := conf.DB.First(&user, userID).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "user not found")
+		return
+	}
+
+	// Check if location is set
+	if !user.Latitude.Valid || !user.Longitude.Valid {
+		utils.RespondError(c, http.StatusNotFound, "user location not set")
+		return
+	}
+
+	// Create response matching frontend interface
+	locationResp := UserLocation{
+		ID:        user.ID,
+		UserID:    user.ID,
+		Latitude:  user.Latitude.Float64,
+		Longitude: user.Longitude.Float64,
+		UpdatedAt: user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if user.CurrentCity.Valid {
+		locationResp.City = &user.CurrentCity.String
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, locationResp)
+}
+
