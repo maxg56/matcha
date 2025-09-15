@@ -99,7 +99,7 @@ func (p *PreferencesService) RecordInteraction(userID, targetUserID int, action 
 		INSERT INTO user_interactions (user_id, target_user_id, interaction_type, created_at)
 		VALUES (?, ?, ?, CURRENT_TIMESTAMP)
 		ON CONFLICT (user_id, target_user_id)
-		DO UPDATE SET 
+		DO UPDATE SET
 			interaction_type = EXCLUDED.interaction_type,
 			created_at = CURRENT_TIMESTAMP
 	`, userID, targetUserID, action)
@@ -123,6 +123,32 @@ func (p *PreferencesService) RecordInteraction(userID, targetUserID int, action 
 		"action":         action,
 		"timestamp":      interaction.CreatedAt,
 		"message":        "Interaction recorded successfully",
+	}
+
+	// Check for mutual like to create match (only for like actions)
+	if action == "like" {
+		var mutualLike models.UserInteraction
+		mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND interaction_type = ?",
+			targetUserID, userID, "like").First(&mutualLike)
+
+		if mutualResult.Error == nil {
+			// Create match
+			match, err := p.createMatch(userID, targetUserID)
+			if err == nil {
+				result["match_created"] = true
+				result["match_id"] = match.ID
+				log.Printf("Match created between users %d and %d", userID, targetUserID)
+			} else {
+				log.Printf("Failed to create match between users %d and %d: %v", userID, targetUserID, err)
+			}
+		}
+	}
+
+	// Handle unlike/pass actions - deactivate any existing match
+	if action == "pass" || action == "block" {
+		if err := p.deactivateMatch(userID, targetUserID); err != nil {
+			log.Printf("Warning: Failed to deactivate match: %v", err)
+		}
 	}
 
 	return result, nil
@@ -308,4 +334,58 @@ func (p *PreferencesService) SetRandomnessFactor(factor float64) {
 	if factor >= 0 && factor <= 1 {
 		p.randomnessFactor = factor
 	}
+}
+
+// createMatch creates a new match between two users
+func (p *PreferencesService) createMatch(userID, targetUserID int) (*models.Match, error) {
+	match := models.Match{
+		User1ID:  uint(userID),
+		User2ID:  uint(targetUserID),
+		IsActive: true,
+	}
+
+	// Ensure consistent ordering (smaller ID first)
+	if userID > targetUserID {
+		match.User1ID = uint(targetUserID)
+		match.User2ID = uint(userID)
+	}
+
+	// Check if match already exists
+	var existingMatch models.Match
+	result := conf.DB.Where("user1_id = ? AND user2_id = ?",
+		match.User1ID, match.User2ID).First(&existingMatch)
+
+	if result.Error != nil {
+		// Create new match
+		if err := conf.DB.Create(&match).Error; err != nil {
+			return nil, err
+		}
+		return &match, nil
+	} else {
+		// Reactivate existing match
+		existingMatch.IsActive = true
+		if err := conf.DB.Save(&existingMatch).Error; err != nil {
+			return nil, err
+		}
+		return &existingMatch, nil
+	}
+}
+
+// deactivateMatch deactivates a match between two users
+func (p *PreferencesService) deactivateMatch(userID, targetUserID int) error {
+	// Determine correct ordering
+	user1ID, user2ID := userID, targetUserID
+	if userID > targetUserID {
+		user1ID, user2ID = targetUserID, userID
+	}
+
+	var match models.Match
+	result := conf.DB.Where("user1_id = ? AND user2_id = ?", user1ID, user2ID).First(&match)
+
+	if result.Error == nil {
+		match.IsActive = false
+		conf.DB.Save(&match)
+	}
+
+	return nil
 }

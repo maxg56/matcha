@@ -204,15 +204,6 @@ CREATE TABLE IF NOT EXISTS matches (
     CONSTRAINT unique_match UNIQUE (user1_id, user2_id)
 );
 
--- Legacy relations table (kept for backward compatibility)
-CREATE TABLE relations (
-    id SERIAL PRIMARY KEY,
-    user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    value_user1 relation_value_enum DEFAULT 'pass' NOT NULL,
-    value_user2 relation_value_enum DEFAULT 'pass' NOT NULL
-);
-
 -- ====================
 -- TABLE : profile_views
 -- ====================
