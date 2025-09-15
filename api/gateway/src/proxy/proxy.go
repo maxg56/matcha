@@ -107,10 +107,17 @@ func copyHeaders(c *gin.Context, req *http.Request) {
 	}
 
 	// Propagate authenticated user id if present in context
+	fmt.Printf("[PROXY] DEBUG: Looking for user ID in context with key: %s\n", middleware.CtxUserIDKey)
 	if v, ok := c.Get(middleware.CtxUserIDKey); ok {
+		fmt.Printf("[PROXY] DEBUG: Found value in context: %v (type: %T)\n", v, v)
 		if s, ok := v.(string); ok && s != "" {
+			fmt.Printf("[PROXY] Setting X-User-ID header: '%s'\n", s)
 			req.Header.Set("X-User-ID", s)
+		} else {
+			fmt.Printf("[PROXY] User ID in context but not string: %v\n", v)
 		}
+	} else {
+		fmt.Printf("[PROXY] No user ID found in context\n")
 	}
 
 	// Forward original JWT token for services that need it

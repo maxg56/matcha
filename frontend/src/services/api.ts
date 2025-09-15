@@ -24,6 +24,11 @@ class ApiService {
     options: RequestInit = {},
     isRetry = false
   ): Promise<T> {
+    // Réinitialiser le compteur de retry pour chaque nouvelle requête (pas pour les retries)
+    if (!isRetry) {
+      this.retryCount = 0;
+    }
+    
     const url = `${this.baseURL}${endpoint}`;
     const token = localStorage.getItem('accessToken');
 

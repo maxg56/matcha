@@ -11,19 +11,25 @@ interface ProfileBioProps {
 
 export function ProfileBio({ bio, user, photos }: ProfileBioProps) {
   const [showMore, setShowMore] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const isLongBio = bio.length > 150;
 
   return (
     <>
       <InfoCard title="À propos de moi" icon={<MessageCircle className="h-4 w-4" />}>
-        <p className="text-muted-foreground leading-relaxed mb-2">
-          {bio.slice(0, 150)}...
-        </p>
-        <button
-          onClick={() => setShowMore(true)}
-          className="text-sm text-purple-500 hover:text-purple-600 font-medium"
-        >
-          Voir plus
-        </button>
+        <div className="text-muted-foreground leading-relaxed mb-2">
+          <p className="whitespace-pre-wrap">
+            {expanded || !isLongBio ? bio : `${bio.slice(0, 150)}...`}
+          </p>
+          {isLongBio && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-primary hover:text-primary/80 text-sm font-medium mt-2 block"
+            >
+              {expanded ? 'Voir moins' : 'Voir plus'}
+            </button>
+          )}
+        </div>
       </InfoCard>
 
       {/* Modal détaillé */}
