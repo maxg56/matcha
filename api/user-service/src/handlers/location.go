@@ -21,7 +21,7 @@ func UpdateLocationHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	var req LocationUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -81,7 +81,7 @@ func GetNearbyUsersHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	// Get current user location
 	var currentUser models.User
@@ -195,7 +195,7 @@ func GetCurrentLocationHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	// Get current user
 	var user models.User
