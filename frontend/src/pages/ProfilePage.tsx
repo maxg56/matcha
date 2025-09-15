@@ -51,8 +51,7 @@ export default function ProfilePage() {
             {profile && <ProfileBasicInfo user={profile} />}
             <ProfileBio bio={profile?.bio || ''} user={profile} photos={profile?.images || []} />
             {profile && <ProfileSections user={profile} />}
-            <ProfileInterests interests={profile?.interests || []} />
-            <ProfileViewers />
+            <ProfileInterests interests={profile?.tags || []} />
             {/* <ProfileStats stats={profile?.stats || {}} /> */}
           </div>
         </div>

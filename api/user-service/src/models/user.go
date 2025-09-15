@@ -92,6 +92,7 @@ type PublicProfile struct {
 	EyeColor            *string   `json:"eye_color,omitempty"`
 	Fame                int       `json:"fame"`
 	Gender              string    `json:"gender"`
+	SexPref             string    `json:"sex_pref"`
 	PoliticalView       *string   `json:"political_view,omitempty"`
 	Tags                []string  `json:"tags,omitempty"`
 	Images              []string  `json:"images,omitempty"`
@@ -109,6 +110,7 @@ func (u *User) ToPublicProfile() *PublicProfile {
 		RelationshipType: u.RelationshipType,
 		Fame:             u.Fame,
 		Gender:           u.Gender,
+		SexPref:          u.SexPref,
 		CreatedAt:        u.CreatedAt,
 	}
 
