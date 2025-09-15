@@ -96,6 +96,14 @@ export function useRegistrationLogic() {
     
     try {
       await authService.verifyEmail(formData.email, emailVerificationCode);
+      
+      // Vérifier l'authentification après la vérification d'email
+      try {
+        await useAuthStore.getState().checkAuth();
+      } catch (authError) {
+        console.warn('Failed to refresh auth state after email verification:', authError);
+      }
+      
       setEmailVerified(true);
       setCurrentStep(3);
       setErrors({});
@@ -163,6 +171,55 @@ export function useRegistrationLogic() {
     clearGlobalError();
     
     try {
+      // 0. Vérifier l'authentification avant de commencer
+      try {
+        console.log('Checking auth state before profile completion...');
+        await useAuthStore.getState().checkAuth();
+        
+        // Si checkAuth réussit, vérifier quand même l'état
+        const authState = useAuthStore.getState();
+        if (!authState.isAuthenticated || !authState.user?.id) {
+          throw new Error('Not authenticated after auth check');
+        }
+        
+        console.log('Auth check successful:', {
+          userId: authState.user.id,
+          isAuthenticated: authState.isAuthenticated
+        });
+      } catch (authError) {
+        console.error('Auth check failed:', authError);
+        
+        // Essayer de se reconnecter automatiquement avec les credentials stockés
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+          try {
+            console.log('Attempting to refresh token...');
+            const response = await fetch('/api/v1/auth/refresh', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: refreshToken })
+            });
+            
+            if (response.ok) {
+              const tokenData = await response.json();
+              localStorage.setItem('accessToken', tokenData.access_token);
+              localStorage.setItem('refreshToken', tokenData.refresh_token);
+              
+              // Recheck auth after refresh
+              await useAuthStore.getState().checkAuth();
+              console.log('Token refresh successful');
+            } else {
+              throw new Error('Token refresh failed');
+            }
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            throw new Error('Authentication expired. Please login again.');
+          }
+        } else {
+          throw new Error('No refresh token available. Please login again.');
+        }
+      }
+
       // 1. Upload des images depuis le store
       let imageUrls: string[] = [];
       const uploadPromises = selectedImages.map(async (imagePreview) => {
@@ -191,12 +248,31 @@ export function useRegistrationLogic() {
       // 3. Ajouter les URLs des images uploadées (obligatoires)
       profileUpdatePayload.images = imageUrls;
 
-      // 4. Mettre à jour le profil utilisateur
-      const currentUser = useAuthStore.getState().user;
-      if (!currentUser?.id) {
-        throw new Error('User not found, please login again');
+      // 4. Vérifier l'authentification avant de mettre à jour le profil
+      const authState = useAuthStore.getState();
+      const currentUser = authState.user;
+      const isAuthenticated = authState.isAuthenticated;
+      
+      console.log('Auth state before profile update:', {
+        user: currentUser,
+        isAuthenticated,
+        hasToken: !!localStorage.getItem('accessToken'),
+        hasRefreshToken: !!localStorage.getItem('refreshToken')
+      });
+      
+      if (!currentUser?.id || !isAuthenticated) {
+        console.error('Authentication failed:', { currentUser, isAuthenticated });
+        throw new Error('User not found or not authenticated, please login again');
       }
 
+      // Vérifier que le token est valide
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.error('No access token found');
+        throw new Error('Authentication token not found, please login again');
+      }
+
+      console.log('Attempting to update profile with payload:', profileUpdatePayload);
       await useUserStore.getState().updateProfile(profileUpdatePayload);
       
       // 5. Succès - rediriger vers la page de découverte
@@ -208,6 +284,20 @@ export function useRegistrationLogic() {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la finalisation du profil';
       
       // Gestion des erreurs spécifiques
+      if (errorMessage.includes('user not authenticated') || errorMessage.includes('not authenticated')) {
+        // Clear tokens and redirect to login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        useAuthStore.getState().logout();
+        
+        setErrors({ images: 'Session expirée. Veuillez vous reconnecter et reprendre l\'inscription.' });
+        setGlobalError('Votre session a expiré. Veuillez vous reconnecter.');
+        setSubmitting(false);
+        setLoading(false);
+        navigate('/auth/login');
+        return;
+      }
+      
       if (errorMessage.includes('failed to update tags')) {
         // Try to update profile without tags first, then handle tags separately
         try {
