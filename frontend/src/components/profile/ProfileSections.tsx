@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Palette, Wine, Baby, Ruler } from 'lucide-react';
 import { physicalTraits, lifestyleLabels, personalValues } from './ProfileLabels';
+import type { UserProfile } from '@/stores/userStore';
 
 interface ProfileSectionsProps {
-  user: any;
+  user: UserProfile;
 }
 
 export function ProfileSections({ user }: ProfileSectionsProps) {
@@ -63,18 +64,24 @@ export function ProfileSections({ user }: ProfileSectionsProps) {
         sectionKey="physical"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <Ruler className="h-4 w-4" />
-            <span>Taille: {user.height} cm</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>{physicalTraits.hairColor[user.hairColor as keyof typeof physicalTraits.hairColor]?.icon}</span>
-            <span>Cheveux: {physicalTraits.hairColor[user.hairColor as keyof typeof physicalTraits.hairColor]?.label}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>{physicalTraits.eyeColor[user.eyeColor as keyof typeof physicalTraits.eyeColor]?.icon}</span>
-            <span>Yeux: {physicalTraits.eyeColor[user.eyeColor as keyof typeof physicalTraits.eyeColor]?.label}</span>
-          </div>
+          {user.height && (
+            <div className="flex items-center gap-2">
+              <Ruler className="h-4 w-4" />
+              <span>Taille: {user.height} cm</span>
+            </div>
+          )}
+          {user.hair_color && (
+            <div className="flex items-center gap-2">
+              <span>{physicalTraits.hairColor[user.hair_color as keyof typeof physicalTraits.hairColor]?.icon}</span>
+              <span>Cheveux: {physicalTraits.hairColor[user.hair_color as keyof typeof physicalTraits.hairColor]?.label}</span>
+            </div>
+          )}
+          {user.eye_color && (
+            <div className="flex items-center gap-2">
+              <span>{physicalTraits.eyeColor[user.eye_color as keyof typeof physicalTraits.eyeColor]?.icon}</span>
+              <span>Yeux: {physicalTraits.eyeColor[user.eye_color as keyof typeof physicalTraits.eyeColor]?.label}</span>
+            </div>
+          )}
         </div>
       </ExpandableSection>
 
@@ -85,13 +92,27 @@ export function ProfileSections({ user }: ProfileSectionsProps) {
         sectionKey="lifestyle"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div>Alcool: {lifestyleLabels.alcoholConsumption[user.alcoholConsumption as keyof typeof lifestyleLabels.alcoholConsumption]}</div>
-          <div>Tabac: {lifestyleLabels.smoking[user.smoking as keyof typeof lifestyleLabels.smoking]}</div>
-          <div>Cannabis: {lifestyleLabels.cannabis[user.cannabis as keyof typeof lifestyleLabels.cannabis]}</div>
-          <div>Drogues: {lifestyleLabels.drugs[user.drugs as keyof typeof lifestyleLabels.drugs]}</div>
-          <div>Sport: {lifestyleLabels.sportActivity[user.sportActivity as keyof typeof lifestyleLabels.sportActivity]}</div>
-          <div>Animaux: {lifestyleLabels.pets[user.pets as keyof typeof lifestyleLabels.pets]}</div>
-          <div>Activité sociale: {lifestyleLabels.socialActivityLevel[user.socialActivityLevel as keyof typeof lifestyleLabels.socialActivityLevel]}</div>
+          {user.alcohol_consumption && (
+            <div>Alcool: {lifestyleLabels.alcoholConsumption[user.alcohol_consumption as keyof typeof lifestyleLabels.alcoholConsumption]}</div>
+          )}
+          {user.smoking && (
+            <div>Tabac: {lifestyleLabels.smoking[user.smoking as keyof typeof lifestyleLabels.smoking]}</div>
+          )}
+          {user.cannabis && (
+            <div>Cannabis: {lifestyleLabels.cannabis[user.cannabis as keyof typeof lifestyleLabels.cannabis]}</div>
+          )}
+          {user.drugs && (
+            <div>Drogues: {lifestyleLabels.drugs[user.drugs as keyof typeof lifestyleLabels.drugs]}</div>
+          )}
+          {user.sport_activity && (
+            <div>Sport: {lifestyleLabels.sportActivity[user.sport_activity as keyof typeof lifestyleLabels.sportActivity]}</div>
+          )}
+          {user.pets && (
+            <div>Animaux: {lifestyleLabels.pets[user.pets as keyof typeof lifestyleLabels.pets]}</div>
+          )}
+          {user.social_activity_level && (
+            <div>Activité sociale: {lifestyleLabels.socialActivityLevel[user.social_activity_level as keyof typeof lifestyleLabels.socialActivityLevel]}</div>
+          )}
         </div>
       </ExpandableSection>
 
@@ -102,11 +123,21 @@ export function ProfileSections({ user }: ProfileSectionsProps) {
         sectionKey="values"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div>Religion: {personalValues.religion[user.religion as keyof typeof personalValues.religion]}</div>
-          <div>Opinion politique: {personalValues.politicalView[user.politicalView as keyof typeof personalValues.politicalView]}</div>
-          <div>Enfants: {personalValues.childrenStatus[user.childrenStatus as keyof typeof personalValues.childrenStatus]}</div>
-          <div>Type de relation: {lifestyleLabels.relationshipType[user.relationshipType as keyof typeof lifestyleLabels.relationshipType]}</div>
-          <div>Éducation: {lifestyleLabels.educationLevel[user.educationLevel as keyof typeof lifestyleLabels.educationLevel]}</div>
+          {user.religion && (
+            <div>Religion: {personalValues.religion[user.religion as keyof typeof personalValues.religion]}</div>
+          )}
+          {user.political_view && (
+            <div>Opinion politique: {personalValues.politicalView[user.political_view as keyof typeof personalValues.politicalView]}</div>
+          )}
+          {user.children_status && (
+            <div>Enfants: {personalValues.childrenStatus[user.children_status as keyof typeof personalValues.childrenStatus]}</div>
+          )}
+          {user.relationship_type && (
+            <div>Type de relation: {lifestyleLabels.relationshipType[user.relationship_type as keyof typeof lifestyleLabels.relationshipType]}</div>
+          )}
+          {user.education_level && (
+            <div>Éducation: {lifestyleLabels.educationLevel[user.education_level as keyof typeof lifestyleLabels.educationLevel]}</div>
+          )}
         </div>
       </ExpandableSection>
     </div>

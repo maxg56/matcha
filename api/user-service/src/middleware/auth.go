@@ -33,8 +33,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Store user ID in context (using uint to match handlers expectation)
-		c.Set("user_id", uint(userID))
+		// Store user ID in context
+		c.Set("user_id", userID)
 		c.Next()
 	}
 }

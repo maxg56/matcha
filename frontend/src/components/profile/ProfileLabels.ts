@@ -6,7 +6,8 @@ export const genderLabels = {
 export const preferenceLabels = {
   man: 'Hommes',
   woman: 'Femmes', 
-  both: 'Tout le monde'
+  both: 'Tout le monde',
+  other: 'Autre'
 };
 
 export const physicalTraits = {
@@ -52,7 +53,9 @@ export const lifestyleLabels = {
     dogs: 'Chiens 🐕',
     both: 'Les deux 🐾',
     other: 'Autres 🐹',
-    none: 'Aucun 🚫'
+    none: 'Aucun 🚫',
+    no: 'Non 🚫',
+    yes: 'Oui 🐾'
   },
   socialActivityLevel: {
     low: 'Introverti 🏠',
@@ -62,7 +65,10 @@ export const lifestyleLabels = {
   sportActivity: {
     low: 'Faible 🛋️',
     medium: 'Modéré 🚶',
-    high: 'Élevé 🏃'
+    high: 'Élevé 🏃',
+    other: 'Autre 🏋️',
+    no: 'Non 🚫',
+    yes: 'Oui 💪'
   },
   educationLevel: {
     high_school: 'Lycée 🎓',
