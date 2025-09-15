@@ -69,6 +69,7 @@ type PublicProfile struct {
 	ID                  uint      `json:"id"`
 	Username            string    `json:"username"`
 	FirstName           string    `json:"first_name"`
+	LastName            string    `json:"last_name"`
 	Age                 int       `json:"age"`
 	Height              *int      `json:"height,omitempty"`
 	AlcoholConsumption  *string   `json:"alcohol_consumption,omitempty"`
@@ -81,6 +82,7 @@ type PublicProfile struct {
 	EducationLevel      *string   `json:"education_level,omitempty"`
 	PersonalOpinion     *string   `json:"personal_opinion,omitempty"`
 	Bio                 string    `json:"bio"`
+	BirthCity           *string   `json:"birth_city,omitempty"`
 	CurrentCity         *string   `json:"current_city,omitempty"`
 	Job                 *string   `json:"job,omitempty"`
 	Religion            *string   `json:"religion,omitempty"`
@@ -105,6 +107,7 @@ func (u *User) ToPublicProfile() *PublicProfile {
 		ID:               u.ID,
 		Username:         u.Username,
 		FirstName:        u.FirstName,
+		LastName:         u.LastName,
 		Age:              u.Age,
 		Bio:              u.Bio,
 		RelationshipType: u.RelationshipType,
@@ -146,6 +149,9 @@ func (u *User) ToPublicProfile() *PublicProfile {
 	}
 	if u.PersonalOpinion.Valid {
 		profile.PersonalOpinion = &u.PersonalOpinion.String
+	}
+	if u.BirthCity.Valid {
+		profile.BirthCity = &u.BirthCity.String
 	}
 	if u.CurrentCity.Valid {
 		profile.CurrentCity = &u.CurrentCity.String

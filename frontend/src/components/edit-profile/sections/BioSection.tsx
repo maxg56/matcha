@@ -41,14 +41,6 @@ export function BioSection({
         editingSection={isEditing}
         onChange={(field, value) => updateField(field as keyof UserProfile, value)}
       />
-      <TextArea 
-        field="personalOpinion" 
-        label="Ma vision de la vie" 
-        placeholder="Votre philosophie, vos valeurs..."
-        currentValue={getCurrentValue('personalOpinion') as string}
-        editingSection={isEditing}
-        onChange={(field, value) => updateField(field as keyof UserProfile, value)}
-      />
     </SettingSection>
   );
 }
