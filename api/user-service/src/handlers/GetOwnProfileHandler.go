@@ -14,7 +14,7 @@ import (
 
 // GetOwnProfileHandler retrieves the authenticated user's profile in jwt
 func GetOwnProfileHandler(c *gin.Context) {
-	userID := c.GetInt("userID")
+	userID := c.GetInt("user_id")
 	fmt.Println("Authenticated user ID:", userID)
 	if userID == 0 {
 		utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")

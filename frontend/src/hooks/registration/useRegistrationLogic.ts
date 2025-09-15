@@ -294,7 +294,7 @@ export function useRegistrationLogic() {
         setGlobalError('Votre session a expiré. Veuillez vous reconnecter.');
         setSubmitting(false);
         setLoading(false);
-        navigate('/auth/login');
+        navigate('/app/profile');
         return;
       }
       

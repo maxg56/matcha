@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -56,7 +57,10 @@ func JWTMiddleware() gin.HandlerFunc {
 
 		// Extract common identifiers
 		if sub, ok := claims["sub"].(string); ok && sub != "" {
+			fmt.Printf("[JWT] Setting user ID in context: '%s'\n", sub)
 			c.Set(CtxUserIDKey, sub)
+		} else {
+			fmt.Printf("[JWT] No valid 'sub' claim found in token: %v\n", claims)
 		}
 
 		c.Next()

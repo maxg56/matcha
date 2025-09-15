@@ -29,7 +29,7 @@ func UpdateProfileHandler(c *gin.Context) {
 	}
 
 	// Users can only update their own profile
-	if uint(id) != authenticatedUserID.(uint) {
+	if uint(id) != uint(authenticatedUserID.(int)) {
 		utils.RespondError(c, http.StatusForbidden, "cannot update another user's profile")
 		return
 	}
