@@ -2,6 +2,8 @@ package handlers
 
 // UpdateProfileRequest represents profile update payload
 type UpdateProfileRequest struct {
+	FirstName           *string  `json:"first_name,omitempty"`
+	LastName            *string  `json:"last_name,omitempty"`
 	Height              *int     `json:"height,omitempty"`
 	HairColor           *string  `json:"hair_color,omitempty"`
 	EyeColor            *string  `json:"eye_color,omitempty"`
