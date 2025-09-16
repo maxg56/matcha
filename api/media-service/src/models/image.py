@@ -5,9 +5,17 @@ Model pour les images/médias stockés
 from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, Text
+import enum
 
 db = SQLAlchemy()
+
+
+class ImageVisibility(enum.Enum):
+    """Enum pour la visibilité des images"""
+    PUBLIC = "public"
+    PRIVATE = "private"
+    FRIENDS_ONLY = "friends_only"
 
 
 class Image(db.Model):
@@ -31,6 +39,8 @@ class Image(db.Model):
     height = Column(Integer, nullable=True)  # Hauteur de l'image
     is_profile = Column(Boolean, default=False)  # Image de profil principale
     is_active = Column(Boolean, default=True)  # Image active/supprimée
+    order_index = Column(Integer, default=0, nullable=False)  # Ordre d'affichage
+    visibility = Column(Enum(ImageVisibility), default=ImageVisibility.PUBLIC, nullable=False)  # Visibilité
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
@@ -58,6 +68,8 @@ class Image(db.Model):
             "height": self.height,
             "is_profile": self.is_profile,
             "is_active": self.is_active,
+            "order_index": self.order_index,
+            "visibility": self.visibility.value if self.visibility else ImageVisibility.PUBLIC.value,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "description": self.description,
@@ -71,8 +83,8 @@ class Image(db.Model):
 
     @classmethod
     def get_by_user_id(cls, user_id):
-        """Récupérer toutes les images d'un utilisateur"""
-        return cls.query.filter_by(user_id=user_id, is_active=True).all()
+        """Récupérer toutes les images d'un utilisateur, triées par order_index"""
+        return cls.query.filter_by(user_id=user_id, is_active=True).order_by(cls.order_index).all()
 
     def soft_delete(self):
         """Suppression logique (marquer comme inactive)"""
@@ -88,3 +100,46 @@ class Image(db.Model):
         )
         self.is_profile = True
         db.session.commit()
+
+    def update_metadata(self, description=None, alt_text=None, visibility=None):
+        """Mettre à jour les métadonnées de l'image"""
+        if description is not None:
+            self.description = description
+        if alt_text is not None:
+            self.alt_text = alt_text
+        if visibility is not None:
+            if isinstance(visibility, str):
+                visibility = ImageVisibility(visibility)
+            self.visibility = visibility
+        self.updated_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+    @classmethod
+    def reorder_user_images(cls, user_id, image_orders):
+        """
+        Réorganiser les images d'un utilisateur
+        image_orders: liste de dictionnaires [{"id": 1, "order_index": 0}, ...]
+        """
+        try:
+            for order_data in image_orders:
+                image_id = order_data.get("id")
+                new_order = order_data.get("order_index")
+
+                if image_id is None or new_order is None:
+                    continue
+
+                image = cls.query.filter_by(
+                    id=image_id,
+                    user_id=user_id,
+                    is_active=True
+                ).first()
+
+                if image:
+                    image.order_index = new_order
+                    image.updated_at = datetime.now(timezone.utc)
+
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            raise e

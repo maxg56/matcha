@@ -13,4 +13,4 @@ export type { Profile, Match, LikeAction } from './discoverStore';
 export type { Message, Conversation } from './chatStore';
 export type { FilterState } from './filtersStore';
 export type { RegistrationData, FieldValidationErrors } from './registrationStore';
-export type { UploadedImage } from './imageUploadStore';
+export type { ImageData } from './imageUploadStore';

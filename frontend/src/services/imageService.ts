@@ -14,6 +14,41 @@ interface ImageDeleteResponse {
   message: string;
 }
 
+interface ImageData {
+  id: number;
+  filename: string;
+  original_name: string;
+  order_index: number;
+  visibility: 'public' | 'private' | 'friends_only';
+  description?: string;
+  alt_text?: string;
+  is_profile: boolean;
+  url?: string;
+}
+
+interface ImageReorderResponse {
+  success: boolean;
+  message: string;
+  data: {
+    images: ImageData[];
+  };
+}
+
+interface ImageMetadataResponse {
+  success: boolean;
+  message: string;
+  data: {
+    image: ImageData;
+  };
+}
+
+interface UserImagesResponse {
+  success: boolean;
+  data: {
+    images: ImageData[];
+  };
+}
+
 class ImageService {
   private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8443';
 
@@ -104,12 +139,37 @@ class ImageService {
     return apiService.delete<ImageDeleteResponse>(`/api/v1/media/images/${imageId}`);
   }
 
-  async getUserImages(userId?: number): Promise<string[]> {
-    const endpoint = userId 
-      ? `/api/v1/media/users/${userId}/images`
-      : '/api/v1/media/images';
-    
-    return apiService.get<string[]>(endpoint);
+  async getUserImages(userId?: number): Promise<ImageData[]> {
+    const endpoint = userId
+      ? `/api/v1/media/user/${userId}`
+      : '/api/v1/media/my';
+
+    const response = await apiService.get<UserImagesResponse>(endpoint);
+    return response.data.images;
+  }
+
+  async reorderImages(imageOrders: { id: number; order_index: number }[]): Promise<ImageData[]> {
+    const response = await apiService.put<ImageReorderResponse>('/api/v1/media/order', {
+      images: imageOrders
+    });
+    return response.data.images;
+  }
+
+  async updateImageMetadata(
+    imageId: number,
+    metadata: {
+      description?: string;
+      alt_text?: string;
+      visibility?: string;
+    }
+  ): Promise<ImageData> {
+    const response = await apiService.put<ImageMetadataResponse>(`/api/v1/media/images/${imageId}`, metadata);
+    return response.data.image;
+  }
+
+  async getImageById(imageId: number): Promise<ImageData> {
+    const response = await apiService.get<ImageMetadataResponse>(`/api/v1/media/images/${imageId}`);
+    return response.data.image;
   }
 
   // Temporary upload for registration (before user account is created)
@@ -184,4 +244,11 @@ class ImageService {
 }
 
 export const imageService = new ImageService();
-export type { ImageUploadResponse, ImageDeleteResponse };
+export type {
+  ImageUploadResponse,
+  ImageDeleteResponse,
+  ImageData,
+  ImageReorderResponse,
+  ImageMetadataResponse,
+  UserImagesResponse
+};

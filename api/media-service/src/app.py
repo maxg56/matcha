@@ -21,6 +21,7 @@ from handlers.resize import resize_image
 from handlers.retrieval import get_file
 from handlers.upload import upload_file
 from handlers.user_media import get_user_media, list_user_media, set_profile_image
+from handlers.reorder import reorder_images, get_image_by_id, update_image_metadata
 
 # Import models
 from models import Image, db
@@ -86,6 +87,18 @@ def create_app(config=None):
     @app.route("/api/v1/media/profile", methods=["POST"])
     def profile():
         return set_profile_image()
+
+    @app.route("/api/v1/media/order", methods=["PUT"])
+    def reorder():
+        return reorder_images()
+
+    @app.route("/api/v1/media/images/<int:image_id>", methods=["GET"])
+    def get_image(image_id):
+        return get_image_by_id(image_id)
+
+    @app.route("/api/v1/media/images/<int:image_id>", methods=["PUT"])
+    def update_image(image_id):
+        return update_image_metadata(image_id)
 
     @app.route("/api/v1/media/uploads/<filename>", methods=["GET"])
     def serve_upload(filename):
