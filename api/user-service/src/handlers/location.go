@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -11,22 +10,9 @@ import (
 	"user-service/src/utils"
 )
 
-// LocationUpdateRequest represents location update payload
-type LocationUpdateRequest struct {
-	Latitude  float64 `json:"latitude" binding:"required,min=-90,max=90"`
-	Longitude float64 `json:"longitude" binding:"required,min=-180,max=180"`
-}
 
 // UpdateLocationHandler updates user's current location
 func UpdateLocationHandler(c *gin.Context) {
-	userIDParam := c.Param("id")
-
-	id, err := strconv.ParseUint(userIDParam, 10, 32)
-	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "invalid user ID")
-		return
-	}
-
 	// Get authenticated user ID from JWT middleware
 	authenticatedUserID, exists := c.Get("user_id")
 	if !exists {
@@ -34,11 +20,7 @@ func UpdateLocationHandler(c *gin.Context) {
 		return
 	}
 
-	// Users can only update their own location
-	if uint(id) != authenticatedUserID.(uint) {
-		utils.RespondError(c, http.StatusForbidden, "cannot update another user's location")
-		return
-	}
+	userID := uint(authenticatedUserID.(int))
 
 	var req LocationUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -47,7 +29,7 @@ func UpdateLocationHandler(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := conf.DB.First(&user, id).Error; err != nil {
+	if err := conf.DB.First(&user, userID).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "user not found")
 		return
 	}
@@ -58,20 +40,39 @@ func UpdateLocationHandler(c *gin.Context) {
 	user.Longitude.Float64 = req.Longitude
 	user.Longitude.Valid = true
 
+	// Update city and country if provided
+	if req.City != nil {
+		user.CurrentCity.String = *req.City
+		user.CurrentCity.Valid = true
+	}
+
 	if err := conf.DB.Save(&user).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "failed to update location")
 		return
 	}
 
+	// Create response matching frontend interface
+	locationResp := UserLocation{
+		ID:        user.ID,
+		UserID:    user.ID,
+		Latitude:  user.Latitude.Float64,
+		Longitude: user.Longitude.Float64,
+		UpdatedAt: user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if user.CurrentCity.Valid {
+		locationResp.City = &user.CurrentCity.String
+	}
+
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"message":   "Location updated successfully",
-		"latitude":  user.Latitude.Float64,
-		"longitude": user.Longitude.Float64,
+		"success":  true,
+		"location": locationResp,
+		"message":  "Location updated successfully",
 	})
 }
 
-// GetNearbyUsersHandler finds users within a specified radius
-func GetNearbyUsersHandler(c *gin.Context) {
+// GetMatchedUsersHandler finds users that the current user has matched with and have location data
+func GetMatchedUsersHandler(c *gin.Context) {
 	// Get authenticated user ID
 	authenticatedUserID, exists := c.Get("user_id")
 	if !exists {
@@ -79,7 +80,7 @@ func GetNearbyUsersHandler(c *gin.Context) {
 		return
 	}
 
-	userID := authenticatedUserID.(uint)
+	userID := uint(authenticatedUserID.(int))
 
 	// Get current user location
 	var currentUser models.User
@@ -93,63 +94,119 @@ func GetNearbyUsersHandler(c *gin.Context) {
 		return
 	}
 
-	// Parse radius parameter (default 50km)
-	radiusStr := c.DefaultQuery("radius", "50")
-	radius, err := strconv.ParseFloat(radiusStr, 64)
-	if err != nil || radius <= 0 {
-		utils.RespondError(c, http.StatusBadRequest, "invalid radius parameter")
+	// Query to get matched users with their location data
+	// We need to join with matches table to get only matched users
+	var matchedUsers []models.User
+	err := conf.DB.Preload("Tags").Preload("Images", "is_active = ?", true).
+		Joins(`JOIN matches ON
+			(matches.user1_id = ? AND matches.user2_id = users.id AND matches.is_active = true) OR
+			(matches.user2_id = ? AND matches.user1_id = users.id AND matches.is_active = true)`, userID, userID).
+		Where("users.latitude IS NOT NULL AND users.longitude IS NOT NULL").
+		Find(&matchedUsers).Error
+
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "failed to get matched users")
 		return
 	}
 
-	// Parse limit parameter (default 20)
-	limitStr := c.DefaultQuery("limit", "20")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 20
-	}
-
-	// Get all users with location data (excluding current user)
-	var users []models.User
-	if err := conf.DB.Preload("Tags").Preload("Images", "is_active = ?", true).
-		Where("id != ? AND latitude IS NOT NULL AND longitude IS NOT NULL", userID).
-		Find(&users).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "failed to get users")
-		return
-	}
-
-	// Filter by distance and create results
-	var nearbyUsers []map[string]interface{}
-	for _, user := range users {
+	// Create results matching frontend interface
+	matchedUsersList := make([]NearbyUserResponse, 0)
+	for _, user := range matchedUsers {
 		if !user.Latitude.Valid || !user.Longitude.Valid {
 			continue
 		}
 
-		distance := calculateDistance(
+		// Calculate distance for display purposes
+		distance := utils.CalculateDistance(
 			currentUser.Latitude.Float64, currentUser.Longitude.Float64,
 			user.Latitude.Float64, user.Longitude.Float64,
 		)
 
-		if distance <= radius {
-			profile := user.ToPublicProfile()
-			nearbyUsers = append(nearbyUsers, map[string]interface{}{
-				"profile":     profile,
-				"distance_km": distance,
-			})
+		matchedUser := NearbyUserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			Age:       user.Age,
+			Bio:       user.Bio,
+			Latitude:  user.Latitude.Float64,
+			Longitude: user.Longitude.Float64,
+			Distance:  distance,
 		}
 
-		// Limit results
-		if len(nearbyUsers) >= limit {
-			break
+		// Add city if available
+		if user.CurrentCity.Valid {
+			matchedUser.CurrentCity = &user.CurrentCity.String
 		}
+
+		// Convert tags to string array
+		for _, tag := range user.Tags {
+			matchedUser.Tags = append(matchedUser.Tags, tag.Name)
+		}
+
+		// Convert images to URL array (only active images)
+		for _, image := range user.Images {
+			if image.IsActive {
+				matchedUser.Images = append(matchedUser.Images, image.URL())
+			}
+		}
+
+		// Add default image if none available
+		if len(matchedUser.Images) == 0 {
+			matchedUser.Images = append(matchedUser.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
+		}
+
+		matchedUsersList = append(matchedUsersList, matchedUser)
 	}
 
+	// Response matching frontend NearbyUsersResponse interface
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"users":       nearbyUsers,
-		"radius_km":   radius,
-		"total_found": len(nearbyUsers),
-		"user_location": gin.H{
+		"users": matchedUsersList,
+		"count": len(matchedUsersList),
+		"center_location": gin.H{
 			"latitude":  currentUser.Latitude.Float64,
 			"longitude": currentUser.Longitude.Float64,
 		},
+		"matches_only": true, // Indicate this is matches-only mode
 	})
 }
+
+// GetCurrentLocationHandler returns the current user's location
+func GetCurrentLocationHandler(c *gin.Context) {
+	// Get authenticated user ID
+	authenticatedUserID, exists := c.Get("user_id")
+	if !exists {
+		utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	userID := uint(authenticatedUserID.(int))
+
+	// Get current user
+	var user models.User
+	if err := conf.DB.First(&user, userID).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "user not found")
+		return
+	}
+
+	// Check if location is set
+	if !user.Latitude.Valid || !user.Longitude.Valid {
+		utils.RespondError(c, http.StatusNotFound, "user location not set")
+		return
+	}
+
+	// Create response matching frontend interface
+	locationResp := UserLocation{
+		ID:        user.ID,
+		UserID:    user.ID,
+		Latitude:  user.Latitude.Float64,
+		Longitude: user.Longitude.Float64,
+		UpdatedAt: user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if user.CurrentCity.Valid {
+		locationResp.City = &user.CurrentCity.String
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, locationResp)
+}
+

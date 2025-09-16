@@ -54,4 +54,14 @@ func SetupUserRoutes(r *gin.Engine) {
 		protected.DELETE("/:id/images/:image_id", proxy.ProxyRequest("user", "/api/v1/users/:id/images/:image_id"))
 		protected.PUT("/:id/images/:image_id", proxy.ProxyRequest("user", "/api/v1/users/:id/images/:image_id"))
 	}
+
+	// Location API routes (matching frontend expectations)
+	location := r.Group("/api/v1/location")
+	location.Use(middleware.JWTMiddleware())
+	{
+		location.GET("/nearby", proxy.ProxyRequest("user", "/api/v1/location/nearby"))
+		location.GET("/search", proxy.ProxyRequest("user", "/api/v1/location/search"))
+		location.PUT("/location", proxy.ProxyRequest("user", "/api/v1/location/location"))
+		location.GET("/location", proxy.ProxyRequest("user", "/api/v1/location/location"))
+	}
 }
