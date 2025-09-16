@@ -3,6 +3,7 @@ import { ProfileImageCarousel } from './ProfileImageCarousel';
 import { ProfileInfo } from './ProfileInfo';
 import { ProfileActions } from './ProfileActions';
 import { ProfileDetails } from './ProfileDetails';
+import { useProfileAnalytics } from '@/hooks/api/useProfileAnalytics';
 
 interface Profile {
   id: string | number;
@@ -74,12 +75,17 @@ export function ProfileCard({
 }: ProfileCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
+  const { trackProfileView } = useProfileAnalytics();
 
   const handleImageChange = (index: number) => {
     setCurrentImageIndex(index);
   };
 
-  const handleToggleDetails = () => {
+  const handleToggleDetails = async () => {
+    if (!showDetails) {
+      // Track profile view when opening details for the first time
+      await trackProfileView(Number(profile.id));
+    }
     setShowDetails(!showDetails);
   };
 
