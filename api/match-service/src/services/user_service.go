@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"math"
+	"strings"
 	"time"
 
 	"match-service/src/conf"
@@ -57,7 +58,7 @@ func (u *UserService) GetUserVector(userID int) (utils.UserVector, error) {
 	return vector, nil
 }
 
-// GetCandidateUsers retrieves potential candidate users for matching
+// GetCandidateUsers retrieves potential candidate users for matching with full preference filtering
 func (u *UserService) GetCandidateUsers(userID int, maxDistance *int, ageRange *AgeRange) ([]models.User, error) {
 	// Get current user
 	currentUser, err := u.GetUser(userID)
@@ -65,19 +66,40 @@ func (u *UserService) GetCandidateUsers(userID int, maxDistance *int, ageRange *
 		return nil, err
 	}
 
+	// Get user preferences
+	userPreferences, err := u.GetUserMatchingPreferences(userID)
+	if err != nil {
+		return nil, err
+	}
+
 	query := conf.DB.Where("id != ?", userID)
 
-	// Apply age range filter
+	// Apply age range filter (use preferences if not overridden)
 	if ageRange != nil {
 		query = query.Where("age BETWEEN ? AND ?", ageRange.Min, ageRange.Max)
 	}
 
-	// Apply gender preference filtering
-	if currentUser.SexPref == "male" {
-		query = query.Where("gender = ?", "male")
-	} else if currentUser.SexPref == "female" {
-		query = query.Where("gender = ?", "female")
+	// Apply minimum fame filter from preferences
+	if userPreferences.MinFame > 0 {
+		query = query.Where("fame >= ?", userPreferences.MinFame)
 	}
+
+	// Apply gender preference filtering from preferences
+	if userPreferences.PreferredGenders != "" && userPreferences.PreferredGenders != `["man","woman","other"]` {
+		// Parse JSON array - for now, handle basic cases
+		if strings.Contains(userPreferences.PreferredGenders, `"man"`) && !strings.Contains(userPreferences.PreferredGenders, `"woman"`) {
+			query = query.Where("gender = ?", "man")
+		} else if strings.Contains(userPreferences.PreferredGenders, `"woman"`) && !strings.Contains(userPreferences.PreferredGenders, `"man"`) {
+			query = query.Where("gender = ?", "woman")
+		}
+		// If both or neither are present, don't filter by gender
+	}
+
+	// Exclude already seen profiles
+	seenSubquery := conf.DB.Table("user_seen_profiles").
+		Select("seen_user_id").
+		Where("user_id = ?", userID)
+	query = query.Where("id NOT IN (?)", seenSubquery)
 
 	// Apply distance filter if specified
 	if maxDistance != nil && currentUser.Latitude.Valid && currentUser.Longitude.Valid {
@@ -172,4 +194,33 @@ func (u *UserService) GetUserMatchingPreferences(userID int) (*models.UserMatchi
 		}, nil
 	}
 	return &preferences, nil
+}
+
+// MarkProfilesAsSeen records that a user has seen specific profiles
+func (u *UserService) MarkProfilesAsSeen(userID int, seenUserIDs []int, algorithmType string) error {
+	for _, seenUserID := range seenUserIDs {
+		seenProfile := models.UserSeenProfile{
+			UserID:        uint(userID),
+			SeenUserID:    uint(seenUserID),
+			AlgorithmType: algorithmType,
+		}
+		
+		// Use INSERT ON CONFLICT to avoid duplicates
+		result := conf.DB.Exec(`
+			INSERT INTO user_seen_profiles (user_id, seen_user_id, algorithm_type, seen_at)
+			VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+			ON CONFLICT (user_id, seen_user_id) DO NOTHING`,
+			seenProfile.UserID, seenProfile.SeenUserID, seenProfile.AlgorithmType)
+		
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+	return nil
+}
+
+// ResetSeenProfiles clears all seen profiles for a user (useful for development/testing)
+func (u *UserService) ResetSeenProfiles(userID int) error {
+	result := conf.DB.Where("user_id = ?", userID).Delete(&models.UserSeenProfile{})
+	return result.Error
 }

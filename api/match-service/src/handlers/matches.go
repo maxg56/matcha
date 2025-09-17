@@ -172,6 +172,19 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 			return
 		}
 
+		// Mark these profiles as seen
+		var seenUserIDs []int
+		for _, match := range matches {
+			seenUserIDs = append(seenUserIDs, match.ID)
+		}
+		if len(seenUserIDs) > 0 {
+			if err := userService.MarkProfilesAsSeen(userID, seenUserIDs, algorithmType); err != nil {
+				// Log error but don't fail the request
+				utils.RespondError(c, "Warning: Failed to mark profiles as seen: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
 		utils.RespondSuccess(c, http.StatusOK, gin.H{
 			"matches":        matches,
 			"count":          len(matches),
@@ -188,6 +201,19 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 		if err != nil {
 			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		// Mark these profiles as seen
+		var seenUserIDs []int
+		for _, candidate := range candidates {
+			seenUserIDs = append(seenUserIDs, candidate.ID)
+		}
+		if len(seenUserIDs) > 0 {
+			if err := userService.MarkProfilesAsSeen(userID, seenUserIDs, algorithmType); err != nil {
+				// Log error but don't fail the request
+				utils.RespondError(c, "Warning: Failed to mark profiles as seen: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		utils.RespondSuccess(c, http.StatusOK, gin.H{
@@ -217,5 +243,22 @@ func GetUserPreferencesHandler(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
 		"user_id":     userID,
 		"preferences": preferences,
+	})
+}
+
+// ResetSeenProfilesHandler allows a user to reset their seen profiles (for development/testing)
+func ResetSeenProfilesHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	userService := services.NewUserService()
+	err := userService.ResetSeenProfiles(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to reset seen profiles: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{
+		"message":  "Seen profiles reset successfully",
+		"user_id":  userID,
 	})
 }

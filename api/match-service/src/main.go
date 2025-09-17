@@ -56,6 +56,7 @@ func main() {
 			matches.POST("/block", handlers.BlockUserHandler)
 			matches.GET("/algorithm", handlers.MatchingAlgorithmHandler)
 			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
+			matches.DELETE("/seen", handlers.ResetSeenProfilesHandler)
 		}
 
 

@@ -429,3 +429,27 @@ JOIN users u1 ON m.user1_id = u1.id
 JOIN users u2 ON m.user2_id = u2.id
 WHERE m.is_active = TRUE
 ORDER BY m.matched_at DESC;
+
+-- ====================
+-- TABLE : user_seen_profiles
+-- ====================
+-- Table to track which profiles a user has already seen to prevent duplicates
+CREATE TABLE IF NOT EXISTS user_seen_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    seen_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    algorithm_type VARCHAR(50) DEFAULT 'unknown',
+    seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, seen_user_id)
+);
+
+-- Indexes for user_seen_profiles
+CREATE INDEX IF NOT EXISTS idx_user_seen_profiles_user_id ON user_seen_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_seen_profiles_seen_user_id ON user_seen_profiles(seen_user_id);
+CREATE INDEX IF NOT EXISTS idx_user_seen_profiles_user_seen ON user_seen_profiles(user_id, seen_user_id);
+
+-- Trigger for user_seen_profiles
+CREATE TRIGGER trg_update_user_seen_profiles_seen_at
+BEFORE UPDATE ON user_seen_profiles
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
