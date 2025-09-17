@@ -39,6 +39,8 @@ export interface UserProfile {
   fame: number;
   gender: string;
   political_view?: string;
+  latitude?: number;
+  longitude?: number;
   tags?: string[];
   images?: string[];
   created_at: string;
@@ -248,7 +250,8 @@ class MatchService {
   }
 
   /**
-   * Récupère les préférences apprises de l'utilisateur
+   * Récupère les préférences apprises de l'utilisateur (legacy - prefer preferencesService)
+   * @deprecated Use preferencesService.getUserPreferences instead
    */
   async getUserPreferences(): Promise<UserPreferences> {
     return apiService.get<UserPreferences>(`${this.baseEndpoint}/preferences`);
