@@ -358,7 +358,7 @@ INSERT INTO tags (name) VALUES
 
 -- User preferences indexes
 CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_preferences_updated_at ON user_preferences(updated_at);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_last_updated ON user_preferences(last_updated);
 
 -- User interactions indexes
 CREATE INDEX IF NOT EXISTS idx_user_interactions_user_id ON user_interactions(user_id);
