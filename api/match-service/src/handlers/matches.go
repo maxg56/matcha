@@ -113,8 +113,16 @@ func BlockUserHandler(c *gin.Context) {
 
 func MatchingAlgorithmHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
-	
-	// Parse query parameters
+
+	// First, get user's explicit preferences from database
+	userService := services.NewUserService()
+	userPreferences, err := userService.GetUserMatchingPreferences(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Parse query parameters with user preferences as defaults
 	limit := 20
 	if limitStr := c.Query("limit"); limitStr != "" {
 		if parsedLimit, err := strconv.Atoi(limitStr); err == nil {
@@ -124,14 +132,21 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 		}
 	}
 
+	// Use user's preferred max distance as default, allow override via query param
 	var maxDistance *int
+	defaultMaxDistance := int(userPreferences.MaxDistance)
+	maxDistance = &defaultMaxDistance
 	if distanceStr := c.Query("max_distance"); distanceStr != "" {
 		if parsedDistance, err := strconv.Atoi(distanceStr); err == nil && parsedDistance > 0 {
 			maxDistance = &parsedDistance
 		}
 	}
 
+	// Use user's preferred age range as default, allow override via query params
 	var ageRange *services.AgeRange
+	defaultAgeRange := &services.AgeRange{Min: userPreferences.AgeMin, Max: userPreferences.AgeMax}
+	ageRange = defaultAgeRange
+
 	ageMinStr := c.Query("age_min")
 	ageMaxStr := c.Query("age_max")
 	if ageMinStr != "" && ageMaxStr != "" {
@@ -145,10 +160,10 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 	algorithmType := c.DefaultQuery("algorithm_type", "vector_based")
 
 	matchService := services.NewMatchService()
-	
+
 	// Check if client wants only candidate IDs (default behavior now)
 	fullProfiles := c.DefaultQuery("full_profiles", "false") == "true"
-	
+
 	if fullProfiles {
 		// Return full profile data (legacy behavior)
 		matches, err := matchService.RunMatchingAlgorithm(userID, algorithmType, limit, maxDistance, ageRange)

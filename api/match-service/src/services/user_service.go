@@ -153,3 +153,23 @@ func (u *UserService) GetUserMatches(userID int) ([]MatchResult, error) {
 
 	return matchResults, nil
 }
+
+// GetUserMatchingPreferences retrieves explicit matching preferences for a user
+func (u *UserService) GetUserMatchingPreferences(userID int) (*models.UserMatchingPreferences, error) {
+	var preferences models.UserMatchingPreferences
+	err := conf.DB.Where("user_id = ?", userID).First(&preferences).Error
+	if err != nil {
+		// Return default preferences if none exist
+		return &models.UserMatchingPreferences{
+			UserID:           uint(userID),
+			AgeMin:           18,
+			AgeMax:           99,
+			MaxDistance:      50,
+			MinFame:          0,
+			PreferredGenders: `["man","woman","other"]`,
+			RequiredTags:     "[]",
+			BlockedTags:      "[]",
+		}, nil
+	}
+	return &preferences, nil
+}
