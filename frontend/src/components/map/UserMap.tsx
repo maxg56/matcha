@@ -203,7 +203,7 @@ export function UserMap({
     if (distance < 1) {
       return `${Math.round(distance * 1000)}m`;
     }
-    return `${distance.toFixed(1)}km`;
+    return `${Math.round(distance)}km`;
   };
 
   return (

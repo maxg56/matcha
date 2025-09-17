@@ -169,7 +169,7 @@ export function ProfileCard({
           { label: "Âge", value: `${normalizedProfile.age} ans`, icon: "🎂" },
           { label: "Profession", value: normalizedProfile.occupation, icon: "💼" },
           { label: "Ville", value: normalizedProfile.location, icon: "📍" },
-          { label: "Distance", value: `${normalizedProfile.distance}km`, icon: "🗺️" }
+          { label: "Distance", value: `${Math.round(normalizedProfile.distance || 0)}km`, icon: "🗺️" }
         ]
       },
       // Image 2: Style de vie
@@ -247,20 +247,14 @@ export function ProfileCard({
                   {normalizedProfile.name}, {normalizedProfile.age}
                 </h2>
                 <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg" />
-                {candidate?.compatibility_score && (
-                  <div className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-full">
-                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
-                      {(candidate.compatibility_score * 100).toFixed(0)}% match
-                    </span>
-                  </div>
-                )}
+                
               </div>
               
               {/* Informations rapides */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                   <span>📍</span>
-                  <span>{normalizedProfile.location} • {normalizedProfile.distance}km</span>
+                  <span>{normalizedProfile.location} • {Math.round(normalizedProfile.distance || 0)}km</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                   <span>💼</span>
