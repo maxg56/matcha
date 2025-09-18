@@ -1,21 +1,22 @@
-package services
+package interactions
 
 import (
 	"errors"
 
 	"match-service/src/conf"
 	"match-service/src/models"
+	"match-service/src/services/users"
 )
 
 // InteractionService handles user interactions (likes, unlikes, blocks)
 type InteractionService struct {
-	userService *UserService
+	userService *users.UserService
 }
 
 // NewInteractionService creates a new InteractionService instance
 func NewInteractionService() *InteractionService {
 	return &InteractionService{
-		userService: NewUserService(),
+		userService: users.NewUserService(),
 	}
 }
 

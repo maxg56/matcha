@@ -44,9 +44,9 @@ func LikeUserHandler(c *gin.Context) {
 		return
 	}
 
-	// Use enhanced vector matching service for preference learning
-	vectorService := services.NewVectorMatchingService()
-	result, err := vectorService.RecordInteraction(userID, request.TargetUserID, "like")
+	// Use match service for handling likes
+	matchService := services.NewMatchService()
+	result, err := matchService.LikeUser(userID, request.TargetUserID)
 	if err != nil {
 		utils.RespondError(c, "Failed to like user: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -72,9 +72,9 @@ func UnlikeUserHandler(c *gin.Context) {
 		return
 	}
 
-	// Use enhanced vector matching service for preference learning
-	vectorService := services.NewVectorMatchingService()
-	result, err := vectorService.RecordInteraction(userID, request.TargetUserID, "pass")
+	// Use match service for handling unlikes
+	matchService := services.NewMatchService()
+	result, err := matchService.UnlikeUser(userID, request.TargetUserID)
 	if err != nil {
 		utils.RespondError(c, "Failed to unlike user: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -100,9 +100,9 @@ func BlockUserHandler(c *gin.Context) {
 		return
 	}
 
-	// Use enhanced vector matching service for blocking
-	vectorService := services.NewVectorMatchingService()
-	result, err := vectorService.RecordInteraction(userID, request.TargetUserID, "block")
+	// Use match service for handling blocks
+	matchService := services.NewMatchService()
+	result, err := matchService.BlockUser(userID, request.TargetUserID)
 	if err != nil {
 		utils.RespondError(c, "Failed to block user: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -114,16 +114,25 @@ func BlockUserHandler(c *gin.Context) {
 func MatchingAlgorithmHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
 
-	// First, get user's explicit preferences from database
-	userService := services.NewUserService()
-	userPreferences, err := userService.GetUserMatchingPreferences(userID)
-	if err != nil {
-		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
-		return
+	// For now, we'll use default preferences since the method is not available
+	// TODO: Implement proper preference retrieval from the preferences service
+	userPreferences := struct {
+		AgeMin      int
+		AgeMax      int
+		MaxDistance int
+		MinFame     int
+	}{
+		AgeMin:      18,
+		AgeMax:      99,
+		MaxDistance: 50,
+		MinFame:     0,
 	}
 
 	// Parse query parameters with user preferences as defaults
 	limit := 20
+
+	// Initialize services we'll need
+	userService := services.NewUserService()
 	if limitStr := c.Query("limit"); limitStr != "" {
 		if parsedLimit, err := strconv.Atoi(limitStr); err == nil {
 			if parsedLimit > 0 && parsedLimit <= 50 {

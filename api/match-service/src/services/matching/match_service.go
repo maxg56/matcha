@@ -1,51 +1,33 @@
-package services
+package matching
 
-// MatchResult represents the result of a matching operation with full profile data
-type MatchResult struct {
-	ID                 int      `json:"id"`
-	Username           string   `json:"username"`
-	FirstName          string   `json:"first_name"`
-	Age                int      `json:"age"`
-	Bio                string   `json:"bio"`
-	Fame               int      `json:"fame"`
-	AlgorithmType      string   `json:"algorithm_type"`
-	CompatibilityScore *float64 `json:"compatibility_score,omitempty"`
-	Distance           *float64 `json:"distance,omitempty"`
-}
-
-// MatchCandidate represents a simplified matching result with only essential data
-type MatchCandidate struct {
-	ID                 int      `json:"id"`
-	AlgorithmType      string   `json:"algorithm_type"`
-	CompatibilityScore *float64 `json:"compatibility_score,omitempty"`
-	Distance           *float64 `json:"distance,omitempty"`
-}
-
-// AgeRange represents an age filter range
-type AgeRange struct {
-	Min int `json:"min"`
-	Max int `json:"max"`
-}
+import (
+	"match-service/src/services/types"
+	"match-service/src/services/users"
+	"match-service/src/services/interactions"
+	"match-service/src/services/algorithms"
+)
 
 // MatchService provides high-level matching operations using specialized services
 type MatchService struct {
-	userService        *UserService
-	interactionService *InteractionService
-	algorithmService   *AlgorithmService
+	userService        *users.UserService
+	userMatchingService *UserMatchingService
+	interactionService *interactions.InteractionService
+	algorithmService   *algorithms.AlgorithmService
 }
 
 // NewMatchService creates a new MatchService with all dependencies
 func NewMatchService() *MatchService {
 	return &MatchService{
-		userService:        NewUserService(),
-		interactionService: NewInteractionService(),
-		algorithmService:   NewAlgorithmService(),
+		userService:        users.NewUserService(),
+		userMatchingService: NewUserMatchingService(),
+		interactionService: interactions.NewInteractionService(),
+		algorithmService:   algorithms.NewAlgorithmService(),
 	}
 }
 
 // GetUserMatches retrieves active matches for a user
-func (s *MatchService) GetUserMatches(userID int) ([]MatchResult, error) {
-	return s.userService.GetUserMatches(userID)
+func (s *MatchService) GetUserMatches(userID int) ([]types.MatchResult, error) {
+	return s.userMatchingService.GetUserMatches(userID)
 }
 
 // LikeUser records a like interaction and handles match creation
@@ -64,13 +46,13 @@ func (s *MatchService) BlockUser(userID, targetUserID int) (map[string]interface
 }
 
 // RunMatchingAlgorithm executes the specified matching algorithm and returns full profile data
-func (s *MatchService) RunMatchingAlgorithm(userID int, algorithmType string, limit int, maxDistance *int, ageRange *AgeRange) ([]MatchResult, error) {
+func (s *MatchService) RunMatchingAlgorithm(userID int, algorithmType string, limit int, maxDistance *int, ageRange *types.AgeRange) ([]types.MatchResult, error) {
 	request := BuildMatchingRequest(userID, algorithmType, limit, maxDistance, ageRange)
 	return s.algorithmService.RunMatchingAlgorithm(request)
 }
 
 // GetMatchingCandidates executes the specified matching algorithm and returns only user IDs with scores
-func (s *MatchService) GetMatchingCandidates(userID int, algorithmType string, limit int, maxDistance *int, ageRange *AgeRange) ([]MatchCandidate, error) {
+func (s *MatchService) GetMatchingCandidates(userID int, algorithmType string, limit int, maxDistance *int, ageRange *types.AgeRange) ([]types.MatchCandidate, error) {
 	request := BuildMatchingRequest(userID, algorithmType, limit, maxDistance, ageRange)
 	return s.algorithmService.GetMatchingCandidates(request)
 }
@@ -117,7 +99,7 @@ func (s *MatchService) IsUserBlocked(userID, targetUserID int) (bool, error) {
 }
 
 // GetAvailableAlgorithms returns all available matching algorithms
-func (s *MatchService) GetAvailableAlgorithms() []AlgorithmInfo {
+func (s *MatchService) GetAvailableAlgorithms() []types.AlgorithmInfo {
 	return s.algorithmService.GetAvailableAlgorithms()
 }
 
@@ -132,10 +114,10 @@ func (s *MatchService) InvalidateUserCaches(userID int) {
 }
 
 // GetNearbyUsers returns users within a specified distance
-func (s *MatchService) GetNearbyUsers(userID int, maxDistanceKm int, limit int) ([]MatchResult, error) {
-	request := &MatchingRequest{
+func (s *MatchService) GetNearbyUsers(userID int, maxDistanceKm int, limit int) ([]types.MatchResult, error) {
+	request := &types.MatchingRequest{
 		UserID:      userID,
-		Algorithm:   AlgorithmProximity,
+		Algorithm:   types.AlgorithmProximity,
 		Limit:       limit,
 		MaxDistance: &maxDistanceKm,
 	}
@@ -143,20 +125,20 @@ func (s *MatchService) GetNearbyUsers(userID int, maxDistanceKm int, limit int) 
 }
 
 // GetRandomMatches returns random compatible users
-func (s *MatchService) GetRandomMatches(userID int, limit int) ([]MatchResult, error) {
-	request := &MatchingRequest{
+func (s *MatchService) GetRandomMatches(userID int, limit int) ([]types.MatchResult, error) {
+	request := &types.MatchingRequest{
 		UserID:    userID,
-		Algorithm: AlgorithmRandom,
+		Algorithm: types.AlgorithmRandom,
 		Limit:     limit,
 	}
 	return s.algorithmService.RunMatchingAlgorithm(request)
 }
 
 // GetNewUsers returns recently joined users
-func (s *MatchService) GetNewUsers(userID int, limit int, daysBack int) ([]MatchResult, error) {
-	request := &MatchingRequest{
+func (s *MatchService) GetNewUsers(userID int, limit int, daysBack int) ([]types.MatchResult, error) {
+	request := &types.MatchingRequest{
 		UserID:   userID,
-		Algorithm: AlgorithmNewUsers,
+		Algorithm: types.AlgorithmNewUsers,
 		Limit:    limit,
 		DaysBack: &daysBack,
 	}
@@ -164,10 +146,10 @@ func (s *MatchService) GetNewUsers(userID int, limit int, daysBack int) ([]Match
 }
 
 // GetPopularUsers returns users with high fame ratings
-func (s *MatchService) GetPopularUsers(userID int, limit int, minFame int) ([]MatchResult, error) {
-	request := &MatchingRequest{
+func (s *MatchService) GetPopularUsers(userID int, limit int, minFame int) ([]types.MatchResult, error) {
+	request := &types.MatchingRequest{
 		UserID:   userID,
-		Algorithm: AlgorithmPopular,
+		Algorithm: types.AlgorithmPopular,
 		Limit:    limit,
 		MinFame:  &minFame,
 	}

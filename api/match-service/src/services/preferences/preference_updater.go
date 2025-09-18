@@ -1,7 +1,8 @@
-package services
+package preferences
 
 import (
 	"match-service/src/utils"
+	"match-service/src/services/users"
 )
 
 // PreferenceUpdater handles machine learning and preference vector adjustments
@@ -21,7 +22,7 @@ func NewPreferenceUpdater(learningRate float64) *PreferenceUpdater {
 // UpdateUserPreferences adjusts user preferences based on interactions
 func (u *PreferenceUpdater) UpdateUserPreferences(userID, targetUserID int, action string) error {
 	// Get target user vector
-	userService := NewUserService()
+	userService := users.NewUserService()
 	targetVector, err := userService.GetUserVector(targetUserID)
 	if err != nil {
 		return err

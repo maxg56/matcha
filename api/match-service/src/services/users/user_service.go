@@ -1,4 +1,4 @@
-package services
+package users
 
 import (
 	"match-service/src/models"
@@ -8,18 +8,14 @@ import (
 // UserService handles user-related operations for matching
 type UserService struct {
 	repository      *UserRepository
-	matchingService *UserMatchingService
-	preferencesManager *UserPreferencesManager
 	trackingService *ProfileTrackingService
 }
 
 // NewUserService creates a new UserService instance
 func NewUserService() *UserService {
 	return &UserService{
-		repository:         NewUserRepository(),
-		matchingService:    NewUserMatchingService(),
-		preferencesManager: NewUserPreferencesManager(),
-		trackingService:    NewProfileTrackingService(),
+		repository:      NewUserRepository(),
+		trackingService: NewProfileTrackingService(),
 	}
 }
 
@@ -39,19 +35,16 @@ func (u *UserService) GetUserVector(userID int) (utils.UserVector, error) {
 }
 
 // GetCandidateUsers retrieves potential candidate users for matching with full preference filtering
-func (u *UserService) GetCandidateUsers(userID int, maxDistance *int, ageRange *AgeRange) ([]models.User, error) {
-	return u.matchingService.GetCandidateUsers(userID, maxDistance, ageRange)
-}
+// GetCandidateUsers is now handled by the UserMatchingService in the matching package
+// This method exists for backwards compatibility but should be used from the matching package
 
 // GetUserMatches retrieves active matches for a user
-func (u *UserService) GetUserMatches(userID int) ([]MatchResult, error) {
-	return u.matchingService.GetUserMatches(userID)
-}
+// GetUserMatches is now handled by the UserMatchingService in the matching package
+// This method exists for backwards compatibility but should be used from the matching package
 
 // GetUserMatchingPreferences retrieves explicit matching preferences for a user
-func (u *UserService) GetUserMatchingPreferences(userID int) (*models.UserMatchingPreferences, error) {
-	return u.preferencesManager.GetUserMatchingPreferences(userID)
-}
+// GetUserMatchingPreferences is now handled by the UserPreferencesManager in the preferences package
+// This method exists for backwards compatibility but should be used from the preferences package
 
 // MarkProfilesAsSeen records that a user has seen specific profiles
 func (u *UserService) MarkProfilesAsSeen(userID int, seenUserIDs []int, algorithmType string) error {

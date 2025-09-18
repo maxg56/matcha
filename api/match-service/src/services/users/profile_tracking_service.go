@@ -1,4 +1,4 @@
-package services
+package users
 
 import (
 	"match-service/src/conf"

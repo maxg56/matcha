@@ -1,4 +1,4 @@
-package services
+package interactions
 
 import (
 	"errors"
@@ -7,24 +7,26 @@ import (
 	"match-service/src/conf"
 	"match-service/src/models"
 	"match-service/src/utils"
+	"match-service/src/services/users"
+	"match-service/src/services/preferences"
 )
 
 // InteractionManager handles user interactions and match creation
 type InteractionManager struct {
-	updater *PreferenceUpdater
+	updater *preferences.PreferenceUpdater
 }
 
 // NewInteractionManager creates a new InteractionManager instance
 func NewInteractionManager(learningRate float64) *InteractionManager {
 	return &InteractionManager{
-		updater: NewPreferenceUpdater(learningRate),
+		updater: preferences.NewPreferenceUpdater(learningRate),
 	}
 }
 
 // RecordInteraction records a user interaction and handles match logic
 func (m *InteractionManager) RecordInteraction(userID, targetUserID int, action string) (map[string]interface{}, error) {
 	// Validate users exist
-	userService := NewUserService()
+	userService := users.NewUserService()
 	if err := userService.ValidateUserExists(userID); err != nil {
 		return nil, err
 	}

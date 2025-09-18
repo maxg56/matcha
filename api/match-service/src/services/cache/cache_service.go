@@ -1,9 +1,10 @@
-package services
+package cache
 
 import (
 	"time"
 
 	"match-service/src/utils"
+	"match-service/src/services/types"
 )
 
 // CacheService provides high-level caching operations for match service
@@ -15,16 +16,16 @@ func NewCacheService() *CacheService {
 }
 
 // CacheMatchResults caches algorithm results for a user
-func (c *CacheService) CacheMatchResults(userID int, algorithmType string, limit int, maxDistance *int, results []MatchResult) {
+func (c *CacheService) CacheMatchResults(userID int, algorithmType string, limit int, maxDistance *int, results []types.MatchResult) {
 	cacheKey := utils.AlgorithmResultsCacheKey(userID, algorithmType, limit, maxDistance)
 	utils.CompatibilityCache.Set(cacheKey, results, 5*time.Minute)
 }
 
 // GetCachedMatchResults retrieves cached algorithm results for a user
-func (c *CacheService) GetCachedMatchResults(userID int, algorithmType string, limit int, maxDistance *int) ([]MatchResult, bool) {
+func (c *CacheService) GetCachedMatchResults(userID int, algorithmType string, limit int, maxDistance *int) ([]types.MatchResult, bool) {
 	cacheKey := utils.AlgorithmResultsCacheKey(userID, algorithmType, limit, maxDistance)
 	if cached, exists := utils.CompatibilityCache.Get(cacheKey); exists {
-		if results, ok := cached.([]MatchResult); ok {
+		if results, ok := cached.([]types.MatchResult); ok {
 			return results, true
 		}
 	}
@@ -32,16 +33,16 @@ func (c *CacheService) GetCachedMatchResults(userID int, algorithmType string, l
 }
 
 // CacheUserMatches caches user's active matches
-func (c *CacheService) CacheUserMatches(userID int, matches []MatchResult) {
+func (c *CacheService) CacheUserMatches(userID int, matches []types.MatchResult) {
 	cacheKey := utils.UserMatchesCacheKey(userID)
 	utils.UserVectorCache.Set(cacheKey, matches, 2*time.Minute) // Shorter TTL for dynamic data
 }
 
 // GetCachedUserMatches retrieves cached user matches
-func (c *CacheService) GetCachedUserMatches(userID int) ([]MatchResult, bool) {
+func (c *CacheService) GetCachedUserMatches(userID int) ([]types.MatchResult, bool) {
 	cacheKey := utils.UserMatchesCacheKey(userID)
 	if cached, exists := utils.UserVectorCache.Get(cacheKey); exists {
-		if matches, ok := cached.([]MatchResult); ok {
+		if matches, ok := cached.([]types.MatchResult); ok {
 			return matches, true
 		}
 	}

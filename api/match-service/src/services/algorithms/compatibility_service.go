@@ -1,4 +1,4 @@
-package services
+package algorithms
 
 import (
 	"log"

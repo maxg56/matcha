@@ -1,4 +1,4 @@
-package services
+package algorithms
 
 import (
 	"errors"
@@ -7,22 +7,24 @@ import (
 	"match-service/src/conf"
 	"match-service/src/models"
 	"match-service/src/utils"
+	"match-service/src/services/types"
+	"match-service/src/services/users"
 )
 
 // BasicMatchingService provides simple compatibility-based matching
 type BasicMatchingService struct {
-	userService *UserService
+	userService *users.UserService
 }
 
 // NewBasicMatchingService creates a new BasicMatchingService instance
 func NewBasicMatchingService() *BasicMatchingService {
 	return &BasicMatchingService{
-		userService: NewUserService(),
+		userService: users.NewUserService(),
 	}
 }
 
 // GetMatches returns basic matches for a user based on sexual preferences and filters
-func (b *BasicMatchingService) GetMatches(userID int, limit int, maxDistance *int, ageRange *AgeRange) ([]MatchResult, error) {
+func (b *BasicMatchingService) GetMatches(userID int, limit int, maxDistance *int, ageRange *types.AgeRange) ([]types.MatchResult, error) {
 	// Get target user
 	targetUser, err := b.userService.GetUser(userID)
 	if err != nil {
@@ -67,8 +69,8 @@ func (b *BasicMatchingService) GetMatches(userID int, limit int, maxDistance *in
 		return nil, err
 	}
 
-	// Convert to MatchResult format with distance calculation
-	var results []MatchResult
+	// Convert to types.MatchResult format with distance calculation
+	var results []types.MatchResult
 	for _, user := range users {
 		var distance *float64
 		if targetUser.Latitude.Valid && targetUser.Longitude.Valid && 
@@ -80,7 +82,7 @@ func (b *BasicMatchingService) GetMatches(userID int, limit int, maxDistance *in
 			distance = &dist
 		}
 
-		result := MatchResult{
+		result := types.MatchResult{
 			ID:            int(user.ID),
 			Username:      user.Username,
 			FirstName:     user.FirstName,
@@ -97,7 +99,7 @@ func (b *BasicMatchingService) GetMatches(userID int, limit int, maxDistance *in
 }
 
 // GetNearbyUsers returns users within a specified distance, regardless of compatibility
-func (b *BasicMatchingService) GetNearbyUsers(userID int, maxDistanceKm int, limit int) ([]MatchResult, error) {
+func (b *BasicMatchingService) GetNearbyUsers(userID int, maxDistanceKm int, limit int) ([]types.MatchResult, error) {
 	targetUser, err := b.userService.GetUser(userID)
 	if err != nil {
 		return nil, err
@@ -123,7 +125,7 @@ func (b *BasicMatchingService) GetNearbyUsers(userID int, maxDistanceKm int, lim
 	}
 
 	// Filter by precise distance and convert to results
-	var results []MatchResult
+	var results []types.MatchResult
 	for _, user := range users {
 		if user.Latitude.Valid && user.Longitude.Valid {
 			distance := utils.HaversineDistance(
@@ -132,7 +134,7 @@ func (b *BasicMatchingService) GetNearbyUsers(userID int, maxDistanceKm int, lim
 			)
 			
 			if distance <= float64(maxDistanceKm) {
-				result := MatchResult{
+				result := types.MatchResult{
 					ID:            int(user.ID),
 					Username:      user.Username,
 					FirstName:     user.FirstName,
@@ -151,7 +153,7 @@ func (b *BasicMatchingService) GetNearbyUsers(userID int, maxDistanceKm int, lim
 }
 
 // GetRandomMatches returns random users that meet basic compatibility criteria
-func (b *BasicMatchingService) GetRandomMatches(userID int, limit int) ([]MatchResult, error) {
+func (b *BasicMatchingService) GetRandomMatches(userID int, limit int) ([]types.MatchResult, error) {
 	targetUser, err := b.userService.GetUser(userID)
 	if err != nil {
 		return nil, err
@@ -177,9 +179,9 @@ func (b *BasicMatchingService) GetRandomMatches(userID int, limit int) ([]MatchR
 	}
 
 	// Convert to results
-	var results []MatchResult
+	var results []types.MatchResult
 	for _, user := range users {
-		result := MatchResult{
+		result := types.MatchResult{
 			ID:            int(user.ID),
 			Username:      user.Username,
 			FirstName:     user.FirstName,
@@ -195,7 +197,7 @@ func (b *BasicMatchingService) GetRandomMatches(userID int, limit int) ([]MatchR
 }
 
 // GetNewUsers returns recently joined users that match basic criteria
-func (b *BasicMatchingService) GetNewUsers(userID int, limit int, daysBack int) ([]MatchResult, error) {
+func (b *BasicMatchingService) GetNewUsers(userID int, limit int, daysBack int) ([]types.MatchResult, error) {
 	targetUser, err := b.userService.GetUser(userID)
 	if err != nil {
 		return nil, err
@@ -222,9 +224,9 @@ func (b *BasicMatchingService) GetNewUsers(userID int, limit int, daysBack int) 
 	}
 
 	// Convert to results
-	var results []MatchResult
+	var results []types.MatchResult
 	for _, user := range users {
-		result := MatchResult{
+		result := types.MatchResult{
 			ID:            int(user.ID),
 			Username:      user.Username,
 			FirstName:     user.FirstName,
@@ -240,7 +242,7 @@ func (b *BasicMatchingService) GetNewUsers(userID int, limit int, daysBack int) 
 }
 
 // GetPopularUsers returns users with highest fame ratings that match basic criteria
-func (b *BasicMatchingService) GetPopularUsers(userID int, limit int, minFame int) ([]MatchResult, error) {
+func (b *BasicMatchingService) GetPopularUsers(userID int, limit int, minFame int) ([]types.MatchResult, error) {
 	targetUser, err := b.userService.GetUser(userID)
 	if err != nil {
 		return nil, err
@@ -267,9 +269,9 @@ func (b *BasicMatchingService) GetPopularUsers(userID int, limit int, minFame in
 	}
 
 	// Convert to results
-	var results []MatchResult
+	var results []types.MatchResult
 	for _, user := range users {
-		result := MatchResult{
+		result := types.MatchResult{
 			ID:            int(user.ID),
 			Username:      user.Username,
 			FirstName:     user.FirstName,

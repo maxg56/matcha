@@ -1,4 +1,4 @@
-package services
+package matching
 
 import (
 	"math"
@@ -7,26 +7,29 @@ import (
 	"match-service/src/conf"
 	"match-service/src/models"
 	"match-service/src/utils"
+	"match-service/src/services/types"
+	"match-service/src/services/users"
+	"match-service/src/services/preferences"
 )
 
 // UserMatchingService handles complex matching logic and candidate retrieval
 type UserMatchingService struct {
-	repository         *UserRepository
-	preferencesManager *UserPreferencesManager
-	trackingService    *ProfileTrackingService
+	repository         *users.UserRepository
+	preferencesManager *preferences.UserPreferencesManager
+	trackingService    *users.ProfileTrackingService
 }
 
 // NewUserMatchingService creates a new UserMatchingService instance
 func NewUserMatchingService() *UserMatchingService {
 	return &UserMatchingService{
-		repository:         NewUserRepository(),
-		preferencesManager: NewUserPreferencesManager(),
-		trackingService:    NewProfileTrackingService(),
+		repository:         users.NewUserRepository(),
+		preferencesManager: preferences.NewUserPreferencesManager(),
+		trackingService:    users.NewProfileTrackingService(),
 	}
 }
 
 // GetCandidateUsers retrieves potential candidate users for matching with full preference filtering
-func (s *UserMatchingService) GetCandidateUsers(userID int, maxDistance *int, ageRange *AgeRange) ([]models.User, error) {
+func (s *UserMatchingService) GetCandidateUsers(userID int, maxDistance *int, ageRange *types.AgeRange) ([]models.User, error) {
 	// Get current user
 	currentUser, err := s.repository.GetUser(userID)
 	if err != nil {
@@ -93,7 +96,7 @@ func (s *UserMatchingService) GetCandidateUsers(userID int, maxDistance *int, ag
 }
 
 // GetUserMatches retrieves active matches for a user
-func (s *UserMatchingService) GetUserMatches(userID int) ([]MatchResult, error) {
+func (s *UserMatchingService) GetUserMatches(userID int) ([]types.MatchResult, error) {
 	var matches []models.Match
 
 	// Get active matches where user is either user1 or user2
@@ -104,7 +107,7 @@ func (s *UserMatchingService) GetUserMatches(userID int) ([]MatchResult, error) 
 		return nil, result.Error
 	}
 
-	var matchResults []MatchResult
+	var matchResults []types.MatchResult
 	for _, match := range matches {
 		var matchedUser models.User
 
@@ -115,7 +118,7 @@ func (s *UserMatchingService) GetUserMatches(userID int) ([]MatchResult, error) 
 			matchedUser = match.User1
 		}
 
-		matchResult := MatchResult{
+		matchResult := types.MatchResult{
 			ID:            int(matchedUser.ID),
 			Username:      matchedUser.Username,
 			FirstName:     matchedUser.FirstName,
