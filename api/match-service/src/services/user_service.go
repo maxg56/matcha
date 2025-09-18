@@ -1,226 +1,64 @@
 package services
 
 import (
-	"errors"
-	"math"
-	"strings"
-	"time"
-
-	"match-service/src/conf"
 	"match-service/src/models"
 	"match-service/src/utils"
 )
 
 // UserService handles user-related operations for matching
-type UserService struct{}
+type UserService struct {
+	repository      *UserRepository
+	matchingService *UserMatchingService
+	preferencesManager *UserPreferencesManager
+	trackingService *ProfileTrackingService
+}
 
 // NewUserService creates a new UserService instance
 func NewUserService() *UserService {
-	return &UserService{}
+	return &UserService{
+		repository:         NewUserRepository(),
+		matchingService:    NewUserMatchingService(),
+		preferencesManager: NewUserPreferencesManager(),
+		trackingService:    NewProfileTrackingService(),
+	}
 }
 
 // ValidateUserExists checks if a user exists in the database
 func (u *UserService) ValidateUserExists(userID int) error {
-	var user models.User
-	result := conf.DB.First(&user, userID)
-	if result.Error != nil {
-		return errors.New("user not found")
-	}
-	return nil
+	return u.repository.ValidateUserExists(userID)
 }
 
 // GetUser retrieves a user by ID
 func (u *UserService) GetUser(userID int) (*models.User, error) {
-	var user models.User
-	if err := conf.DB.First(&user, userID).Error; err != nil {
-		return nil, errors.New("user not found")
-	}
-	return &user, nil
+	return u.repository.GetUser(userID)
 }
 
 // GetUserVector converts a user to vector representation with caching
 func (u *UserService) GetUserVector(userID int) (utils.UserVector, error) {
-	// Check cache first
-	if cached, exists := utils.GetCachedUserVector(userID); exists {
-		return cached, nil
-	}
-
-	// Get user from database
-	user, err := u.GetUser(userID)
-	if err != nil {
-		return utils.UserVector{}, err
-	}
-
-	// Convert to vector and cache
-	vector := utils.UserToVector(user)
-	utils.CacheUserVector(userID, vector, 10*time.Minute)
-
-	return vector, nil
+	return u.repository.GetUserVector(userID)
 }
 
 // GetCandidateUsers retrieves potential candidate users for matching with full preference filtering
 func (u *UserService) GetCandidateUsers(userID int, maxDistance *int, ageRange *AgeRange) ([]models.User, error) {
-	// Get current user
-	currentUser, err := u.GetUser(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get user preferences
-	userPreferences, err := u.GetUserMatchingPreferences(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	query := conf.DB.Where("id != ?", userID)
-
-	// Apply age range filter (use preferences if not overridden)
-	if ageRange != nil {
-		query = query.Where("age BETWEEN ? AND ?", ageRange.Min, ageRange.Max)
-	}
-
-	// Apply minimum fame filter from preferences
-	if userPreferences.MinFame > 0 {
-		query = query.Where("fame >= ?", userPreferences.MinFame)
-	}
-
-	// Apply gender preference filtering from preferences
-	if userPreferences.PreferredGenders != "" && userPreferences.PreferredGenders != `["man","woman","other"]` {
-		// Parse JSON array - for now, handle basic cases
-		if strings.Contains(userPreferences.PreferredGenders, `"man"`) && !strings.Contains(userPreferences.PreferredGenders, `"woman"`) {
-			query = query.Where("gender = ?", "man")
-		} else if strings.Contains(userPreferences.PreferredGenders, `"woman"`) && !strings.Contains(userPreferences.PreferredGenders, `"man"`) {
-			query = query.Where("gender = ?", "woman")
-		}
-		// If both or neither are present, don't filter by gender
-	}
-
-	// Exclude already seen profiles
-	seenSubquery := conf.DB.Table("user_seen_profiles").
-		Select("seen_user_id").
-		Where("user_id = ?", userID)
-	query = query.Where("id NOT IN (?)", seenSubquery)
-
-	// Apply distance filter if specified
-	if maxDistance != nil && currentUser.Latitude.Valid && currentUser.Longitude.Valid {
-		// Use a simple bounding box for initial filtering (more efficient than Haversine in WHERE clause)
-		latDelta := float64(*maxDistance) / 111.0 // Approximate km per degree of latitude
-		lonDelta := latDelta / math.Cos(currentUser.Latitude.Float64*math.Pi/180)
-		
-		query = query.Where("latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?",
-			currentUser.Latitude.Float64-latDelta, currentUser.Latitude.Float64+latDelta,
-			currentUser.Longitude.Float64-lonDelta, currentUser.Longitude.Float64+lonDelta)
-	}
-
-	var candidates []models.User
-	if err := query.Find(&candidates).Error; err != nil {
-		return nil, err
-	}
-
-	// If distance filter is applied, do precise filtering
-	if maxDistance != nil && currentUser.Latitude.Valid && currentUser.Longitude.Valid {
-		var filteredCandidates []models.User
-		for _, candidate := range candidates {
-			if candidate.Latitude.Valid && candidate.Longitude.Valid {
-				distance := utils.HaversineDistance(
-					currentUser.Latitude.Float64, currentUser.Longitude.Float64,
-					candidate.Latitude.Float64, candidate.Longitude.Float64,
-				)
-				if distance <= float64(*maxDistance) {
-					filteredCandidates = append(filteredCandidates, candidate)
-				}
-			}
-		}
-		candidates = filteredCandidates
-	}
-
-	return candidates, nil
+	return u.matchingService.GetCandidateUsers(userID, maxDistance, ageRange)
 }
 
 // GetUserMatches retrieves active matches for a user
 func (u *UserService) GetUserMatches(userID int) ([]MatchResult, error) {
-	var matches []models.Match
-	
-	// Get active matches where user is either user1 or user2
-	result := conf.DB.Where("(user1_id = ? OR user2_id = ?) AND is_active = ?", userID, userID, true).
-		Preload("User1").Preload("User2").Find(&matches)
-	
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	var matchResults []MatchResult
-	for _, match := range matches {
-		var matchedUser models.User
-		
-		// Determine which user is the matched user (not the current user)
-		if match.User1ID == uint(userID) {
-			matchedUser = match.User2
-		} else {
-			matchedUser = match.User1
-		}
-
-		matchResult := MatchResult{
-			ID:        int(matchedUser.ID),
-			Username:  matchedUser.Username,
-			FirstName: matchedUser.FirstName,
-			Age:       matchedUser.Age,
-			Bio:       matchedUser.Bio,
-			Fame:      matchedUser.Fame,
-			AlgorithmType: "mutual_match",
-		}
-
-		matchResults = append(matchResults, matchResult)
-	}
-
-	return matchResults, nil
+	return u.matchingService.GetUserMatches(userID)
 }
 
 // GetUserMatchingPreferences retrieves explicit matching preferences for a user
 func (u *UserService) GetUserMatchingPreferences(userID int) (*models.UserMatchingPreferences, error) {
-	var preferences models.UserMatchingPreferences
-	err := conf.DB.Where("user_id = ?", userID).First(&preferences).Error
-	if err != nil {
-		// Return default preferences if none exist
-		return &models.UserMatchingPreferences{
-			UserID:           uint(userID),
-			AgeMin:           18,
-			AgeMax:           99,
-			MaxDistance:      50,
-			MinFame:          0,
-			PreferredGenders: `["man","woman","other"]`,
-			RequiredTags:     "[]",
-			BlockedTags:      "[]",
-		}, nil
-	}
-	return &preferences, nil
+	return u.preferencesManager.GetUserMatchingPreferences(userID)
 }
 
 // MarkProfilesAsSeen records that a user has seen specific profiles
 func (u *UserService) MarkProfilesAsSeen(userID int, seenUserIDs []int, algorithmType string) error {
-	for _, seenUserID := range seenUserIDs {
-		seenProfile := models.UserSeenProfile{
-			UserID:        uint(userID),
-			SeenUserID:    uint(seenUserID),
-			AlgorithmType: algorithmType,
-		}
-		
-		// Use INSERT ON CONFLICT to avoid duplicates
-		result := conf.DB.Exec(`
-			INSERT INTO user_seen_profiles (user_id, seen_user_id, algorithm_type, seen_at)
-			VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-			ON CONFLICT (user_id, seen_user_id) DO NOTHING`,
-			seenProfile.UserID, seenProfile.SeenUserID, seenProfile.AlgorithmType)
-		
-		if result.Error != nil {
-			return result.Error
-		}
-	}
-	return nil
+	return u.trackingService.MarkProfilesAsSeen(userID, seenUserIDs, algorithmType)
 }
 
 // ResetSeenProfiles clears all seen profiles for a user (useful for development/testing)
 func (u *UserService) ResetSeenProfiles(userID int) error {
-	result := conf.DB.Where("user_id = ?", userID).Delete(&models.UserSeenProfile{})
-	return result.Error
+	return u.trackingService.ResetSeenProfiles(userID)
 }
