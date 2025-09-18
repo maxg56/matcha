@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,13 @@ import (
 	"match-service/src/services"
 	"match-service/src/utils"
 )
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
 
 // GetMatchesHandler returns matches for a user
 func GetMatchesHandler(c *gin.Context) {
@@ -43,8 +51,6 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 	// Parse query parameters with user preferences as defaults
 	limit := 20
 
-	// Initialize services we'll need
-	userService := services.NewUserService()
 	if limitStr := c.Query("limit"); limitStr != "" {
 		if parsedLimit, err := strconv.Atoi(limitStr); err == nil {
 			if parsedLimit > 0 && parsedLimit <= 50 {
@@ -80,31 +86,26 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 
 	algorithmType := c.DefaultQuery("algorithm_type", "vector_based")
 
+	log.Printf("🔍 [DEBUG] Matching request - UserID: %d, Algorithm: %s, Limit: %d, MaxDistance: %v, AgeRange: %v",
+		userID, algorithmType, limit, maxDistance, ageRange)
+
 	matchService := services.NewMatchService()
 
 	// Check if client wants only candidate IDs (default behavior now)
 	fullProfiles := c.DefaultQuery("full_profiles", "false") == "true"
+	log.Printf("🔍 [DEBUG] Full profiles requested: %t", fullProfiles)
 
 	if fullProfiles {
 		// Return full profile data (legacy behavior)
 		matches, err := matchService.RunMatchingAlgorithm(userID, algorithmType, limit, maxDistance, ageRange)
 		if err != nil {
+			log.Printf("❌ [ERROR] Full profile matching failed: %v", err)
 			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Mark these profiles as seen
-		var seenUserIDs []int
-		for _, match := range matches {
-			seenUserIDs = append(seenUserIDs, match.ID)
-		}
-		if len(seenUserIDs) > 0 {
-			if err := userService.MarkProfilesAsSeen(userID, seenUserIDs, algorithmType); err != nil {
-				// Log error but don't fail the request
-				utils.RespondError(c, "Warning: Failed to mark profiles as seen: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
+		log.Printf("✅ [DEBUG] Full profiles found: %d matches", len(matches))
+		// Note: Profiles are no longer marked as seen here - they will be marked when user actually interacts
 
 		utils.RespondSuccess(c, http.StatusOK, gin.H{
 			"matches":        matches,
@@ -120,22 +121,16 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 		// Return only candidate IDs with scores (new default behavior)
 		candidates, err := matchService.GetMatchingCandidates(userID, algorithmType, limit, maxDistance, ageRange)
 		if err != nil {
+			log.Printf("❌ [ERROR] Candidate matching failed: %v", err)
 			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Mark these profiles as seen
-		var seenUserIDs []int
-		for _, candidate := range candidates {
-			seenUserIDs = append(seenUserIDs, candidate.ID)
+		log.Printf("✅ [DEBUG] Candidates found: %d candidates", len(candidates))
+		if len(candidates) > 0 {
+			log.Printf("🔍 [DEBUG] First few candidates: %+v", candidates[:min(3, len(candidates))])
 		}
-		if len(seenUserIDs) > 0 {
-			if err := userService.MarkProfilesAsSeen(userID, seenUserIDs, algorithmType); err != nil {
-				// Log error but don't fail the request
-				utils.RespondError(c, "Warning: Failed to mark profiles as seen: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
+		// Note: Profiles are no longer marked as seen here - they will be marked when user actually interacts
 
 		utils.RespondSuccess(c, http.StatusOK, gin.H{
 			"candidates":     candidates,

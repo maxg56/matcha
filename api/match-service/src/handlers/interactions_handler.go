@@ -35,6 +35,14 @@ func LikeUserHandler(c *gin.Context) {
 		return
 	}
 
+	// Mark this profile as seen since user interacted with it
+	userService := services.NewUserService()
+	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
+		// Log but don't fail the request
+		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	utils.RespondSuccess(c, http.StatusOK, result)
 }
 
@@ -64,6 +72,14 @@ func UnlikeUserHandler(c *gin.Context) {
 		return
 	}
 
+	// Mark this profile as seen since user interacted with it
+	userService := services.NewUserService()
+	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
+		// Log but don't fail the request
+		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	utils.RespondSuccess(c, http.StatusOK, result)
 }
 
@@ -90,6 +106,14 @@ func BlockUserHandler(c *gin.Context) {
 	result, err := matchService.BlockUser(userID, request.TargetUserID)
 	if err != nil {
 		utils.RespondError(c, "Failed to block user: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Mark this profile as seen since user interacted with it
+	userService := services.NewUserService()
+	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
+		// Log but don't fail the request
+		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
