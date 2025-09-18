@@ -3,6 +3,8 @@ package core
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	"match-service/src/services/types"
 	"match-service/src/services/algorithms/vector"
 	"match-service/src/services/algorithms/basic"
@@ -50,20 +52,34 @@ func (r *AlgorithmRouter) ExecuteAlgorithm(request *types.MatchingRequest) ([]ty
 
 // ExecuteCandidateAlgorithm routes to the appropriate algorithm and returns only candidates
 func (r *AlgorithmRouter) ExecuteCandidateAlgorithm(request *types.MatchingRequest) ([]types.MatchCandidate, error) {
+	log.Printf("🔍 [DEBUG Router] ExecuteCandidateAlgorithm - Algorithm: %s, UserID: %d", request.Algorithm, request.UserID)
+
 	// For now, we'll convert full results to candidates
 	// This is a temporary solution until we implement dedicated candidate methods in each service
 	results, err := r.ExecuteAlgorithm(request)
 	if err != nil {
+		log.Printf("❌ [ERROR Router] ExecuteAlgorithm failed: %v", err)
 		return nil, err
 	}
 
-	return r.convertResultsToCandidates(results), nil
+	log.Printf("✅ [DEBUG Router] ExecuteAlgorithm returned %d results", len(results))
+	candidates := r.convertResultsToCandidates(results)
+	log.Printf("✅ [DEBUG Router] Converted to %d candidates", len(candidates))
+
+	return candidates, nil
 }
 
 // executeVectorAlgorithm executes vector-based matching algorithms
 func (r *AlgorithmRouter) executeVectorAlgorithm(request *types.MatchingRequest) ([]types.MatchResult, error) {
-	return r.vectorMatchingService.GetPotentialMatches(
+	log.Printf("🔍 [DEBUG Router] Executing vector algorithm for user %d", request.UserID)
+	results, err := r.vectorMatchingService.GetPotentialMatches(
 		request.UserID, request.Limit, request.MaxDistance, request.AgeRange)
+	if err != nil {
+		log.Printf("❌ [ERROR Router] Vector algorithm failed: %v", err)
+		return nil, err
+	}
+	log.Printf("✅ [DEBUG Router] Vector algorithm returned %d results", len(results))
+	return results, nil
 }
 
 // executeBasicCompatibility executes basic compatibility algorithm

@@ -1,6 +1,8 @@
 package matching
 
 import (
+	"log"
+
 	"match-service/src/services/types"
 	"match-service/src/services/users"
 	"match-service/src/services/interactions"
@@ -53,8 +55,18 @@ func (s *MatchService) RunMatchingAlgorithm(userID int, algorithmType string, li
 
 // GetMatchingCandidates executes the specified matching algorithm and returns only user IDs with scores
 func (s *MatchService) GetMatchingCandidates(userID int, algorithmType string, limit int, maxDistance *int, ageRange *types.AgeRange) ([]types.MatchCandidate, error) {
+	log.Printf("🔍 [DEBUG MatchService] GetMatchingCandidates called - UserID: %d, Algorithm: %s, Limit: %d", userID, algorithmType, limit)
 	request := BuildMatchingRequest(userID, algorithmType, limit, maxDistance, ageRange)
-	return s.algorithmService.GetMatchingCandidates(request)
+	log.Printf("🔍 [DEBUG MatchService] Built request: %+v", request)
+
+	candidates, err := s.algorithmService.GetMatchingCandidates(request)
+	if err != nil {
+		log.Printf("❌ [ERROR MatchService] Algorithm service returned error: %v", err)
+		return nil, err
+	}
+
+	log.Printf("✅ [DEBUG MatchService] Algorithm service returned %d candidates", len(candidates))
+	return candidates, nil
 }
 
 // GetUserInteractions retrieves all interactions for a user

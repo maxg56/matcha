@@ -1,6 +1,8 @@
 package core
 
 import (
+	"log"
+
 	"match-service/src/services/types"
 	"match-service/src/services/validation"
 	"match-service/src/services/cache"
@@ -60,21 +62,29 @@ func (a *AlgorithmService) RunMatchingAlgorithm(request *types.MatchingRequest) 
 
 // GetMatchingCandidates executes the specified matching algorithm and returns only IDs with scores
 func (a *AlgorithmService) GetMatchingCandidates(request *types.MatchingRequest) ([]types.MatchCandidate, error) {
+	log.Printf("🔍 [DEBUG AlgorithmService] GetMatchingCandidates - Algorithm: %s, UserID: %d", request.Algorithm, request.UserID)
+
 	// Validate request
 	if err := a.validator.ValidateMatchingRequest(request); err != nil {
+		log.Printf("❌ [ERROR AlgorithmService] Validation failed: %v", err)
 		return nil, err
 	}
 
 	if err := a.validator.ValidateAlgorithmRequirements(request); err != nil {
+		log.Printf("❌ [ERROR AlgorithmService] Algorithm requirements validation failed: %v", err)
 		return nil, err
 	}
+
+	log.Printf("✅ [DEBUG AlgorithmService] Validation passed, executing algorithm...")
 
 	// Execute the appropriate algorithm
 	candidates, err := a.router.ExecuteCandidateAlgorithm(request)
 	if err != nil {
+		log.Printf("❌ [ERROR AlgorithmService] Router execution failed: %v", err)
 		return nil, err
 	}
 
+	log.Printf("✅ [DEBUG AlgorithmService] Router returned %d candidates", len(candidates))
 	return candidates, nil
 }
 

@@ -1,6 +1,7 @@
 package matching
 
 import (
+	"log"
 	"math"
 	"strings"
 
@@ -30,17 +31,24 @@ func NewUserMatchingService() *UserMatchingService {
 
 // GetCandidateUsers retrieves potential candidate users for matching with full preference filtering
 func (s *UserMatchingService) GetCandidateUsers(userID int, maxDistance *int, ageRange *types.AgeRange) ([]models.User, error) {
+	log.Printf("🔍 [DEBUG UserMatching] GetCandidateUsers for user %d", userID)
+
 	// Get current user
 	currentUser, err := s.repository.GetUser(userID)
 	if err != nil {
+		log.Printf("❌ [ERROR UserMatching] Failed to get user %d: %v", userID, err)
 		return nil, err
 	}
 
 	// Get user preferences
 	userPreferences, err := s.preferencesManager.GetUserMatchingPreferences(userID)
 	if err != nil {
+		log.Printf("❌ [ERROR UserMatching] Failed to get preferences for user %d: %v", userID, err)
 		return nil, err
 	}
+
+	log.Printf("🔍 [DEBUG UserMatching] User preferences: MinFame=%d, PreferredGenders=%s, AgeMin=%d, AgeMax=%d",
+		userPreferences.MinFame, userPreferences.PreferredGenders, userPreferences.AgeMin, userPreferences.AgeMax)
 
 	query := conf.DB.Where("id != ?", userID)
 
@@ -84,14 +92,21 @@ func (s *UserMatchingService) GetCandidateUsers(userID int, maxDistance *int, ag
 
 	var candidates []models.User
 	if err := query.Find(&candidates).Error; err != nil {
+		log.Printf("❌ [ERROR UserMatching] Database query failed: %v", err)
 		return nil, err
 	}
 
+	log.Printf("🔍 [DEBUG UserMatching] Query returned %d candidates", len(candidates))
+
 	// If distance filter is applied, do precise filtering
 	if maxDistance != nil && currentUser.Latitude.Valid && currentUser.Longitude.Valid {
+		log.Printf("🔍 [DEBUG UserMatching] Applying distance filter: maxDistance=%d", *maxDistance)
+		beforeCount := len(candidates)
 		candidates = s.filterByPreciseDistance(candidates, currentUser, *maxDistance)
+		log.Printf("🔍 [DEBUG UserMatching] Distance filter: %d -> %d candidates", beforeCount, len(candidates))
 	}
 
+	log.Printf("✅ [DEBUG UserMatching] Final candidate count: %d", len(candidates))
 	return candidates, nil
 }
 
