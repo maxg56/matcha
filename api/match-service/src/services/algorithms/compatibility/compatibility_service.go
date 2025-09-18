@@ -1,4 +1,4 @@
-package algorithms
+package compatibility
 
 import (
 	"log"

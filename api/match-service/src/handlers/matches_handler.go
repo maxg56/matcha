@@ -10,9 +10,10 @@ import (
 	"match-service/src/utils"
 )
 
+// GetMatchesHandler returns matches for a user
 func GetMatchesHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
-	
+
 	matchService := services.NewMatchService()
 	matches, err := matchService.GetUserMatches(userID)
 	if err != nil {
@@ -27,90 +28,7 @@ func GetMatchesHandler(c *gin.Context) {
 	})
 }
 
-func LikeUserHandler(c *gin.Context) {
-	userID := c.GetInt("userID")
-	
-	var request struct {
-		TargetUserID int `json:"target_user_id" binding:"required"`
-	}
-	
-	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if request.TargetUserID == userID {
-		utils.RespondError(c, "Cannot like yourself", http.StatusBadRequest)
-		return
-	}
-
-	// Use match service for handling likes
-	matchService := services.NewMatchService()
-	result, err := matchService.LikeUser(userID, request.TargetUserID)
-	if err != nil {
-		utils.RespondError(c, "Failed to like user: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.RespondSuccess(c, http.StatusOK, result)
-}
-
-func UnlikeUserHandler(c *gin.Context) {
-	userID := c.GetInt("userID")
-	
-	var request struct {
-		TargetUserID int `json:"target_user_id" binding:"required"`
-	}
-	
-	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if request.TargetUserID == userID {
-		utils.RespondError(c, "Cannot unlike yourself", http.StatusBadRequest)
-		return
-	}
-
-	// Use match service for handling unlikes
-	matchService := services.NewMatchService()
-	result, err := matchService.UnlikeUser(userID, request.TargetUserID)
-	if err != nil {
-		utils.RespondError(c, "Failed to unlike user: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.RespondSuccess(c, http.StatusOK, result)
-}
-
-func BlockUserHandler(c *gin.Context) {
-	userID := c.GetInt("userID")
-	
-	var request struct {
-		TargetUserID int `json:"target_user_id" binding:"required"`
-	}
-	
-	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if request.TargetUserID == userID {
-		utils.RespondError(c, "Cannot block yourself", http.StatusBadRequest)
-		return
-	}
-
-	// Use match service for handling blocks
-	matchService := services.NewMatchService()
-	result, err := matchService.BlockUser(userID, request.TargetUserID)
-	if err != nil {
-		utils.RespondError(c, "Failed to block user: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.RespondSuccess(c, http.StatusOK, result)
-}
-
+// MatchingAlgorithmHandler runs the matching algorithm for a user
 func MatchingAlgorithmHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
 
@@ -236,38 +154,4 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 			},
 		})
 	}
-}
-
-// GetUserPreferencesHandler returns the learned preferences for a user
-func GetUserPreferencesHandler(c *gin.Context) {
-	userID := c.GetInt("userID")
-
-	vectorService := services.NewVectorMatchingService()
-	preferences, err := vectorService.GetUserPreferences(userID)
-	if err != nil {
-		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"user_id":     userID,
-		"preferences": preferences,
-	})
-}
-
-// ResetSeenProfilesHandler allows a user to reset their seen profiles (for development/testing)
-func ResetSeenProfilesHandler(c *gin.Context) {
-	userID := c.GetInt("userID")
-
-	userService := services.NewUserService()
-	err := userService.ResetSeenProfiles(userID)
-	if err != nil {
-		utils.RespondError(c, "Failed to reset seen profiles: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"message":  "Seen profiles reset successfully",
-		"user_id":  userID,
-	})
 }

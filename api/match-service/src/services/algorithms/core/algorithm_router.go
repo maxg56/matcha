@@ -1,22 +1,24 @@
-package algorithms
+package core
 
 import (
 	"errors"
 	"fmt"
 	"match-service/src/services/types"
+	"match-service/src/services/algorithms/vector"
+	"match-service/src/services/algorithms/basic"
 )
 
 // AlgorithmRouter handles routing requests to appropriate matching algorithms
 type AlgorithmRouter struct {
-	vectorMatchingService *VectorMatchingService
-	basicMatchingService  *BasicMatchingService
+	vectorMatchingService *vector.VectorMatchingService
+	basicMatchingService  *basic.BasicMatchingService
 }
 
 // NewAlgorithmRouter creates a new AlgorithmRouter instance
 func NewAlgorithmRouter() *AlgorithmRouter {
 	return &AlgorithmRouter{
-		vectorMatchingService: NewVectorMatchingService(),
-		basicMatchingService:  NewBasicMatchingService(),
+		vectorMatchingService: vector.NewVectorMatchingService(),
+		basicMatchingService:  basic.NewBasicMatchingService(),
 	}
 }
 

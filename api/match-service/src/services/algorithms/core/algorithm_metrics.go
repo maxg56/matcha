@@ -1,4 +1,4 @@
-package algorithms
+package core
 
 import (
 	"match-service/src/services/types"

@@ -1,4 +1,4 @@
-package algorithms
+package vector
 
 import (
 	"log"
@@ -11,12 +11,13 @@ import (
 	"match-service/src/services/users"
 	"match-service/src/services/preferences"
 	"match-service/src/services/cache"
+	"match-service/src/services/algorithms/compatibility"
 )
 
 // VectorMatchingService orchestrates the enhanced matching algorithm
 type VectorMatchingService struct {
 	userService          *users.UserService
-	compatibilityService *CompatibilityService
+	compatibilityService *compatibility.CompatibilityService
 	preferencesService   *preferences.PreferencesService
 	cacheService         *cache.CacheService
 	maxDistanceKm        int
@@ -28,7 +29,7 @@ type VectorMatchingService struct {
 func NewVectorMatchingService() *VectorMatchingService {
 	return &VectorMatchingService{
 		userService:          users.NewUserService(),
-		compatibilityService: NewCompatibilityService(),
+		compatibilityService: compatibility.NewCompatibilityService(),
 		preferencesService:   preferences.NewPreferencesService(),
 		cacheService:         cache.NewCacheService(),
 		maxDistanceKm:        50,
