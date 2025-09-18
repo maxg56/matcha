@@ -9,12 +9,12 @@ import (
 	"match-service/src/utils"
 )
 
-// GetUserPreferencesHandler returns the learned preferences for a user
+// GetUserPreferencesHandler returns the user's explicit matching preferences
 func GetUserPreferencesHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
 
-	vectorService := services.NewVectorMatchingService()
-	preferences, err := vectorService.GetUserPreferences(userID)
+	preferencesManager := services.NewUserPreferencesManager()
+	preferences, err := preferencesManager.GetUserMatchingPreferences(userID)
 	if err != nil {
 		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
 		return

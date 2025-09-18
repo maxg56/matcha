@@ -8,19 +8,14 @@ import (
 	"match-service/src/models"
 	"match-service/src/utils"
 	"match-service/src/services/users"
-	"match-service/src/services/preferences"
 )
 
 // InteractionManager handles user interactions and match creation
-type InteractionManager struct {
-	updater *preferences.PreferenceUpdater
-}
+type InteractionManager struct {}
 
 // NewInteractionManager creates a new InteractionManager instance
 func NewInteractionManager(learningRate float64) *InteractionManager {
-	return &InteractionManager{
-		updater: preferences.NewPreferenceUpdater(learningRate),
-	}
+	return &InteractionManager{}
 }
 
 // RecordInteraction records a user interaction and handles match logic
@@ -55,10 +50,8 @@ func (m *InteractionManager) RecordInteraction(userID, targetUserID int, action 
 		return nil, errors.New("failed to record interaction")
 	}
 
-	// Update user preferences based on the interaction
-	if err := m.updater.UpdateUserPreferences(userID, targetUserID, action); err != nil {
-		log.Printf("Warning: Failed to update user preferences: %v", err)
-	}
+	// Note: Preference learning has been simplified - now using explicit preferences only
+	log.Printf("Interaction recorded: user %d -> user %d (%s)", userID, targetUserID, action)
 
 	// Invalidate cache for this user
 	utils.InvalidateUserCache(userID)

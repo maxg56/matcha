@@ -63,9 +63,6 @@ var (
 
 // Re-export service constructors from preferences package
 var (
-	NewPreferencesService     = preferences.NewPreferencesService
-	NewPreferenceRepository   = preferences.NewPreferenceRepository
-	NewPreferenceUpdater      = preferences.NewPreferenceUpdater
 	NewUserPreferencesManager = preferences.NewUserPreferencesManager
 )
 

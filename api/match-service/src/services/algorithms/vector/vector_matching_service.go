@@ -9,7 +9,6 @@ import (
 	"match-service/src/models"
 	"match-service/src/services/types"
 	"match-service/src/services/users"
-	"match-service/src/services/preferences"
 	"match-service/src/services/cache"
 	"match-service/src/services/algorithms/compatibility"
 )
@@ -18,7 +17,6 @@ import (
 type VectorMatchingService struct {
 	userService          *users.UserService
 	compatibilityService *compatibility.CompatibilityService
-	preferencesService   *preferences.PreferencesService
 	cacheService         *cache.CacheService
 	maxDistanceKm        int
 	maxAgeDifference     int
@@ -30,7 +28,6 @@ func NewVectorMatchingService() *VectorMatchingService {
 	return &VectorMatchingService{
 		userService:          users.NewUserService(),
 		compatibilityService: compatibility.NewCompatibilityService(),
-		preferencesService:   preferences.NewPreferencesService(),
 		cacheService:         cache.NewCacheService(),
 		maxDistanceKm:        50,
 		maxAgeDifference:     10,
@@ -57,12 +54,8 @@ func (v *VectorMatchingService) GetPotentialMatches(userID int, limit int, maxDi
 		return nil, err
 	}
 
-	// Get or create user preference vector
-	preferenceVector, err := v.preferencesService.GetUserPreferenceVector(uint(userID), currentUserVector)
-	if err != nil {
-		log.Printf("Error getting preference vector: %v", err)
-		preferenceVector = currentUserVector // fallback to user's own vector
-	}
+	// Use the user's own vector as preference vector (simplified approach)
+	preferenceVector := currentUserVector
 
 	// Get potential candidates - this now needs to be handled differently
 	// to avoid circular dependencies. For now, we'll implement basic candidate retrieval
@@ -147,8 +140,11 @@ func (v *VectorMatchingService) GetPotentialMatches(userID int, limit int, maxDi
 // GetUserMatches is now handled by the UserMatchingService to avoid circular dependencies
 // This method is kept for backwards compatibility but should be used from the matching package
 
-// GetUserPreferences returns the current learned preferences for a user
-// GetUserPreferences returns the current learned preferences for a user
+// GetUserPreferences returns a simple compatibility response (deprecated)
+// Use UserPreferencesManager.GetUserMatchingPreferences() instead
 func (v *VectorMatchingService) GetUserPreferences(userID int) (map[string]interface{}, error) {
-	return v.preferencesService.GetUserPreferences(userID)
+	return map[string]interface{}{
+		"message": "Vector-based preferences have been replaced with explicit preferences",
+		"use": "UserPreferencesManager.GetUserMatchingPreferences() for actual preferences",
+	}, nil
 }
