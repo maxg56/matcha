@@ -164,30 +164,6 @@ CREATE TABLE images (
 -- MATCHING SYSTEM TABLES
 -- ====================
 
--- Table to store user preferences for matching (learned preference vector)
-CREATE TABLE IF NOT EXISTS user_preferences (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    age REAL DEFAULT 0.5,
-    height REAL DEFAULT 0.5,
-    fame REAL DEFAULT 0.5,
-    alcohol_consumption REAL DEFAULT 0.5,
-    smoking REAL DEFAULT 0.5,
-    cannabis REAL DEFAULT 0.5,
-    drugs REAL DEFAULT 0.5,
-    pets REAL DEFAULT 0.5,
-    social_activity_level REAL DEFAULT 0.5,
-    sport_activity REAL DEFAULT 0.5,
-    education_level REAL DEFAULT 0.5,
-    religion REAL DEFAULT 0.5,
-    children_status REAL DEFAULT 0.5,
-    political_view REAL DEFAULT 0.5,
-    latitude REAL DEFAULT 0.5,
-    longitude REAL DEFAULT 0.5,
-    update_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Table to track user interactions
 CREATE TABLE IF NOT EXISTS user_interactions (
