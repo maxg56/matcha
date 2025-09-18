@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { usePreferences } from '@/hooks';
 import { type UpdatePreferencesRequest } from '@/types/preferences';
 import { type LifestyleType } from '../constants/lifestyle';
+import { preferencesEventEmitter } from '@/utils/preferencesEvents';
+import { useToast } from '@/hooks/ui/useToast';
 
 interface UsePreferencesFormProps {
   onClose?: () => void;
@@ -28,6 +30,7 @@ interface UsePreferencesFormResult {
 
 export function usePreferencesForm({ onClose }: UsePreferencesFormProps = {}): UsePreferencesFormResult {
   const { preferences, loading, updatePreferences } = usePreferences();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState<UpdatePreferencesRequest>({
     age_min: 18,
@@ -106,6 +109,16 @@ export function usePreferencesForm({ onClose }: UsePreferencesFormProps = {}): U
     const success = await updatePreferences(formData);
     if (success) {
       setHasChanges(false);
+      
+      // Informer l'utilisateur que les profils vont être rechargés
+      toast({
+        variant: 'info',
+        message: 'Critères mis à jour - Recherche de nouveaux profils...',
+      });
+      
+      // Émettre l'événement de changement de préférences pour vider le cache des profils
+      preferencesEventEmitter.emit();
+      
       // Fermer le modal après sauvegarde si on est en mode modal
       if (onClose) {
         onClose();
