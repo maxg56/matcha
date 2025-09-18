@@ -32,18 +32,12 @@ func GetMatchesHandler(c *gin.Context) {
 func MatchingAlgorithmHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
 
-	// For now, we'll use default preferences since the method is not available
-	// TODO: Implement proper preference retrieval from the preferences service
-	userPreferences := struct {
-		AgeMin      int
-		AgeMax      int
-		MaxDistance int
-		MinFame     int
-	}{
-		AgeMin:      18,
-		AgeMax:      99,
-		MaxDistance: 50,
-		MinFame:     0,
+	// Retrieve user preferences from the preferences service
+	preferencesManager := services.NewUserPreferencesManager()
+	userPreferences, err := preferencesManager.GetUserMatchingPreferences(userID)
+	if err != nil {
+		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Parse query parameters with user preferences as defaults
@@ -61,7 +55,7 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 
 	// Use user's preferred max distance as default, allow override via query param
 	var maxDistance *int
-	defaultMaxDistance := int(userPreferences.MaxDistance)
+	defaultMaxDistance := int(userPreferences.MaxDistance) // Convert float64 to int
 	maxDistance = &defaultMaxDistance
 	if distanceStr := c.Query("max_distance"); distanceStr != "" {
 		if parsedDistance, err := strconv.Atoi(distanceStr); err == nil && parsedDistance > 0 {

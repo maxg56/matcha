@@ -39,7 +39,6 @@ var (
 	NewBasicMatchingService  = algorithms.NewBasicMatchingService
 	NewCompatibilityService  = algorithms.NewCompatibilityService
 	NewMatrixService         = algorithms.NewMatrixService
-	NewAlgorithmMetrics      = algorithms.NewAlgorithmMetrics
 	NewAlgorithmRouter       = algorithms.NewAlgorithmRouter
 )
 
