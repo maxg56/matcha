@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"log"
 
 	"match-service/src/conf"
 	"match-service/src/models"
@@ -28,8 +29,11 @@ func (i *InteractionService) GetUserService() *users.UserService {
 
 // LikeUser records a like interaction and checks for mutual matches
 func (i *InteractionService) LikeUser(userID, targetUserID int) (map[string]interface{}, error) {
+	log.Printf("🔍 [DEBUG Like] User %d is liking user %d", userID, targetUserID)
+
 	// Validate that target user exists
 	if err := i.userService.ValidateUserExists(targetUserID); err != nil {
+		log.Printf("❌ [ERROR Like] Target user %d does not exist", targetUserID)
 		return nil, errors.New("target user does not exist")
 	}
 
@@ -40,16 +44,22 @@ func (i *InteractionService) LikeUser(userID, targetUserID int) (map[string]inte
 
 	if result.Error == nil {
 		// Update existing interaction
+		log.Printf("🔍 [DEBUG Like] Updating existing interaction ID %d to 'like'", existingInteraction.ID)
 		existingInteraction.InteractionType = "like"
 		conf.DB.Save(&existingInteraction)
 	} else {
 		// Create new interaction
+		log.Printf("🔍 [DEBUG Like] Creating new like interaction")
 		interaction := models.UserInteraction{
 			UserID:          uint(userID),
 			TargetUserID:    uint(targetUserID),
 			InteractionType: "like",
 		}
-		conf.DB.Create(&interaction)
+		if err := conf.DB.Create(&interaction).Error; err != nil {
+			log.Printf("❌ [ERROR Like] Failed to create interaction: %v", err)
+		} else {
+			log.Printf("✅ [SUCCESS Like] Created interaction with ID %d", interaction.ID)
+		}
 	}
 
 	response := map[string]interface{}{
@@ -59,17 +69,24 @@ func (i *InteractionService) LikeUser(userID, targetUserID int) (map[string]inte
 	}
 
 	// Check for mutual like to create match
+	log.Printf("🔍 [DEBUG Like] Checking for mutual like: looking for user %d -> user %d", targetUserID, userID)
 	var mutualLike models.UserInteraction
 	mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND interaction_type = ?",
 		targetUserID, userID, "like").First(&mutualLike)
 
 	if mutualResult.Error == nil {
+		log.Printf("✅ [DEBUG Like] Mutual like found! Creating match between users %d and %d", userID, targetUserID)
 		// Create match
 		match, err := matches.CreateMatch(userID, targetUserID)
 		if err == nil {
 			response["match_created"] = true
 			response["match_id"] = match.ID
+			log.Printf("✅ [SUCCESS Match] Match created with ID %d", match.ID)
+		} else {
+			log.Printf("❌ [ERROR Match] Failed to create match: %v", err)
 		}
+	} else {
+		log.Printf("🔍 [DEBUG Like] No mutual like found. User %d has not liked user %d yet. Error: %v", targetUserID, userID, mutualResult.Error)
 	}
 
 	return response, nil
