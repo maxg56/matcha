@@ -144,3 +144,43 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 		})
 	}
 }
+
+// UnmatchHandler handles unmatch requests between users
+func UnmatchHandler(c *gin.Context) {
+	userID := c.GetInt("userID")
+
+	type UnmatchRequest struct {
+		TargetUserID int `json:"target_user_id" binding:"required"`
+	}
+
+	var req UnmatchRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate that user is not trying to unmatch themselves
+	if userID == req.TargetUserID {
+		utils.RespondError(c, "Cannot unmatch yourself", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("🔍 [DEBUG UnmatchHandler] User %d requesting unmatch with user %d", userID, req.TargetUserID)
+
+	// Use the interaction manager to handle the unmatch
+	interactionManager := services.NewInteractionManager()
+	err := interactionManager.UnmatchUsers(userID, req.TargetUserID)
+	if err != nil {
+		log.Printf("❌ [ERROR UnmatchHandler] Failed to unmatch users %d and %d: %v", userID, req.TargetUserID, err)
+		utils.RespondError(c, "Failed to unmatch: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("✅ [SUCCESS UnmatchHandler] Successfully unmatched users %d and %d", userID, req.TargetUserID)
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{
+		"message":        "Successfully unmatched",
+		"user_id":        userID,
+		"target_user_id": req.TargetUserID,
+	})
+}

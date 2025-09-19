@@ -14,7 +14,7 @@ import (
 type InteractionManager struct {}
 
 // NewInteractionManager creates a new InteractionManager instance
-func NewInteractionManager(learningRate float64) *InteractionManager {
+func NewInteractionManager() *InteractionManager {
 	return &InteractionManager{}
 }
 
@@ -176,6 +176,33 @@ func (m *InteractionManager) deactivateMatch(userID, targetUserID int) error {
 		conf.DB.Save(&match)
 	}
 
+	return nil
+}
+
+// UnmatchUsers handles unmatching between two users
+func (m *InteractionManager) UnmatchUsers(userID, targetUserID int) error {
+	log.Printf("🔍 [DEBUG Unmatch] Processing unmatch between users %d and %d", userID, targetUserID)
+
+	// Validate users exist
+	userService := users.NewUserService()
+	if err := userService.ValidateUserExists(userID); err != nil {
+		return err
+	}
+	if err := userService.ValidateUserExists(targetUserID); err != nil {
+		return err
+	}
+
+	// Deactivate the match
+	if err := m.deactivateMatch(userID, targetUserID); err != nil {
+		log.Printf("❌ [ERROR Unmatch] Failed to deactivate match: %v", err)
+		return errors.New("failed to unmatch users")
+	}
+
+	// Invalidate cache for both users
+	utils.InvalidateUserCache(userID)
+	utils.InvalidateUserCache(targetUserID)
+
+	log.Printf("✅ [SUCCESS Unmatch] Successfully unmatched users %d and %d", userID, targetUserID)
 	return nil
 }
 

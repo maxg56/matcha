@@ -80,19 +80,42 @@ func CreateMatch(userID, targetUserID int) (*models.Match, error) {
 
 // DeactivateMatch deactivates a match between two users
 func DeactivateMatch(userID, targetUserID int) error {
+	log.Printf("🔍 [DEBUG DeactivateMatch] Deactivating match between users %d and %d", userID, targetUserID)
+
 	// Determine correct ordering
 	user1ID, user2ID := userID, targetUserID
 	if userID > targetUserID {
 		user1ID, user2ID = targetUserID, userID
+		log.Printf("🔍 [DEBUG DeactivateMatch] Reordered IDs: user1_id=%d, user2_id=%d", user1ID, user2ID)
+	} else {
+		log.Printf("🔍 [DEBUG DeactivateMatch] Using original order: user1_id=%d, user2_id=%d", user1ID, user2ID)
 	}
 
 	var match models.Match
-	result := conf.DB.Where("user1_id = ? AND user2_id = ?", user1ID, user2ID).First(&match)
+	result := conf.DB.Where("user1_id = ? AND user2_id = ? AND is_active = ?", user1ID, user2ID, true).First(&match)
 
-	if result.Error == nil {
-		match.IsActive = false
-		conf.DB.Save(&match)
+	if result.Error != nil {
+		if result.Error.Error() == "record not found" {
+			log.Printf("⚠️ [WARNING DeactivateMatch] No active match found between users %d and %d", userID, targetUserID)
+			return nil // Not an error - match might already be deactivated or never existed
+		}
+		log.Printf("❌ [ERROR DeactivateMatch] Failed to find match: %v", result.Error)
+		return result.Error
 	}
+
+	log.Printf("🔍 [DEBUG DeactivateMatch] Found active match (ID: %d), deactivating", match.ID)
+	log.Printf("🔍 [DEBUG DeactivateMatch] Match before deactivation: %+v", match)
+
+	match.IsActive = false
+	saveResult := conf.DB.Save(&match)
+	if saveResult.Error != nil {
+		log.Printf("❌ [ERROR DeactivateMatch] Failed to deactivate match: %v", saveResult.Error)
+		log.Printf("❌ [ERROR DeactivateMatch] RowsAffected: %d", saveResult.RowsAffected)
+		return saveResult.Error
+	}
+
+	log.Printf("✅ [SUCCESS DeactivateMatch] Match deactivated (ID: %d), RowsAffected: %d", match.ID, saveResult.RowsAffected)
+	log.Printf("🔍 [DEBUG DeactivateMatch] Match after deactivation: %+v", match)
 
 	return nil
 }
