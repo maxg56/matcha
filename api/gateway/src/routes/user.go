@@ -39,6 +39,10 @@ func SetupUserRoutes(r *gin.Engine) {
 		protected.GET("/:id/preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/preferences"))
 		protected.PUT("/:id/preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/preferences"))
 
+		// User setup and initialization
+		protected.POST("/setup", proxy.ProxyRequest("user", "/api/v1/users/setup"))
+		protected.POST("/:id/initialize-preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/initialize-preferences"))
+
 		// User reporting
 		protected.POST("/reports", proxy.ProxyRequest("user", "/api/v1/users/reports"))
 		protected.GET("/reports", proxy.ProxyRequest("user", "/api/v1/users/reports"))

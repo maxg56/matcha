@@ -53,6 +53,10 @@ func main() {
 			protected.GET("/:id/preferences", handlers.GetPreferencesHandler)
 			protected.PUT("/:id/preferences", handlers.UpdatePreferencesHandler)
 
+			// User setup and initialization
+			protected.POST("/setup", handlers.SetupNewUserHandler)
+			protected.POST("/:id/initialize-preferences", handlers.InitializeUserPreferencesHandler)
+
 			// User reporting
 			protected.POST("/reports", handlers.CreateReportHandler)
 			protected.GET("/reports", handlers.GetUserReportsHandler)

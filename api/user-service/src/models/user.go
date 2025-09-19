@@ -17,7 +17,7 @@ type User struct {
 	BirthDate    time.Time        `gorm:"column:birth_date;not null" json:"birth_date"`
 	Age          int              `gorm:"column:age" json:"age"`
 	Height       sql.NullInt64    `gorm:"column:height" json:"height"`
-	Premium      sql.NullTime     `gorm:"column:premium" json:"premium"`
+	Premium      sql.NullTime     `gorm:"column:premium;default:CURRENT_TIMESTAMP" json:"premium"`
 
 	AlcoholConsumption sql.NullString `gorm:"column:alcohol_consumption" json:"alcohol_consumption"`
 	Smoking            sql.NullString `gorm:"column:smoking" json:"smoking"`
@@ -193,7 +193,19 @@ func (u *User) ToPublicProfile() *PublicProfile {
 		}
 	}
 	if len(profile.Images) == 0 {
-		profile.Images = append(profile.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
+		// Set default image based on gender
+		var defaultImage string
+		switch profile.Gender {
+		case "man":
+			defaultImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop"
+		case "woman":
+			defaultImage = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop"
+		default:
+			defaultImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop"
+		}
+		profile.Images = append(profile.Images, defaultImage)
+		profile.Images = append(profile.Images, defaultImage)
+		profile.Images = append(profile.Images, defaultImage)  
 	}
 
 	return profile

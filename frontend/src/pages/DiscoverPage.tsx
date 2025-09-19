@@ -1,4 +1,3 @@
-import { FiltersScreen } from '@/components/filters/FiltersScreen';
 import { 
   DiscoverHeader,
   ProfileCard,
@@ -6,6 +5,7 @@ import {
 } from '@/components/discover';
 import { useMatches, useFilters } from '@/hooks';
 import { useToast } from '@/hooks/ui/useToast';
+import { MatchingPreferencesModal } from '@/components/preferences';
 
 export default function DiscoverPage() {
   const { currentProfile, currentCandidate, actions, loading, error, isProfileLoading } = useMatches();
@@ -104,14 +104,7 @@ export default function DiscoverPage() {
     }
   };
 
-  if (showFilters) {
-    return (
-      <FiltersScreen
-        onClose={onCloseFilters}
-        onApply={onFiltersChange}
-      />
-    );
-  }
+  // Le modal sera affiché en overlay, pas besoin de condition ici
 
   if (loading) {
     return (
@@ -209,6 +202,12 @@ export default function DiscoverPage() {
           />
         )}
       </div>
+
+      {/* Modal des préférences */}
+      <MatchingPreferencesModal
+        isOpen={showFilters}
+        onClose={onCloseFilters}
+      />
     </div>
   );
 }

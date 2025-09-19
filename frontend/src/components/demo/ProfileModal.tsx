@@ -159,13 +159,11 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
             </h2>
             
             {profile.location && (
-              <div className="flex items-center gap-1 text-muted-foreground mb-2">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm">
+                              <span className="text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
                   {profile.location}
-                  {profile.distance && ` • ${profile.distance}km`}
+                  {profile.distance && ` • ${Math.round(profile.distance)}km`}
                 </span>
-              </div>
             )}
             
             {profile.occupation && (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { matchService, type Match, type MatchesResponse } from '@/services/matchService';
 import { useToast } from '@/hooks/ui/useToast';
 import { ProfileViewers } from '@/components/profile/ProfileViewers';
@@ -18,6 +19,7 @@ export default function MatchesPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('matches');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -42,22 +44,42 @@ export default function MatchesPage() {
     fetchMatches();
   }, [fetchMatches]);
 
-  const handleUnmatch = async () => {
-    // Pour l'instant, on ne peut pas "unmatch" via l'API
-    // Cette fonctionnalité pourrait être ajoutée plus tard
-    toast({
-      variant: 'info',
-      message: "Fonctionnalité non disponible - L'unmatch n'est pas encore implémenté",
-    });
+  const handleUnmatch = async (matchId: number, targetUserId: number) => {
+    try {
+      await matchService.unmatchUser(targetUserId);
+
+      // Retirer le match de la liste locale
+      setMatches(currentMatches => currentMatches.filter(match => match.id !== matchId));
+
+      toast({
+        variant: 'success',
+        message: "Match supprimé avec succès",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur lors du unmatch';
+      toast({
+        variant: 'error',
+        message: message,
+      });
+    }
   };
 
   const handleMessage = (userId: number) => {
-    // Redirection vers la page de chat (à implémenter)
-    console.log('Redirection vers chat avec utilisateur:', userId);
-    toast({
-      variant: 'info',
-      message: "Fonctionnalité à venir - La messagerie sera bientôt disponible",
+    // Trouver le match correspondant pour obtenir l'ID du match
+    const currentMatch = matches.find(match => {
+      const user = match.target_user || match.user;
+      return user && user.id === userId;
     });
+
+    if (currentMatch) {
+      // Rediriger vers la page de chat avec l'ID du match
+      navigate(`/app/chat/${currentMatch.id}`);
+    } else {
+      toast({
+        variant: 'error',
+        message: "Impossible de trouver la conversation correspondante",
+      });
+    }
   };
 
   if (loading) {
@@ -86,12 +108,13 @@ export default function MatchesPage() {
     { id: 'viewed', label: 'Profils vus', count: null },
   ] as const;
 
+ 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'matches':
         return (
           <div>
-            {!matches || matches.length === 0 ? (
+            { !matches || matches.length  === 0 ? (
               <EmptyState
                 icon={
                   <svg
@@ -117,11 +140,17 @@ export default function MatchesPage() {
               />
             ) : (
               <div className="space-y-4">
+                <h2 className="text-xl font-bold">Vos Matches</h2>
                 {matches?.map((match) => (
                   <MatchCard
                     key={match.id}
                     match={match}
-                    onUnmatch={() => handleUnmatch()}
+                    onUnmatch={(matchId) => {
+                      const user = match.target_user || match.user;
+                      if (user) {
+                        handleUnmatch(matchId, user.id);
+                      }
+                    }}
                     onMessage={handleMessage}
                   />
                 ))}

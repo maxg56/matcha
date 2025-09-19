@@ -1,6 +1,9 @@
-import { Button } from '@/components/ui/button';
-// import { Badge } from '@/components/ui/badge';
-import { Shield } from 'lucide-react';
+import { User, Eye, MapPin, Heart, Users, Zap, Book } from 'lucide-react';
+import { ProfileDetailsHeader } from './ProfileDetailsHeader';
+import { DetailSection } from './DetailSection';
+import { InfoCard } from './InfoCard';
+import { PersonalPresentationSection } from './PersonalPresentationSection';
+import { InterestsSection } from './InterestsSection';
 
 interface ProfileDetailsProps {
   bio: string;
@@ -11,6 +14,7 @@ interface ProfileDetailsProps {
   sportActivity?: string;
   religion?: string;
   childrenStatus?: string;
+  childrenDetails?: string;
   zodiacSign?: string;
   hairColor?: string;
   skinColor?: string;
@@ -18,21 +22,37 @@ interface ProfileDetailsProps {
   birthCity?: string;
   currentCity?: string;
   job?: string;
+  relationshipType?: string;
+  politicalView?: string;
+  alcoholConsumption?: string;
+  smoking?: string;
+  cannabis?: string;
+  drugs?: string;
+  pets?: string;
+  height?: number;
+  fame?: number;
+  gender?: string;
+  sexPref?: string;
+  age?: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
   isOpen: boolean;
   profileId: string;
   onClose: () => void;
   onReport?: (id: string) => void;
 }
 
-
 export function ProfileDetails({
   bio,
+  interests,
   personalOpinion,
   educationLevel,
   socialActivityLevel,
   sportActivity,
   religion,
   childrenStatus,
+  childrenDetails,
   zodiacSign,
   hairColor,
   skinColor,
@@ -40,6 +60,21 @@ export function ProfileDetails({
   birthCity,
   currentCity,
   job,
+  relationshipType,
+  politicalView,
+  alcoholConsumption,
+  smoking,
+  cannabis,
+  drugs,
+  pets,
+  height,
+  fame,
+  gender,
+  sexPref,
+  age,
+  username,
+  firstName,
+  lastName,
   profileId,
   isOpen,
   onClose,
@@ -49,81 +84,66 @@ export function ProfileDetails({
 
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-end z-50">
-      <div className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-6 max-h-[70%] overflow-y-auto">
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-lg">À propos</h3>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed border-2 border-primary rounded-md pl-4">
-              {bio}
-            </p>
-          </div>
+      <div className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-6 max-h-[90%] overflow-y-auto">
+        <ProfileDetailsHeader
+          firstName={firstName}
+          lastName={lastName}
+          username={username}
+          profileId={profileId}
+          onClose={onClose}
+          onReport={onReport}
+        />
 
-          <div className="space-y-4 border-2 border-primary rounded-md p-4">
-            {personalOpinion && (
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-lg">Opinion personnelle</h3>
-                <p className="text-gray-600 dark:text-gray-300">{personalOpinion}</p>
-              </div>
-            )}
+        <div className="space-y-8">
+          <DetailSection title="Informations générales" icon={User}>
+            <InfoCard icon="🎂" label="Âge" value={age && `${age} ans`} />
+            <InfoCard icon="⚡" label="Score Flamme" value={fame && `${fame}%`} />
+            <InfoCard icon="🏷️" label="Genre" value={gender} formatType="capitalize" />
+            <InfoCard icon="💘" label="Préférence" value={sexPref} formatType="capitalize" />
+            <InfoCard icon="📏" label="Taille" value={height && `${height} cm`} />
+            <InfoCard icon="💼" label="Profession" value={job} formatType="capitalize" />
+          </DetailSection>
 
-            {educationLevel && (
-              <p className="text-gray-700 dark:text-gray-300">🎓 Niveau d'éducation : {educationLevel}</p>
-            )}
-            {socialActivityLevel && (
-              <p className="text-gray-700 dark:text-gray-300">👥 Vie sociale : {socialActivityLevel}</p>
-            )}
-            {sportActivity && (
-              <p className="text-gray-700 dark:text-gray-300">💪 Activité sportive : {sportActivity}</p>
-            )}
-            {religion && (
-              <p className="text-gray-700 dark:text-gray-300">🙏 Religion : {religion}</p>
-            )}
-            {childrenStatus && (
-              <p className="text-gray-700 dark:text-gray-300">👶 Enfants : {childrenStatus}</p>
-            )}
-            {zodiacSign && (
-              <p className="text-gray-700 dark:text-gray-300">♌ Signe astrologique : {zodiacSign}</p>
-            )}
-            {(hairColor || skinColor || eyeColor) && (
-              <p className="text-gray-700 dark:text-gray-300">
-                👤 Apparence : {hairColor && `Cheveux ${hairColor}`} {skinColor && `, Peau ${skinColor}`} {eyeColor && `, Yeux ${eyeColor}`}
-              </p>
-            )}
-            {birthCity && (
-              <p className="text-gray-700 dark:text-gray-300">🏙️ Ville de naissance : {birthCity}</p>
-            )}
-            {currentCity && (
-              <p className="text-gray-700 dark:text-gray-300">📍 Ville actuelle : {currentCity}</p>
-            )}
-            {job && (
-              <p className="text-gray-700 dark:text-gray-300">💼 Profession : {job}</p>
-            )}
-          </div>
+          <DetailSection title="Apparence" icon={Eye} columns={3}>
+            <InfoCard icon="💇" label="Cheveux" value={hairColor} formatType="capitalize" />
+            <InfoCard icon="👁️" label="Yeux" value={eyeColor} formatType="capitalize" />
+            <InfoCard icon="🎨" label="Peau" value={skinColor} formatType="capitalize" />
+            <InfoCard icon="⭐" label="Signe" value={zodiacSign} formatType="capitalize" />
+          </DetailSection>
 
-          {/* Bouton Signaler dans la bio */}
-          {onReport && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 text-red-600 dark:text-red-400 border-red-200 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                onClick={() => onReport(profileId)}
-              >
-                <Shield className="h-4 w-4" />
-                Signaler ce profil
-              </Button>
-            </div>
-          )}
+          <DetailSection title="Localisation" icon={MapPin}>
+            <InfoCard icon="🏠" label="Ville actuelle" value={currentCity} formatType="capitalize" />
+            <InfoCard icon="🌍" label="Ville de naissance" value={birthCity} formatType="capitalize" />
+          </DetailSection>
 
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={onClose}
-            >
-              Fermer
-            </Button>
-          </div>
+          <DetailSection title="Mode de vie" icon={Heart}>
+            <InfoCard icon="🍷" label="Alcool" value={alcoholConsumption} formatType="yes_sometimes_no" />
+            <InfoCard icon="🚬" label="Tabac" value={smoking} formatType="yes_sometimes_no" />
+            <InfoCard icon="🌿" label="Cannabis" value={cannabis} formatType="yes_sometimes_no" />
+            <InfoCard icon="💊" label="Autres drogues" value={drugs} formatType="yes_no" />
+            <InfoCard icon="🐕" label="Animaux" value={pets} formatType="yes_no" />
+          </DetailSection>
+
+          <DetailSection title="Relations et famille" icon={Users} columns={1}>
+            <InfoCard icon="💑" label="Type de relation" value={relationshipType} formatType="capitalize" />
+            <InfoCard icon="👶" label="Enfants" value={childrenStatus} formatType="capitalize" />
+            <InfoCard icon="📝" label="Détails enfants" value={childrenDetails} />
+          </DetailSection>
+
+          <DetailSection title="Activités et loisirs" icon={Zap}>
+            <InfoCard icon="🏃" label="Sport" value={sportActivity} formatType="capitalize" />
+            <InfoCard icon="👥" label="Vie sociale" value={socialActivityLevel} formatType="capitalize" />
+          </DetailSection>
+
+          <DetailSection title="Valeurs et croyances" icon={Book}>
+            <InfoCard icon="📚" label="Éducation" value={educationLevel} formatType="capitalize" />
+            <InfoCard icon="🙏" label="Religion" value={religion} formatType="capitalize" />
+            <InfoCard icon="🏛️" label="Politique" value={politicalView} formatType="capitalize" />
+          </DetailSection>
+
+          <PersonalPresentationSection bio={bio} personalOpinion={personalOpinion} />
+
+          <InterestsSection interests={interests} />
         </div>
       </div>
     </div>
