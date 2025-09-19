@@ -184,10 +184,30 @@ CREATE TABLE IF NOT EXISTS matches (
     user2_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    
+
     -- Ensure consistent ordering and uniqueness
     CONSTRAINT user_order_check CHECK (user1_id < user2_id),
     CONSTRAINT unique_match UNIQUE (user1_id, user2_id)
+);
+
+-- ====================
+-- TABLE : user_matching_preferences
+-- ====================
+CREATE TABLE IF NOT EXISTS user_matching_preferences (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    age_min INTEGER DEFAULT 18,
+    age_max INTEGER DEFAULT 99,
+    max_distance NUMERIC(10,2) DEFAULT 50.0,
+    min_fame INTEGER DEFAULT 0,
+    preferred_genders TEXT NOT NULL DEFAULT '["man","woman","other"]',
+    required_tags TEXT DEFAULT '[]',
+    blocked_tags TEXT DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Ensure unique preferences per user
+    CONSTRAINT unique_user_preferences UNIQUE (user_id)
 );
 
 -- ====================
@@ -298,9 +318,9 @@ FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
 
--- Trigger for user preferences updated_at
-CREATE TRIGGER trg_update_user_preferences_updated_at
-BEFORE UPDATE ON user_preferences
+-- Trigger for user_matching_preferences updated_at
+CREATE TRIGGER trg_update_user_matching_preferences_updated_at
+BEFORE UPDATE ON user_matching_preferences
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
@@ -332,9 +352,9 @@ INSERT INTO tags (name) VALUES
 -- INDEXES FOR MATCHING PERFORMANCE
 -- ====================
 
--- User preferences indexes
-CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_preferences_last_updated ON user_preferences(last_updated);
+-- User matching preferences indexes
+CREATE INDEX IF NOT EXISTS idx_user_matching_preferences_user_id ON user_matching_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_matching_preferences_updated_at ON user_matching_preferences(updated_at);
 
 -- User interactions indexes
 CREATE INDEX IF NOT EXISTS idx_user_interactions_user_id ON user_interactions(user_id);
