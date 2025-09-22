@@ -42,14 +42,14 @@ export function PasswordStrength({
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div
             className={cn(
-              "h-2 rounded-full transition-all duration-300",
+              "h-2 rounded-full transition-all duration-300 progress-width",
               {
                 'bg-red-500': validation.strength === 'weak',
                 'bg-orange-500': validation.strength === 'medium',
                 'bg-green-500': validation.strength === 'strong',
               }
             )}
-            style={{ width: `${validation.score}%` }}
+            style={{"--width": `${validation.score}%`} as React.CSSProperties}
           />
         </div>
       </div>

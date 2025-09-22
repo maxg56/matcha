@@ -282,8 +282,7 @@ export function UserMap({
         <MapContainer
           center={mapCenter}
           zoom={12}
-          style={{ width: "100%", height: "100%" }}
-          className="rounded-lg"
+          className="rounded-lg map-container-full"
         >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

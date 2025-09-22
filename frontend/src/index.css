@@ -141,9 +141,14 @@
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Body overflow control classes */
+  body.body-overflow-hidden {
+    overflow: hidden;
   }
   
   /* Custom scrollbar for webkit browsers */
@@ -353,18 +358,54 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
-  
+
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+
+  /* CSP-safe dynamic width utilities */
+  .progress-width {
+    transition: width 300ms ease;
+    width: var(--width, 0%);
+  }
+
+  /* CSP-safe image max height */
+  .photo-viewer-image {
+    max-height: calc(100vh - 200px);
+  }
+
+  /* CSP-safe animation delays for typing indicator */
+  .animate-bounce-delay-1 {
+    animation: bounce 1s infinite;
+    animation-delay: 0.1s;
+  }
+
+  .animate-bounce-delay-2 {
+    animation: bounce 1s infinite;
+    animation-delay: 0.2s;
+  }
+
+  /* CSP-safe chat input auto-resize */
+  .chat-input-auto-height {
+    height: auto;
+    min-height: 40px;
+    max-height: 120px;
+  }
+
+  /* CSP-safe map container dimensions */
+  .map-container-full {
+    width: 100%;
+    height: 100%;
+  }
+
 }
