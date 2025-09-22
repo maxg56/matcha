@@ -8,9 +8,9 @@
       content="
         default-src 'self';
         script-src 'self' https://js.stripe.com https://m.stripe.network;
-        style-src 'self';
+        style-src 'self' 'unsafe-inline' data:;
         img-src 'self' data: blob: https:;
-        connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://nominatim.openstreetmap.org;
+        connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://nominatim.openstreetmap.org ws: wss:;
         frame-src https://*.js.stripe.com https://js.stripe.com https://hooks.stripe.com;
         object-src 'none';
         base-uri 'self';
