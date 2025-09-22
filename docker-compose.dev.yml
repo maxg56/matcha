@@ -54,6 +54,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       GIN_MODE: debug
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
     volumes:
       - ./api/gateway/src:/app/src
       - ./api/gateway/go.mod:/app/go.mod
