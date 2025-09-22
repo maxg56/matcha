@@ -4,12 +4,13 @@ import { type MessageHandler } from '@/services/websocket';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { apiService } from '@/services/api';
+import { authService } from '@/services/auth';
 
 export function Notification() {
     const [seen, setSeen] = useState(false);
 
     const { user } = useAuthStore();
-    const token = localStorage.getItem('accessToken');
+    const token = authService.getAccessToken();
     const { addNotificationHandler, removeNotificationHandler } = useWebSocketNotifications();
     
     // Utilisation du store Zustand pour les notifications

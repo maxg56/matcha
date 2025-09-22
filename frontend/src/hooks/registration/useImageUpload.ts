@@ -6,6 +6,7 @@ import type { ImagePreview } from '../../components/registration/steps/image-upl
 import { MAX_IMAGES } from '../../components/registration/steps/image-upload/types';
 import { useNavigate } from 'react-router-dom';
 import { imageService } from '@/services/imageService';
+import { authService } from '@/services/auth';
 
 export const useImageUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -145,8 +146,7 @@ export const useImageUpload = () => {
         }
         
         // Token refresh failed
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        authService.clearTokens();
         
         dispatchUploadEvent('upload_error', 'Session expirée. Redirection vers la connexion...', {
           error: 'token_expired',

@@ -192,7 +192,7 @@ export function useRegistrationLogic() {
         console.error('Auth check failed:', authError);
         
         // Essayer de se reconnecter automatiquement avec les credentials stockés
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = authService.getRefreshToken();
         if (refreshToken) {
           try {
             console.log('Attempting to refresh token...');
@@ -202,8 +202,7 @@ export function useRegistrationLogic() {
               refresh_token: string;
             }>('/api/v1/auth/refresh', { refresh_token: refreshToken });
 
-            localStorage.setItem('accessToken', tokenData.access_token);
-            localStorage.setItem('refreshToken', tokenData.refresh_token);
+            authService.setTokens(tokenData.access_token, tokenData.refresh_token);
 
             // Recheck auth after refresh
             await useAuthStore.getState().checkAuth();
@@ -244,8 +243,8 @@ export function useRegistrationLogic() {
       console.log('Auth state before profile update:', {
         user: currentUser,
         isAuthenticated,
-        hasToken: !!localStorage.getItem('accessToken'),
-        hasRefreshToken: !!localStorage.getItem('refreshToken')
+        hasToken: !!authService.getAccessToken(),
+        hasRefreshToken: !!authService.getRefreshToken()
       });
       
       if (!currentUser?.id || !isAuthenticated) {
@@ -254,7 +253,7 @@ export function useRegistrationLogic() {
       }
 
       // Vérifier que le token est valide
-      const token = localStorage.getItem('accessToken');
+      const token = authService.getAccessToken();
       if (!token) {
         console.error('No access token found');
         throw new Error('Authentication token not found, please login again');
@@ -274,8 +273,7 @@ export function useRegistrationLogic() {
       // Gestion des erreurs spécifiques
       if (errorMessage.includes('user not authenticated') || errorMessage.includes('not authenticated')) {
         // Clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        authService.clearTokens();
         useAuthStore.getState().logout();
         
         setErrors({ images: 'Session expirée. Veuillez vous reconnecter et reprendre l\'inscription.' });
@@ -304,8 +302,7 @@ export function useRegistrationLogic() {
       
       if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
         // Clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        authService.clearTokens();
         
         setErrors({ images: 'Session expirée. Veuillez vous reconnecter.' });
         setGlobalError('Session expirée. Redirection en cours...');
