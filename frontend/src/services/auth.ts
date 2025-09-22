@@ -1,4 +1,6 @@
 import { apiService } from './api';
+import secureStorage from './secureStorage';
+import cookieManager from './cookieManager';
 
 export interface LoginRequest {
   login: string; // username or email
@@ -157,31 +159,31 @@ class AuthService {
 
   // Token management helpers
   setTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    
-    // Also set access_token as cookie for EventSource authentication
-    document.cookie = `access_token=${accessToken}; path=/; max-age=3600; samesite=strict`;
+    // Use secure storage instead of localStorage
+    secureStorage.setTokens(accessToken, refreshToken);
+
+    // Also set access_token as secure cookie for EventSource authentication
+    cookieManager.setAuthTokenCookie('access_token', accessToken, 3600);
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem('accessToken');
+    return secureStorage.getAccessToken();
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem('refreshToken');
+    return secureStorage.getRefreshToken();
   }
 
-  clearTokens(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    
-    // Also clear the cookie
-    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  async clearTokens(): Promise<void> {
+    // Use secure storage clearance
+    await secureStorage.clearTokens();
+
+    // Also clear the cookie securely
+    cookieManager.clearAuthCookies();
   }
 
   isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+    return secureStorage.isAuthenticated();
   }
 }
 
