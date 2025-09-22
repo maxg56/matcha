@@ -208,6 +208,7 @@ services:
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: 6379
       PORT: 8005
+      JWT_SECRET: ${JWT_SECRET}
       FLASK_ENV: development
       FLASK_DEBUG: 1
     volumes:
@@ -229,6 +230,7 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8006
+      JWT_SECRET: ${JWT_SECRET}
       FLASK_ENV: development
       FLASK_DEBUG: 1
     volumes:

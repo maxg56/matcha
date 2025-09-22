@@ -28,10 +28,16 @@ def get_user_id_from_request():
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
         try:
-            # Note: En production, la validation JWT se fait au niveau du gateway
-            # Ici on extrait juste l'ID pour les tests locaux
-            payload = jwt.decode(token, options={"verify_signature": False})
-            return int(payload.get("user_id", 0))
+            # En production, la validation JWT se fait au niveau du gateway
+            # Pour les tests locaux, on valide quand même la signature
+            import os
+            jwt_secret = os.getenv("JWT_SECRET")
+            if jwt_secret:
+                payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+                return int(payload.get("sub", 0))
+            else:
+                logger.warning("JWT_SECRET not configured, skipping JWT validation")
+                return None
         except (jwt.InvalidTokenError, ValueError, KeyError):
             logger.warning("Failed to extract user_id from JWT token")
 
