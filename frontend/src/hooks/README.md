@@ -19,7 +19,6 @@ hooks/
 - `useTokenRefresh.ts` - Gestion des tokens expirés
 
 ## 🌐 API (`/api`) 
-- `useDiscoverProfiles.ts` - Récupération des profils à découvrir
 - `useEditProfile.ts` - Modification de profil
 - `useFilters.ts` - Gestion des filtres de recherche
 
