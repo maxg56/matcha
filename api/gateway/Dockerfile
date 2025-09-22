@@ -23,7 +23,10 @@ CMD ["air", "-c", ".air.toml"]
 FROM alpine:latest AS production
 
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/gateway .
+RUN addgroup -g 1001 -S gateway && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G gateway gateway
+WORKDIR /app
+COPY --from=builder --chown=gateway:gateway /app/gateway .
+USER gateway
 EXPOSE 8080
 CMD ["./gateway"]
