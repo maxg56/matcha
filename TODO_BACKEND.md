@@ -15,7 +15,6 @@
 | **Chat** | ✅ Complet | Maintenance | WebSocket temps réel, persistence | ✅ Bon |
 | **Notify** | ⚠️ Minimal | IMPORTANT | WebSocket basique seulement | ❌ Aucun |
 | **Media** | ✅ Complet | Maintenance | Upload, resize, optimisation | ✅ Bon |
-| **Admin** | ⚠️ 60% | CRITIQUE | Stats avancées, gestion admin manquante | ⚠️ Basique |
 | **User Creation** | ✅ Utilitaire | - | Génération fake data | N/A |
 
 ---
@@ -53,40 +52,6 @@
   - [ ] Tests d'intégration avec base de données
   - [ ] Tests de validation des données
 
-### 2. **Admin Service - Finaliser l'implémentation**
-```
-📁 /api/admin-servise/src/ (RENOMMER LE DOSSIER!)
-```
-
-- [ ] **BUG CRITIQUE : Renommer le dossier**
-  ```bash
-  mv /api/admin-servise /api/admin-service
-  # Mettre à jour docker-compose.dev.yml
-  ```
-
-- [ ] **Gestion des utilisateurs admin**
-  - [ ] `GET /admin/users` - Liste/recherche utilisateurs avec filtres
-  - [ ] `GET /admin/users/:id` - Profil détaillé utilisateur
-  - [ ] `PUT /admin/users/:id/suspend` - Suspension/ban utilisateur
-  - [ ] `DELETE /admin/users/:id` - Suppression compte
-  - [ ] `POST /admin/users/:id/unban` - Débannissement
-
-- [ ] **Gestion des signalements**
-  - [ ] `GET /admin/reports` - Liste des signalements
-  - [ ] `PUT /admin/reports/:id` - Traiter un signalement
-  - [ ] `POST /admin/reports/:id/action` - Actions admin (ban, avertissement)
-
-- [ ] **Endpoints de performance (actuellement vides)**
-  - [ ] `GetPerformanceStatsHandler()` - Vraies métriques (CPU, RAM, DB)
-  - [ ] `ClearCacheHandler()` - Support multi-cache avec retour détaillé
-  - [ ] `CreateIndexesHandler()` - Création/optimisation index DB
-
-- [ ] **Dashboard APIs**
-  - [ ] Statistiques temps réel (WebSocket)
-  - [ ] Export rapports (CSV, PDF)
-  - [ ] Métriques système détaillées
-
-
 ## 🔧 PRIORITÉ IMPORTANTE - Améliorations nécessaires
 
 ### 4. **Tests et qualité de code**
@@ -112,15 +77,6 @@
   - [ ] Tests WebSocket proxy
 
 ### 5. **Sécurité et permissions**
-
-- [ ] **Admin Service - Permissions granulaires**
-  ```go
-  // Remplacer utils/jwt.go:84-103
-  IsUserAdmin() // IDs codés en dur - à refactorer
-  ```
-  - [ ] Système RBAC (Role-Based Access Control)
-  - [ ] Permissions par action
-  - [ ] Audit trail des actions admin
 
 - [ ] **Rate limiting avancé**
   - [ ] Rate limiting par endpoint
