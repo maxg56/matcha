@@ -17,7 +17,7 @@ type Users struct {
 	BirthDate    time.Time     `gorm:"column:birth_date;not null" json:"birth_date"`
 	Age          int           `gorm:"column:age" json:"age"`
 	Height       sql.NullInt64 `gorm:"column:height" json:"height"`
-	Premium      *time.Time    `gorm:"column:premium;default:CURRENT_TIMESTAMP" json:"premium"`
+	Premium      sql.NullTime  `gorm:"column:premium;default:CURRENT_TIMESTAMP" json:"premium"`
 
 	AlcoholConsumption sql.NullString `gorm:"column:alcohol_consumption" json:"alcohol_consumption"`
 	Smoking            sql.NullString `gorm:"column:smoking" json:"smoking"`

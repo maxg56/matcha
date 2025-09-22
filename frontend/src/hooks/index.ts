@@ -26,4 +26,8 @@ export { useProfileNotifications } from './ui/useProfileNotifications';
 export { useTheme } from './ui/useTheme';
 export { useToast } from './ui/useToast';
 
+// Preferences hooks
+export { usePreferences } from './usePreferences';
+export { useMatchingFilter, useFilterStats } from './useMatchingFilter';
+
 // NOTE: NotifImage.ts is not exported as it's an internal utility

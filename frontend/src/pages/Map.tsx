@@ -33,7 +33,7 @@ export default function MapPage() {
                       {selectedUser.first_name} (@{selectedUser.username}) - {selectedUser.age} ans
                     </p>
                     <p className="text-blue-700 dark:text-blue-300 text-sm">
-                      📍 À {selectedUser.distance.toFixed(1)} km de vous
+                      📍 À {Math.round(selectedUser.distance)} km de vous
                     </p>
                   </div>
                   <button

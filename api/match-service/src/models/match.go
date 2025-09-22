@@ -4,8 +4,8 @@ import "time"
 
 type Match struct {
 	ID        uint      `gorm:"primaryKey;column:id" json:"id"`
-	User1ID   uint      `gorm:"column:user1_id;not null;index" json:"user1_id"`
-	User2ID   uint      `gorm:"column:user2_id;not null;index" json:"user2_id"`
+	User1ID   uint      `gorm:"column:user1_id;not null;index;uniqueIndex:unique_match" json:"user1_id"`
+	User2ID   uint      `gorm:"column:user2_id;not null;index;uniqueIndex:unique_match" json:"user2_id"`
 	IsActive  bool      `gorm:"column:is_active;default:true" json:"is_active"`
 	MatchedAt time.Time `gorm:"column:matched_at;default:CURRENT_TIMESTAMP" json:"matched_at"`
 

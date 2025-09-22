@@ -1,16 +1,29 @@
 import { useState } from 'react';
 import { ProfileImageCarousel } from './ProfileImageCarousel';
-import { ProfileInfo } from './ProfileInfo';
 import { ProfileActions } from './ProfileActions';
 import { ProfileDetails } from './ProfileDetails';
+import { ProfileContextualOverlay } from './ProfileContextualOverlay';
+import { ProfileHeader } from './ProfileHeader';
+import { ProfileQuickInfo } from './ProfileQuickInfo';
+import { ProfileBio } from './ProfileBio';
+import { ProfileInterests } from './ProfileInterests';
 import { useProfileAnalytics } from '@/hooks/api/useProfileAnalytics';
+import { useNormalizedProfile, getContextualInfo } from '@/hooks/useNormalizedProfile';
+import { ChevronDown } from 'lucide-react';
 
 interface Profile {
   id: string | number;
   // Nom (peut venir de first_name ou name)
   name?: string;
   first_name?: string;
+  last_name?: string;
+  username?: string;
   age: number;
+  height?: number;
+  fame?: number;
+  gender?: string;
+  sex_pref?: string;
+  sexPref?: string;
   images?: string[];
   profile_photos?: string[]; // alias pour images
   bio: string;
@@ -34,6 +47,8 @@ interface Profile {
   religion?: string;
   children_status?: string;
   childrenStatus?: string; // alias
+  children_details?: string;
+  childrenDetails?: string; // alias
   zodiac_sign?: string;
   zodiacSign?: string; // alias
   hair_color?: string;
@@ -45,6 +60,18 @@ interface Profile {
   birth_city?: string;
   birthCity?: string; // alias
   currentCity?: string;
+  
+  // Style de vie
+  relationship_type?: string;
+  relationshipType?: string; // alias
+  political_view?: string;
+  politicalView?: string; // alias
+  alcohol_consumption?: string;
+  alcoholConsumption?: string; // alias
+  smoking?: string;
+  cannabis?: string;
+  drugs?: string;
+  pets?: string;
 }
 
 interface ProfileCardProps {
@@ -76,6 +103,7 @@ export function ProfileCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
   const { trackProfileView } = useProfileAnalytics();
+  const normalizedProfile = useNormalizedProfile(profile, candidate);
 
   const handleImageChange = (index: number) => {
     setCurrentImageIndex(index);
@@ -83,7 +111,6 @@ export function ProfileCard({
 
   const handleToggleDetails = async () => {
     if (!showDetails) {
-      // Track profile view when opening details for the first time
       await trackProfileView(Number(profile.id));
     }
     setShowDetails(!showDetails);
@@ -93,56 +120,57 @@ export function ProfileCard({
     setShowDetails(false);
   };
 
-  // Normaliser les données pour compatibilité
-  const normalizedProfile = {
-    ...profile,
-    name: profile.name || profile.first_name || 'Utilisateur',
-    images: profile.images || profile.profile_photos || [],
-    location: profile.location || profile.current_city || '',
-    occupation: profile.occupation || profile.job || '',
-    interests: profile.interests || profile.tags || [],
-    distance: candidate?.distance || profile.distance || 0,
-    
-    // Normaliser les aliases camelCase vers snake_case
-    personalOpinion: profile.personal_opinion || profile.personalOpinion,
-    educationLevel: profile.education_level || profile.educationLevel,
-    socialActivityLevel: profile.social_activity_level || profile.socialActivityLevel,
-    sportActivity: profile.sport_activity || profile.sportActivity,
-    childrenStatus: profile.children_status || profile.childrenStatus,
-    zodiacSign: profile.zodiac_sign || profile.zodiacSign,
-    hairColor: profile.hair_color || profile.hairColor,
-    skinColor: profile.skin_color || profile.skinColor,
-    eyeColor: profile.eye_color || profile.eyeColor,
-    birthCity: profile.birth_city || profile.birthCity,
-    currentCity: profile.current_city || profile.currentCity,
-    job: profile.job || profile.occupation
-  };
+  const currentInfo = getContextualInfo(currentImageIndex, normalizedProfile);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden h-full flex flex-col ">
+    <div className="relative rounded-2xl overflow-hidden h-full flex flex-col shadow-2xl">
       {/* Carousel d'images */}
-      <div className="bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950">
-      <ProfileImageCarousel
-        images={normalizedProfile.images}
-        profileName={normalizedProfile.name}
-        currentIndex={currentImageIndex}
-        onImageChange={handleImageChange}
-      />
+      <div className="relative bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950">
+        <ProfileImageCarousel
+          images={normalizedProfile.images}
+          profileName={normalizedProfile.name}
+          currentIndex={currentImageIndex}
+          onImageChange={handleImageChange}
+        />
+        
+        <ProfileContextualOverlay
+          currentInfo={currentInfo}
+          currentImageIndex={currentImageIndex}
+          totalImages={normalizedProfile.images.length}
+        />
       </div>
 
       {/* Section infos et boutons */}
       <div className="flex-1 bg-white dark:bg-gradient-to-b dark:from-emerald-950 dark:to-gray-900 flex flex-col">
-        {/* Infos profil */}
-        <ProfileInfo
-          name={normalizedProfile.name}
-          age={normalizedProfile.age}
-          location={normalizedProfile.location}
-          distance={normalizedProfile.distance}
-          occupation={normalizedProfile.occupation}
-          showDetails={showDetails}
-          onToggleDetails={handleToggleDetails}
-          candidate={candidate}
-        />
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <ProfileHeader
+                name={normalizedProfile.name}
+                age={normalizedProfile.age}
+              />
+
+              <ProfileQuickInfo
+                location={normalizedProfile.location}
+                distance={normalizedProfile.distance}
+                occupation={normalizedProfile.occupation}
+                educationLevel={normalizedProfile.educationLevel}
+                childrenStatus={normalizedProfile.childrenStatus}
+              />
+
+              <ProfileBio bio={normalizedProfile.bio} />
+
+              <ProfileInterests interests={normalizedProfile.interests} />
+            </div>
+
+            <button
+              onClick={handleToggleDetails}
+              className="ml-4 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+            >
+              <ChevronDown className={`h-5 w-5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+        </div>
 
         {/* Boutons d'actions */}
         <ProfileActions
@@ -165,6 +193,7 @@ export function ProfileCard({
         sportActivity={normalizedProfile.sportActivity}
         religion={normalizedProfile.religion}
         childrenStatus={normalizedProfile.childrenStatus}
+        childrenDetails={normalizedProfile.childrenDetails}
         zodiacSign={normalizedProfile.zodiacSign}
         hairColor={normalizedProfile.hairColor}
         skinColor={normalizedProfile.skinColor}
@@ -172,6 +201,21 @@ export function ProfileCard({
         birthCity={normalizedProfile.birthCity}
         currentCity={normalizedProfile.currentCity}
         job={normalizedProfile.job}
+        relationshipType={normalizedProfile.relationshipType}
+        politicalView={normalizedProfile.politicalView}
+        alcoholConsumption={normalizedProfile.alcoholConsumption}
+        smoking={normalizedProfile.smoking}
+        cannabis={normalizedProfile.cannabis}
+        drugs={normalizedProfile.drugs}
+        pets={normalizedProfile.pets}
+        height={normalizedProfile.height}
+        fame={normalizedProfile.fame}
+        gender={normalizedProfile.gender}
+        sexPref={normalizedProfile.sexPref}
+        age={normalizedProfile.age}
+        username={normalizedProfile.username}
+        firstName={normalizedProfile.firstName}
+        lastName={normalizedProfile.lastName}
         profileId={String(profile.id)}
         isOpen={showDetails}
         onClose={handleCloseDetails}

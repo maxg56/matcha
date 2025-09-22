@@ -44,7 +44,7 @@ export function ProfileInfo({
         </div>
         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300 mb-1">
           <MapPin className="h-4 w-4" />
-          <span>{location} • {candidate?.distance || distance}km</span>
+          <span>{location} • {Math.round(candidate?.distance || distance || 0)}km</span>
         </div>
         <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-1">
           <Briefcase className="h-4 w-4" />
