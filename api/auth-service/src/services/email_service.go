@@ -77,7 +77,7 @@ type PasswordResetData struct {
 // SendPasswordResetEmail sends a password reset email
 func (es *EmailService) SendPasswordResetEmail(toEmail, resetToken string) error {
 	// Get frontend URL from environment
-	frontendURL := getEnvOrDefault("FRONTEND_URL", "http://localhost:3000")
+	frontendURL := getEnvOrDefault("FRONTEND_URL", "https://localhost:8443")
 	resetURL := fmt.Sprintf("%s/reinitialiser-mot-de-passe?token=%s", frontendURL, resetToken)
 	
 	// Skip sending email if SMTP is not configured (development mode)
