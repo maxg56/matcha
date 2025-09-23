@@ -26,9 +26,13 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
         </div>
         
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-          <div 
-            className="bg-gradient-to-r from-purple-500 to-violet-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(currentStep / steps.length) * 100}%` }}
+          <div
+            className="bg-gradient-to-r from-purple-500 to-violet-500 h-2 rounded-full progress-width"
+            ref={(el) => {
+              if (el) {
+                el.style.width = `${(currentStep / steps.length) * 100}%`;
+              }
+            }}
           />
         </div>
 

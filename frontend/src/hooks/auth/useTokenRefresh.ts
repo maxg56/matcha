@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { authService } from '@/services/auth';
 import { attemptTokenRefresh } from '@/utils/smashNotifications';
 
 export const useTokenRefresh = () => {
@@ -17,8 +18,7 @@ export const useTokenRefresh = () => {
     }
     
     // Clear tokens and redirect to login
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    authService.clearTokens();
     
     setTimeout(() => {
       navigate('/login');

@@ -1,7 +1,7 @@
 services:
   caddy:
     image: caddy:latest
-    container_name: caddy-dev
+    container_name: caddy-prod
     environment:
       VITE_HOSTNAME: ${VITE_HOSTNAME:-localhost}
     volumes:
@@ -31,7 +31,7 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
+      - postgres_data_prod:/var/lib/postgresql/data
       - ./services/database:/docker-entrypoint-initdb.d
     networks:
       - DB
@@ -77,23 +77,16 @@ services:
     tmpfs:
       - /tmp
 
-
-  # Gateway for development
   gateway:
     build:
       context: ./api/gateway
-      target: development
+      target: production
     environment:
       PORT: 8080
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
-      GIN_MODE: debug
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-    volumes:
-      - ./api/gateway/src:/app/src
-      - ./api/gateway/go.mod:/app/go.mod
-      - ./api/gateway/go.sum:/app/go.sum
-      - ./api/gateway/.air.toml:/app/.air.toml
+      GIN_MODE: release
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       - auth-service
       - user-service
@@ -114,7 +107,7 @@ services:
   auth-service:
     build:
       context: ./api/auth-service
-      target: development
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -123,7 +116,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-password}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: 6379
-      GIN_MODE: debug
+      GIN_MODE: release
       JWT_SECRET: ${JWT_SECRET}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -133,12 +126,6 @@ services:
       FROM_NAME: ${FROM_NAME}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       CLEANUP_INTERVAL_MINUTES: ${CLEANUP_INTERVAL_MINUTES:-30}
-    volumes:
-      - ./api/auth-service/src:/app/src
-      - ./api/auth-service/templates:/app/templates
-      - ./api/auth-service/go.mod:/app/go.mod
-      - ./api/auth-service/go.sum:/app/go.sum
-      - ./api/auth-service/.air.toml:/app/.air.toml
     depends_on:
       - postgres
       - redis
@@ -154,19 +141,14 @@ services:
   user-service:
     build:
       context: ./api/user-service
-      target: development
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
-      GIN_MODE: debug
-    volumes:
-      - ./api/user-service/src:/app/src
-      - ./api/user-service/go.mod:/app/go.mod
-      - ./api/user-service/go.sum:/app/go.sum
-      - ./api/user-service/.air.toml:/app/.air.toml
+      GIN_MODE: release
     depends_on:
       - postgres
     networks:
@@ -181,7 +163,7 @@ services:
   match-service:
     build:
       context: ./api/match-service
-      target: development
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -195,13 +177,9 @@ services:
       REDIS_DB: ${REDIS_DB:-0}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       USE_REDIS_CACHE: ${USE_REDIS_CACHE:-true}
-    volumes:
-      - ./api/match-service/src:/app/src
-      - ./api/match-service/go.mod:/app/go.mod
-      - ./api/match-service/go.sum:/app/go.sum
-      - ./api/match-service/.air.toml:/app/.air.toml
     depends_on:
       - postgres
+      - redis
     networks:
       - DB
       - backend
@@ -214,7 +192,7 @@ services:
   chat-service:
     build:
       context: ./api/chat-service
-      target: development
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -225,18 +203,13 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      ENABLE_DETAILED_LOGS: ${ENABLE_DETAILED_LOGS:-true}
+      ENABLE_DETAILED_LOGS: ${ENABLE_DETAILED_LOGS:-false}
       METRICS_ENABLED: ${METRICS_ENABLED:-true}
       RATE_LIMIT_MESSAGES: ${RATE_LIMIT_MESSAGES:-10}
       RATE_LIMIT_WINDOW_MINUTES: ${RATE_LIMIT_WINDOW_MINUTES:-1}
       FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
-      ALLOWED_ORIGINS : ${ALLOWED_ORIGINS}
-      GIN_MODE: debug
-    volumes:
-      - ./api/chat-service/src:/app/src
-      - ./api/chat-service/go.mod:/app/go.mod
-      - ./api/chat-service/go.sum:/app/go.sum
-      - ./api/chat-service/.air.toml:/app/.air.toml
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      GIN_MODE: release
     depends_on:
       - postgres
       - redis
@@ -262,10 +235,8 @@ services:
       REDIS_PORT: 6379
       PORT: 8005
       JWT_SECRET: ${JWT_SECRET}
-      FLASK_ENV: development
-      FLASK_DEBUG: 1
-    volumes:
-      - ./api/notify-service/src:/app/src:ro
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
     depends_on:
       - postgres
       - redis
@@ -283,16 +254,15 @@ services:
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-matcha_dev}
+      DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8006
       JWT_SECRET: ${JWT_SECRET}
-      FLASK_ENV: development
-      FLASK_DEBUG: 1
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
     volumes:
-      - media_uploads_dev:/app/uploads
-      - ./api/media-service/src:/app/src:ro
+      - media_uploads_prod:/app/uploads
     depends_on:
       - postgres
     networks:
@@ -307,14 +277,9 @@ services:
   paiements-service:
     build:
       context: ./api/paiements-service
-      target: development
+      target: production
     env_file:
       - ./.env
-    volumes:
-      - ./api/paiements-service/src:/app/src
-      - ./api/paiements-service/go.mod:/app/go.mod
-      - ./api/paiements-service/go.sum:/app/go.sum
-      - ./api/paiements-service/.air.toml:/app/.air.toml
     depends_on:
       - postgres
       - redis
@@ -330,13 +295,10 @@ services:
   frontend:
     build:
       context: ./frontend
-      target: development
+      target: production
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
       VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - gateway
     networks:
@@ -373,23 +335,23 @@ services:
       - ALL
 
 volumes:
-  postgres_data_dev:
+  postgres_data_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/data
+      device: ./volumes/data_prod
       o: bind
-  redis_data_dev:
+  redis_data_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/redis
+      device: ./volumes/redis_prod
       o: bind
-  media_uploads_dev:
+  media_uploads_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/media_uploads
+      device: ./volumes/media_uploads_prod
       o: bind
   frontend_node_modules:
   caddy_data:

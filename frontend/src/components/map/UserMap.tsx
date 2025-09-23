@@ -99,13 +99,19 @@ export function UserMap({
     } catch (err) {
       console.error('Erreur lors du chargement des matches:', err);
 
-      // Gestion spécifique des erreurs d'authentification
-      if (err instanceof Error && err.message.includes('session a expiré')) {
-        setError('Votre session a expiré. Veuillez vous reconnecter pour voir vos matches.');
-      } else if (err instanceof Error && err.message.includes('not authenticated')) {
-        setError('Vous devez être connecté pour voir vos matches.');
+      // Gestion spécifique des erreurs d'authentification et de localisation
+      if (err instanceof Error) {
+        if (err.message.includes('session a expiré')) {
+          setError('Votre session a expiré. Veuillez vous reconnecter pour voir vos matches.');
+        } else if (err.message.includes('not authenticated')) {
+          setError('Vous devez être connecté pour voir vos matches.');
+        } else if (err.message.includes('user location not set') || err.message.includes('current user location not set')) {
+          setError('Géolocalisation non configurée. Allez dans les paramètres pour activer votre localisation et voir des matches près de chez vous.');
+        } else {
+          setError(err.message);
+        }
       } else {
-        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des matches');
+        setError('Erreur lors du chargement des matches');
       }
     } finally {
       setLoading(false);
@@ -231,7 +237,11 @@ export function UserMap({
       {error && (
         <div className="absolute top-4 left-4 z-[1000] bg-red-500 text-white px-4 py-2 rounded-md shadow-lg max-w-sm">
           <p className="text-sm">{error}</p>
-          {error.includes('Géolocalisation') || error.includes('session') ? (
+          {error.includes('Géolocalisation') || error.includes('localisation') ? (
+            <p className="text-xs mt-1 text-red-200">
+              💡 Rendez-vous dans Paramètres → Géolocalisation pour activer votre position
+            </p>
+          ) : error.includes('session') ? (
             <p className="text-xs mt-1 text-red-200">
               💡 Cliquez sur la carte pour définir votre position ou utilisez la recherche par ville
             </p>
@@ -282,8 +292,7 @@ export function UserMap({
         <MapContainer
           center={mapCenter}
           zoom={12}
-          style={{ width: "100%", height: "100%" }}
-          className="rounded-lg"
+          className="rounded-lg map-container-full"
         >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

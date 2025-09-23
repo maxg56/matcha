@@ -145,8 +145,8 @@ export default function MessagesPage() {
           profile={selectedProfile}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onLike={(id) => console.log('Liked:', id)}
-          onPass={(id) => console.log('Passed:', id)}
+          onLike={(_id) => {}}
+          onPass={(_id) => {}}
         />
       )}
     </>

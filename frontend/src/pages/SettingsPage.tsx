@@ -11,9 +11,11 @@ import {
   Moon,
   Volume2,
   Vibrate,
-  Star
+  Star,
+  MapPin
 } from 'lucide-react';
 import { SettingItem, SettingSection, PremiumSection } from '@/components/settings';
+import { locationService } from '@/services/locationService';
 
 
 const mockUser = {
@@ -46,6 +48,29 @@ export default function SettingsPage() {
     language: 'Français',
     autoPlay: true
   });
+
+  const [locationStatus, setLocationStatus] = useState<{
+    enabled: boolean;
+    loading: boolean;
+    error: string | null;
+  }>({
+    enabled: false,
+    loading: false,
+    error: null
+  });
+
+  const handleUpdateLocation = async () => {
+    setLocationStatus(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      await locationService.updateLocationFromBrowser();
+      setLocationStatus(prev => ({ ...prev, enabled: true, loading: false }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la localisation';
+      setLocationStatus(prev => ({ ...prev, loading: false, error: errorMessage }));
+      console.error('Erreur lors de la mise à jour de la localisation:', error);
+    }
+  };
 
   return (
     <div className="p-4 space-y-6">
@@ -179,15 +204,56 @@ export default function SettingsPage() {
             icon={<Shield className="h-4 w-4" />}
             title="Profils bloqués"
             description="Gérer les utilisateurs bloqués"
-            onClick={() => console.log('Manage blocked profiles')}
+            onClick={() => {}}
           />
 
           <SettingItem
             icon={<Shield className="h-4 w-4" />}
             title="Signaler un problème"
             description="Signaler un bug ou un utilisateur"
-            onClick={() => console.log('Report issue')}
+            onClick={() => {}}
           />
+        </SettingSection>
+
+        {/* Géolocalisation */}
+        <SettingSection title="Géolocalisation">
+          <SettingItem
+            icon={<MapPin className="h-4 w-4" />}
+            title="Activer la géolocalisation"
+            description={locationStatus.enabled ? "Votre position est configurée" : "Nécessaire pour trouver des matches à proximité"}
+          >
+            <button
+              onClick={handleUpdateLocation}
+              disabled={locationStatus.loading}
+              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                locationStatus.enabled 
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {locationStatus.loading ? 'Localisation...' : locationStatus.enabled ? 'Mettre à jour' : 'Activer'}
+            </button>
+          </SettingItem>
+          
+          {locationStatus.error && (
+            <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{locationStatus.error}</p>
+              <p className="text-xs text-red-500 mt-1">
+                Vérifiez que vous avez autorisé l'accès à votre localisation dans votre navigateur.
+              </p>
+            </div>
+          )}
+          
+          <div className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-600">
+              💡 <strong>Pourquoi activer la géolocalisation ?</strong>
+            </p>
+            <ul className="text-xs text-blue-500 mt-1 space-y-1">
+              <li>• Trouvez des matches près de chez vous</li>
+              <li>• Voyez les distances sur la carte</li>
+              <li>• Améliorez vos recommandations</li>
+            </ul>
+          </div>
         </SettingSection>
 
         {/* App Preferences */}
@@ -207,7 +273,7 @@ export default function SettingsPage() {
             icon={<Globe className="h-4 w-4" />}
             title="Langue"
             description={preferences.language}
-            onClick={() => console.log('Change language')}
+            onClick={() => {}}
           />
 
           <SettingItem
@@ -231,21 +297,21 @@ export default function SettingsPage() {
             icon={<Shield className="h-4 w-4" />}
             title="Aide et support"
             description="Centre d'aide et contact"
-            onClick={() => console.log('Open help')}
+            onClick={() => {}}
           />
 
           <SettingItem
             icon={<Shield className="h-4 w-4" />}
             title="Conditions d'utilisation"
             description="Lire nos conditions"
-            onClick={() => console.log('Open terms')}
+            onClick={() => {}}
           />
 
           <SettingItem
             icon={<Shield className="h-4 w-4" />}
             title="Politique de confidentialité"
             description="Comment nous protégeons vos données"
-            onClick={() => console.log('Open privacy policy')}
+            onClick={() => {}}
           />
         </SettingSection>
 
@@ -255,14 +321,14 @@ export default function SettingsPage() {
             icon={<Trash2 className="h-4 w-4" />}
             title="Supprimer le compte"
             description="Supprimer définitivement votre compte"
-            onClick={() => console.log('Delete account')}
+            onClick={() => {}}
             className="text-destructive"
           />
 
           <SettingItem
             icon={<LogOut className="h-4 w-4" />}
             title="Se déconnecter"
-            onClick={() => console.log('Logout')}
+            onClick={() => {}}
             className="text-destructive"
           />
         </SettingSection>

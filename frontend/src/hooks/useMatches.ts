@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { matchService, type UserProfile, type MatchCandidate, type MatchingAlgorithmParams, type InteractionResponse } from '@/services/matchService';
 import { preferencesEventEmitter } from '@/utils/preferencesEvents';
 import { useToast } from '@/hooks/ui/useToast';
+import { authService } from '@/services/auth';
 
 interface UseMatchesState {
   candidates: MatchCandidate[];
@@ -28,8 +29,8 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
   });
 
   const fetchCandidates = useCallback(async (params: MatchingAlgorithmParams = {}, isLoadMore = false) => {
-    // Vérifier si un token est présent
-    const token = localStorage.getItem('accessToken');
+    // Vérifier si un token est présent via le service centralisé
+    const token = authService.getAccessToken();
     if (!token) {
       setState(prev => ({
         ...prev,
@@ -81,13 +82,27 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors du chargement des candidats';
       
-      // Si c'est une erreur d'authentification, suggérer une reconnexion
-      if (error instanceof Error && (error.message.includes('401') || error.message.includes('unauthorized'))) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Votre session a expiré. Veuillez vous reconnecter.'
-        }));
+      // Gestion spécifique des différents types d'erreurs
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Votre session a expiré. Veuillez vous reconnecter.'
+          }));
+        } else if (error.message.includes('user location not set') || error.message.includes('current user location not set')) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'location_required' // Code d'erreur spécial pour la géolocalisation
+          }));
+        } else {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: errorMessage
+          }));
+        }
       } else {
         setState(prev => ({
           ...prev,

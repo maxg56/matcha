@@ -7,7 +7,6 @@ export default function MapPage() {
 
   const handleUserClick = (user: NearbyUser) => {
     setSelectedUser(user);
-    console.log('Match sélectionné:', user);
   };
 
   return (

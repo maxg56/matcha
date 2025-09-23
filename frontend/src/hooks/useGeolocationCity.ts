@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiService } from '../services/api';
 
 interface GeolocationCityResult {
 	city: string | null;
@@ -28,28 +29,39 @@ export function useGeolocationCity(): GeolocationCityResult {
   async (position) => {
     const { latitude, longitude } = position.coords;
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        {
-          headers: {
-            "User-Agent": "MyApp/1.0 (contact@myapp.com)", 
-            "Accept-Language": "fr"
-          }
-        }
+      // Utiliser le service centralisé pour le géocodage inverse
+      const result = await apiService.get<{ city?: string; country?: string }>(
+        `/api/v1/location/reverse-geocode?lat=${latitude}&lon=${longitude}`
       );
 
-      if (!response.ok) throw new Error("Erreur API Nominatim");
-      const data = await response.json();
-
-      const foundCity =
-        data.address.city ||
-        data.address.town ||
-        data.address.village ||
-        "Ville inconnue";
-
+      const foundCity = result.city || "Ville inconnue";
       setCity(foundCity);
     } catch (err: any) {
-      setError("Impossible de récupérer le nom de la ville : " + err.message);
+      // Fallback vers l'API directe en cas d'échec du backend
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          {
+            headers: {
+              "User-Agent": "MyApp/1.0 (contact@myapp.com)",
+              "Accept-Language": "fr"
+            }
+          }
+        );
+
+        if (!response.ok) throw new Error("Erreur API Nominatim");
+        const data = await response.json();
+
+        const foundCity =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          "Ville inconnue";
+
+        setCity(foundCity);
+      } catch (fallbackErr: any) {
+        setError("Impossible de récupérer le nom de la ville : " + fallbackErr.message);
+      }
     } finally {
       setLoading(false);
     }

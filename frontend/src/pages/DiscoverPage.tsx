@@ -6,14 +6,26 @@ import {
 import { useMatches, useFilters } from '@/hooks';
 import { useToast } from '@/hooks/ui/useToast';
 import { MatchingPreferencesModal } from '@/components/preferences';
+import { LocationPrompt } from '@/components/LocationPrompt';
+import { useState } from 'react';
 
 export default function DiscoverPage() {
   const { currentProfile, currentCandidate, actions, loading, error, isProfileLoading } = useMatches();
   const { showFilters, onOpenFilters, onCloseFilters, onFiltersChange } = useFilters();
   const { toast } = useToast();
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+
+  // Gérer l'affichage du prompt de géolocalisation
+  const handleLocationSet = () => {
+    // Rafraîchir les candidats après configuration de la géolocalisation
+    actions.refresh();
+  };
+
+  // Vérifier si l'erreur nécessite la géolocalisation
+  const needsLocation = error === 'location_required';
 
   const handleMoreOptions = () => {
-    console.log('More options');
+    // More options functionality to be implemented
   };
 
   const handleLike = async () => {
@@ -124,6 +136,36 @@ export default function DiscoverPage() {
   }
 
   if (error) {
+    if (needsLocation) {
+      return (
+        <div className="flex flex-col h-screen overflow-hidden">
+          <DiscoverHeader
+            onOpenFilters={onOpenFilters}
+            onMoreOptions={handleMoreOptions}
+          />
+          <div className="flex-1 overflow-y-auto">
+            <LocationPrompt
+              onDismiss={() => setShowLocationPrompt(false)}
+              onLocationSet={handleLocationSet}
+            />
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center max-w-md">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Pour découvrir des profils près de chez vous, nous avons besoin de votre localisation.
+                </p>
+                <button
+                  onClick={actions.refresh}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Réessayer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col h-screen overflow-hidden">
         <DiscoverHeader

@@ -235,35 +235,46 @@ class LocationService {
 
   /**
    * Géocodage inverse pour obtenir l'adresse à partir des coordonnées
+   * Utilise le service backend qui fait l'appel à l'API de géocodage
    */
   private async reverseGeocode(
     latitude: number,
     longitude: number
   ): Promise<{ city?: string; country?: string }> {
     try {
-      // Utilisation de l'API Nominatim d'OpenStreetMap pour le géocodage inverse
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'Matcha-App/1.0'
-          }
-        }
+      // Utiliser le service backend pour le géocodage inverse
+      const result = await apiService.get<{ city?: string; country?: string }>(
+        `/api/v1/location/reverse-geocode?lat=${latitude}&lon=${longitude}`
       );
-
-      if (!response.ok) {
-        throw new Error('Échec du géocodage inverse');
-      }
-
-      const data = await response.json();
-
-      return {
-        city: data.address?.city || data.address?.town || data.address?.village,
-        country: data.address?.country
-      };
+      return result;
     } catch (error) {
-      console.error('Erreur lors du géocodage inverse:', error);
-      return {};
+      console.warn('Backend geocoding failed, fallback to direct API call:', error);
+
+      // Fallback vers l'API directe en cas d'échec du backend
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+          {
+            headers: {
+              'User-Agent': 'Matcha-App/1.0'
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Échec du géocodage inverse');
+        }
+
+        const data = await response.json();
+
+        return {
+          city: data.address?.city || data.address?.town || data.address?.village,
+          country: data.address?.country
+        };
+      } catch (fallbackError) {
+        console.error('Erreur lors du géocodage inverse (fallback):', fallbackError);
+        return {};
+      }
     }
   }
 

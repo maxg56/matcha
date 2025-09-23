@@ -1,6 +1,7 @@
 import { loadStripe } from "@stripe/stripe-js";
 // import { Elements } from "@stripe/react-stripe-js";
 import { useEffect } from "react";
+import { apiService } from '../../services/api';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -13,20 +14,17 @@ interface PaymentModalProps {
 export default function PaymentModal({ onClose, plan }: PaymentModalProps) {
   useEffect(() => {
     const startCheckout = async () => {
-      // Appeler ton backend pour créer une session Stripe
-      const API_URL = import.meta.env.VITE_API_URL;
+      try {
+        // Utiliser le service API centralisé pour créer une session Stripe
+        const session = await apiService.post<{ id: string }>('/api/stripe/create-checkout-session', { plan });
 
-      const res = await fetch(`${API_URL}/api/stripe/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const session = await res.json();
-
-      const stripe = await stripePromise;
-      if (stripe) {
-        const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
-        if (error) console.error(error.message);
+        const stripe = await stripePromise;
+        if (stripe) {
+          const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+          if (error) console.error(error.message);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la création de la session Stripe:', error);
       }
     };
 

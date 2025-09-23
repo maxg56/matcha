@@ -14,6 +14,7 @@ import {
 import { availableTags } from '@/data/EditProfileOptions';
 import { useEditProfile } from '@/hooks';
 import { useUserStore } from '@/stores/userStore';
+import { calculateAge } from '@/utils/dateUtils';
 import type { UserProfile as EditUserProfile } from '@/data/UserProfileData';
 import type { UserProfile as StoreUserProfile } from '@/stores/userStore';
 
@@ -25,7 +26,7 @@ const mapStoreProfileToEditProfile = (storeProfile: StoreUserProfile): EditUserP
     lastName: storeProfile.last_name || '',
     email: storeProfile.email || '',
     birthDate: storeProfile.birth_date || '',
-    age: storeProfile.age || 0,
+    age: calculateAge(storeProfile.birth_date) || storeProfile.age || 0,
     height: storeProfile.height || 0,
     hairColor: storeProfile.hair_color || '',
     skinColor: storeProfile.skin_color || '',
