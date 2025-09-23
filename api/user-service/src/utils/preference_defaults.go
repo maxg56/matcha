@@ -36,7 +36,7 @@ func CreateDefaultUserPreferences(userID int, sexPref string) models.UserPrefere
 		UserID:           userID,
 		AgeMin:           18,
 		AgeMax:           99,
-		MaxDistance:      100, // 100km as requested
+		MaxDistance:      500, // 500km for sparse user distribution
 		MinFame:          0,
 		PreferredGenders: MapSexPrefToPreferredGenders(sexPref),
 		RequiredTags:     "[]", // Empty array
@@ -91,7 +91,7 @@ func CreateSmartDefaultPreferences(userID int, userAge int, sexPref string) mode
 		UserID:           userID,
 		AgeMin:           ageMin,
 		AgeMax:           ageMax,
-		MaxDistance:      100, // 100km as requested
+		MaxDistance:      500, // 500km for sparse user distribution
 		MinFame:          0,
 		PreferredGenders: MapSexPrefToPreferredGenders(sexPref),
 		RequiredTags:     "[]", // Empty array

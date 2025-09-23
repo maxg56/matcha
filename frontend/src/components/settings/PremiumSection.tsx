@@ -38,14 +38,14 @@ export function PremiumSection({ isPremium }: PremiumSectionProps) {
         icon={<Zap className="h-4 w-4" />}
         title="Boost"
         description="Soyez vu par plus de personnes"
-        onClick={() => console.log('Purchase boost')}
+        onClick={() => {}}
       />
 
       <SettingItem
         icon={<Star className="h-4 w-4" />}
         title="Super Likes"
         description="Montrez votre intérêt spécial"
-        onClick={() => console.log('Purchase super likes')}
+        onClick={() => {}}
       />
 
       {open && <PremiumModal onClose={() => setOpen(false)} />}

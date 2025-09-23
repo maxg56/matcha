@@ -9,8 +9,7 @@ export function useFilters() {
     discardChanges,
   } = useFiltersStore();
 
-  const handleFiltersChange = (filters: FilterState) => {
-    console.log('Filters applied:', filters);
+  const handleFiltersChange = (_filters: FilterState) => {
     applyFilters();
   };
 

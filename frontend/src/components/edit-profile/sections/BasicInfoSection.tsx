@@ -2,6 +2,7 @@ import { User } from 'lucide-react';
 import { SettingSection, SelectField, SliderField, TextInput } from '../index';
 import { fieldOptions } from '@/data/EditProfileOptions';
 import type { UserProfile } from '@/data/UserProfileData';
+import { formatBirthDate, formatAge } from '@/utils/dateUtils';
 
 interface BasicInfoSectionProps {
   user: UserProfile;
@@ -59,7 +60,7 @@ export function BasicInfoSection({
       />
       <div className="p-4 border-b border-border">
         <h3 className="font-medium text-foreground mb-2">Date de naissance</h3>
-        <p className="text-foreground">{new Date(user.birthDate).toLocaleDateString('fr-FR')} ({user.age} ans)</p>
+        <p className="text-foreground">{formatBirthDate(user.birthDate)} ({formatAge(user.age)})</p>
         <p className="text-xs text-muted-foreground mt-1">L'âge ne peut pas être modifié</p>
       </div>
       <SelectField 

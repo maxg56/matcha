@@ -44,8 +44,10 @@ export function useEditProfile(initialUser: UserProfile) {
     // Auto-sauvegarder immédiatement en base de données
     try {
       const storeFormatData = convertToStoreFormat(updatedUser);
+      console.log('🔄 Auto-saving section data:', storeFormatData);
       
       await updateProfile(storeFormatData);
+      console.log('✅ Auto-save successful');
       
       setHasChanges(false); // Plus de modifications en attente
       

@@ -121,7 +121,7 @@ class PreferencesService {
     return {
       age_min: 18,
       age_max: 99,
-      max_distance: 100, // Updated to 100km as per backend default
+      max_distance: 500, // Updated to 500km for sparse user distribution
       min_fame: 0,
       preferred_genders: ['man', 'woman', 'other'],
       required_tags: [],

@@ -164,7 +164,13 @@ export function getContextualInfo(
         { label: "Âge", value: `${normalizedProfile.age} ans`, icon: "🎂" },
         { label: "Profession", value: normalizedProfile.occupation, icon: "💼" },
         { label: "Ville", value: normalizedProfile.location, icon: "📍" },
-        { label: "Distance", value: `${Math.round(normalizedProfile.distance || 0)}km`, icon: "🗺️" }
+        { 
+          label: "Distance", 
+          value: normalizedProfile.distance && normalizedProfile.distance > 0 
+            ? `${Math.round(normalizedProfile.distance)}km` 
+            : null, 
+          icon: "🗺️" 
+        }
       ].filter(item => item.value && item.value.trim() !== '')
     },
     {

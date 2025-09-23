@@ -1,5 +1,6 @@
 import { Slider } from '@/components/ui/slider';
 import { useGeolocationCity } from '@/hooks/useGeolocationCity';
+import { useEffect } from 'react';
 
 interface HeightSliderProps {
   label: string;
@@ -26,10 +27,12 @@ export function HeightSlider({
 }: HeightSliderProps) {
   const geolocationCity = useGeolocationCity();
 
-  // Synchronisation de la ville trouvée par la géoloc avec le store
-  if (geolocationCity.city && geolocationCity.city !== currentCity) {
-    onCityChange(geolocationCity.city);
-  }
+  // Synchronisation de la ville  par la géoloc avec le store
+  useEffect(() => {
+    if (geolocationCity.city && geolocationCity.city !== currentCity) {
+      onCityChange(geolocationCity.city);
+    }
+  }, [geolocationCity.city, currentCity, onCityChange]);
 
   const texts: string[] = [];
   if (geolocationCity.error) {

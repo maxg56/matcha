@@ -26,6 +26,8 @@ type UpdateProfileRequest struct {
 	ChildrenDetails     *string  `json:"children_details,omitempty"`
 	ZodiacSign          *string  `json:"zodiac_sign,omitempty"`
 	PoliticalView       *string  `json:"political_view,omitempty"`
+	Gender              *string  `json:"gender,omitempty"`
+	SexPref             *string  `json:"sex_pref,omitempty"`
 	Tags                []string `json:"tags,omitempty"`
 }
 
