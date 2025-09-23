@@ -73,7 +73,7 @@ func GetPreferencesHandler(c *gin.Context) {
 			UserID:           int(id),
 			AgeMin:           18,
 			AgeMax:           99,
-			MaxDistance:      50,
+			MaxDistance:      500, // Increased to 500km to fix discovery issue
 			MinFame:          0,
 			PreferredGenders: `["man","woman","other"]`,
 			RequiredTags:     `[]`,

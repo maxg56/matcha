@@ -79,6 +79,13 @@ func UpdateProfileHandler(c *gin.Context) {
 	utils.SetNullString(&user.ZodiacSign, req.ZodiacSign)
 	utils.SetNullString(&user.PoliticalView, req.PoliticalView)
 
+	if req.Gender != nil {
+		user.Gender = *req.Gender
+	}
+	if req.SexPref != nil {
+		user.SexPref = *req.SexPref
+	}
+
 	if req.Bio != nil {
 		user.Bio = *req.Bio
 	}
