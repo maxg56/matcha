@@ -123,8 +123,8 @@ export function ProfileCard({
 
   return (
     <div className="relative rounded-2xl overflow-hidden h-full flex flex-col shadow-2xl">
-      {/* Carousel d'images - hauteur fixe avec overflow masqué */}
-      <div className="relative bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950 h-80 overflow-hidden">
+      {/* Carousel d'images - hauteur responsive : mobile h-80, desktop h-96 */}
+      <div className="relative bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950 h-80 md:h-120 overflow-hidden">
         <ProfileImageCarousel
           images={normalizedProfile.images}
           profileName={normalizedProfile.name}
