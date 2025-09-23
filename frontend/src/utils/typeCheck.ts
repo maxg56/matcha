@@ -11,7 +11,7 @@ import { preferencesService } from '@/services/preferencesService';
 import { usePreferences, useMatchingFilter } from '@/hooks';
 
 // Vérifications de compilation TypeScript
-const testPreferences: UserMatchingPreferences = {
+const _testPreferences: UserMatchingPreferences = {
   user_id: 1,
   age_min: 18,
   age_max: 99,
@@ -22,7 +22,7 @@ const testPreferences: UserMatchingPreferences = {
   blocked_tags: []
 };
 
-const testRequest: UpdatePreferencesRequest = {
+const _testRequest: UpdatePreferencesRequest = {
   age_min: 20,
   age_max: 30,
   max_distance: 25,
@@ -32,7 +32,7 @@ const testRequest: UpdatePreferencesRequest = {
   blocked_tags: []
 };
 
-const testProfile: UserProfile = {
+const _testProfile: UserProfile = {
   id: 1,
   username: 'test',
   first_name: 'Test',
@@ -44,14 +44,10 @@ const testProfile: UserProfile = {
   created_at: '2025-01-01'
 };
 
-// Log pour confirmer que tout compile
-console.log('Type check OK:', {
-  preferencesService: typeof preferencesService,
-  usePreferences: typeof usePreferences,
-  useMatchingFilter: typeof useMatchingFilter,
-  testPreferences,
-  testRequest,
-  testProfile
-});
+// Type check completed successfully
+// All types are properly defined and exported
+
+// Export unused imports to satisfy linter
+export { preferencesService, usePreferences, useMatchingFilter };
 
 export {}; // Force ce fichier à être un module

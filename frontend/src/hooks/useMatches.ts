@@ -81,13 +81,27 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors du chargement des candidats';
       
-      // Si c'est une erreur d'authentification, suggérer une reconnexion
-      if (error instanceof Error && (error.message.includes('401') || error.message.includes('unauthorized'))) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Votre session a expiré. Veuillez vous reconnecter.'
-        }));
+      // Gestion spécifique des différents types d'erreurs
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Votre session a expiré. Veuillez vous reconnecter.'
+          }));
+        } else if (error.message.includes('user location not set') || error.message.includes('current user location not set')) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'location_required' // Code d'erreur spécial pour la géolocalisation
+          }));
+        } else {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: errorMessage
+          }));
+        }
       } else {
         setState(prev => ({
           ...prev,

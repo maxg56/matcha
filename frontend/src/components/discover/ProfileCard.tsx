@@ -4,7 +4,6 @@ import { ProfileActions } from './ProfileActions';
 import { ProfileDetails } from './ProfileDetails';
 import { ProfileContextualOverlay } from './ProfileContextualOverlay';
 import { ProfileHeader } from './ProfileHeader';
-import { ProfileQuickInfo } from './ProfileQuickInfo';
 import { ProfileBio } from './ProfileBio';
 import { ProfileInterests } from './ProfileInterests';
 import { useProfileAnalytics } from '@/hooks/api/useProfileAnalytics';
@@ -124,8 +123,8 @@ export function ProfileCard({
 
   return (
     <div className="relative rounded-2xl overflow-hidden h-full flex flex-col shadow-2xl">
-      {/* Carousel d'images */}
-      <div className="relative bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950">
+      {/* Carousel d'images - hauteur fixe avec overflow masqué */}
+      <div className="relative bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-emerald-950 h-80 overflow-hidden">
         <ProfileImageCarousel
           images={normalizedProfile.images}
           profileName={normalizedProfile.name}
@@ -141,8 +140,9 @@ export function ProfileCard({
       </div>
 
       {/* Section infos et boutons */}
-      <div className="flex-1 bg-white dark:bg-gradient-to-b dark:from-emerald-950 dark:to-gray-900 flex flex-col">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex-1 bg-white dark:bg-gradient-to-b dark:from-emerald-950 dark:to-gray-900 flex flex-col min-h-0">
+        {/* Header fixe - toujours visible */}
+        <div className="flex-shrink-0 p-4 pb-2">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <ProfileHeader
@@ -150,17 +150,16 @@ export function ProfileCard({
                 age={normalizedProfile.age}
               />
 
-              <ProfileQuickInfo
-                location={normalizedProfile.location}
-                distance={normalizedProfile.distance}
-                occupation={normalizedProfile.occupation}
-                educationLevel={normalizedProfile.educationLevel}
-                childrenStatus={normalizedProfile.childrenStatus}
-              />
-
-              <ProfileBio bio={normalizedProfile.bio} />
-
-              <ProfileInterests interests={normalizedProfile.interests} />
+              {/* Infos essentielles seulement - localisation */}
+              {normalizedProfile.location && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  <span>📍</span>
+                  <span>
+                    {normalizedProfile.location}
+                    {normalizedProfile.distance !== undefined && ` • ${Math.round(normalizedProfile.distance)}km`}
+                  </span>
+                </div>
+              )}
             </div>
 
             <button
@@ -172,15 +171,67 @@ export function ProfileCard({
           </div>
         </div>
 
-        {/* Boutons d'actions */}
-        <ProfileActions
-          profileId={String(profile.id)}
-          onLike={onLike}
-          onPass={onPass}
-          onSuperLike={onSuperLike}
-          onBoost={onBoost}
-          onMessage={onMessage}
-        />
+        {/* Zone scrollable UNIQUE avec toutes les infos */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          <div className="px-4 pb-4 flex flex-col h-full">
+            {/* Contenu scrollable */}
+            <div className="flex-1 space-y-3">
+              {/* Infos complémentaires */}
+              <div className="space-y-2">
+                {normalizedProfile.occupation && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <span>💼</span>
+                    <span>{normalizedProfile.occupation}</span>
+                  </div>
+                )}
+                {normalizedProfile.educationLevel && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <span>🎓</span>
+                    <span className="capitalize">{normalizedProfile.educationLevel}</span>
+                  </div>
+                )}
+                {normalizedProfile.childrenStatus && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <span>👶</span>
+                    <span className="capitalize">
+                      {normalizedProfile.childrenStatus === 'yes' ? 'A des enfants' : 'Sans enfants'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <ProfileBio bio={normalizedProfile.bio} />
+              <ProfileInterests interests={normalizedProfile.interests} />
+              
+              {/* Boutons DANS le scroll sur desktop seulement */}
+              <div className="hidden md:block flex-shrink-0 pt-6">
+                <ProfileActions
+                  profileId={String(profile.id)}
+                  onLike={onLike}
+                  onPass={onPass}
+                  onSuperLike={onSuperLike}
+                  onBoost={onBoost}
+                  onMessage={onMessage}
+                />
+              </div>
+              
+              {/* Espace pour éviter que le contenu soit caché par les boutons fixes sur mobile */}
+              <div className="md:hidden h-20"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Boutons fixes en bas sur mobile - toujours visibles */}
+        <div className="md:hidden absolute bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
+          <ProfileActions
+            profileId={String(profile.id)}
+            onLike={onLike}
+            onPass={onPass}
+            onSuperLike={onSuperLike}
+            onBoost={onBoost}
+            onMessage={onMessage}
+          />
+        </div>
       </div>
 
       {/* Détails dépliables */}

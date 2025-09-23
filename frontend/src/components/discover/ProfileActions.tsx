@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import { Heart, X, Star, Zap, MessageCircle } from 'lucide-react';
 
 interface ProfileActionsProps {
@@ -19,57 +19,52 @@ export function ProfileActions({
   onMessage
 }: ProfileActionsProps) {
   return (
-    <div className="px-6 pb-6 mt-auto">
-      <div className="grid grid-cols-5 gap-3">
-        {/* Passer */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-14 w-14 rounded-full border-2 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
-          onClick={() => onPass(profileId)}
-        >
-          <X className="h-6 w-6" />
-        </Button>
+    <div className="flex justify-center items-center gap-2 md:gap-4 py-3 md:py-4">
+      {/* Bouton Pass */}
+      <button
+        onClick={() => onPass(profileId)}
+        className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 text-red-600 dark:text-red-400 rounded-full transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+      >
+        <X className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
 
-        {/* Super Like */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-14 w-14 rounded-full border-2 border-blue-200 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-          onClick={() => onSuperLike?.(profileId)}
+      {/* Bouton Super Like */}
+      {onSuperLike && (
+        <button
+          onClick={() => onSuperLike(profileId)}
+          className="flex items-center justify-center w-14 h-14 md:w-16 md:h-16 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 text-blue-600 dark:text-blue-400 rounded-full transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          <Star className="h-6 w-6" />
-        </Button>
+          <Star className="w-6 h-6 md:w-7 md:h-7" />
+        </button>
+      )}
 
-        {/* Like */}
-        <Button
-          size="icon"
-          className="h-16 w-16 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white shadow-xl"
-          onClick={() => onLike(profileId)}
-        >
-          <Heart className="h-7 w-7" />
-        </Button>
+      {/* Bouton Like */}
+      <button
+        onClick={() => onLike(profileId)}
+        className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white rounded-full transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+      >
+        <Heart className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
 
-        {/* Boost */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-14 w-14 rounded-full border-2 border-yellow-200 dark:border-yellow-600 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-          onClick={() => onBoost?.(profileId)}
+      {/* Bouton Message */}
+      {onMessage && (
+        <button
+          onClick={() => onMessage(profileId)}
+          className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-800/40 text-purple-600 dark:text-purple-400 rounded-full transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          <Zap className="h-6 w-6" />
-        </Button>
+          <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
+        </button>
+      )}
 
-        {/* Message */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-14 w-14 rounded-full border-2 border-green-200 dark:border-green-600 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-          onClick={() => onMessage?.(profileId)}
+      {/* Bouton Boost */}
+      {onBoost && (
+        <button
+          onClick={() => onBoost(profileId)}
+          className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-800/40 text-yellow-600 dark:text-yellow-400 rounded-full transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      </div>
+          <Zap className="w-5 h-5 md:w-6 md:h-6" />
+        </button>
+      )}
     </div>
   );
 }
