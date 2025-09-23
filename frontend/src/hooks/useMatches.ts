@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { matchService, type UserProfile, type MatchCandidate, type MatchingAlgorithmParams, type InteractionResponse } from '@/services/matchService';
 import { preferencesEventEmitter } from '@/utils/preferencesEvents';
 import { useToast } from '@/hooks/ui/useToast';
+import { authService } from '@/services/auth';
 
 interface UseMatchesState {
   candidates: MatchCandidate[];
@@ -28,8 +29,8 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
   });
 
   const fetchCandidates = useCallback(async (params: MatchingAlgorithmParams = {}, isLoadMore = false) => {
-    // Vérifier si un token est présent
-    const token = localStorage.getItem('accessToken');
+    // Vérifier si un token est présent via le service centralisé
+    const token = authService.getAccessToken();
     if (!token) {
       setState(prev => ({
         ...prev,

@@ -1,4 +1,6 @@
 import { useToast } from '@/hooks';
+import { apiService } from '../services/api';
+import { authService } from '../services/auth';
 
 export interface SmashUploadStatus {
   type: 'upload_start' | 'upload_progress' | 'upload_success' | 'upload_error';
@@ -215,28 +217,20 @@ export function createSmashNotifier(): SmashNotificationSystem {
  */
 export async function attemptTokenRefresh(): Promise<boolean> {
   try {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = authService.getRefreshToken();
     if (!refreshToken) {
       return false;
     }
 
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refresh_token: refreshToken })
-    });
+    // Utiliser le service API centralisé pour le refresh token
+    const tokenResponse = await apiService.post<{
+      access_token: string;
+      refresh_token: string;
+    }>('/api/v1/auth/refresh', { refresh_token: refreshToken });
 
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem('accessToken', data.access_token);
-      if (data.refresh_token) {
-        localStorage.setItem('refreshToken', data.refresh_token);
-      }
-      return true;
-    }
-    return false;
+    // Utiliser le service centralisé pour sauvegarder les tokens
+    authService.setTokens(tokenResponse.access_token, tokenResponse.refresh_token);
+    return true;
   } catch (error) {
     console.error('Token refresh failed:', error);
     return false;

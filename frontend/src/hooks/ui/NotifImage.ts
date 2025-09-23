@@ -3,12 +3,14 @@ import { useWebSocketNotifications } from '../useWebSocketConnection';
 import { type MessageHandler } from '@/services/websocket';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { apiService } from '@/services/api';
+import { authService } from '@/services/auth';
 
 export function Notification() {
     const [seen, setSeen] = useState(false);
 
     const { user } = useAuthStore();
-    const token = localStorage.getItem('accessToken');
+    const token = authService.getAccessToken();
     const { addNotificationHandler, removeNotificationHandler } = useWebSocketNotifications();
     
     // Utilisation du store Zustand pour les notifications
@@ -96,16 +98,8 @@ export function Notification() {
 
         clearAll();
         try {
-            const response = await fetch(
-                `https://localhost:8443/api/v1/notifications/delete?user_id=${user.id}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                }
-            );
-            const data = await response.json();
+            // Utiliser le service API centralisé
+            const data = await apiService.get(`/api/v1/notifications/delete?user_id=${user.id}`);
             console.log("Réponse backend:", data);
         } catch (error) {
             console.error("Failed to clear notifications:", error);

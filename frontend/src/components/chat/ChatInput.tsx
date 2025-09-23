@@ -58,14 +58,10 @@ export function ChatInput({
             className={cn(
               "min-h-0 resize-none border-border/30 rounded-2xl",
               "focus:ring-primary/50 pr-12",
-              "glass-light backdrop-blur-sm"
+              "glass-light backdrop-blur-sm",
+              "chat-input-auto-height"
             )}
             rows={1}
-            style={{
-              height: 'auto',
-              minHeight: '40px',
-              maxHeight: '120px',
-            }}
           />
           
           <Button

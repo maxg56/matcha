@@ -43,8 +43,9 @@ export class WebSocketConnection {
     }
 
     const { user } = useAuthStore.getState();
-    const token = localStorage.getItem('accessToken');
-    
+    const { default: secureStorage } = await import('../secureStorage');
+    const token = secureStorage.getAccessToken();
+
     if (!user?.id || !token) {
       console.warn('WebSocket: Cannot connect without authentication');
       return;

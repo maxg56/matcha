@@ -4,7 +4,6 @@ import { authService, type RegisterRequest } from '@/services/auth';
 import { useNotificationStore } from './notificationStore';
 import { useUserStore } from './userStore';
 import { useChatStore } from './chatStore';
-import { useDiscoverStore } from './discoverStore';
 import { webSocketService } from '@/services/websocket';
 
 interface User {
@@ -144,7 +143,6 @@ export const useAuthStore = create<AuthStore>()(
             useNotificationStore.getState().reset();
             useUserStore.getState().reset();
             useChatStore.getState().reset();
-            useDiscoverStore.getState().reset();
             // Note: We don't reset filters as users may want to keep their filter preferences
           }
         },
@@ -209,7 +207,6 @@ export const useAuthStore = create<AuthStore>()(
               useNotificationStore.getState().reset();
               useUserStore.getState().reset();
               useChatStore.getState().reset();
-              useDiscoverStore.getState().reset();
 
               set({
                 user: null,

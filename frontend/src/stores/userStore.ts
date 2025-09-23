@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
 import { useAuthStore } from './authStore';
+import { imageService } from '@/services/imageService';
 
 interface UserProfile {
   id: number;
@@ -143,27 +144,13 @@ export const useUserStore = create<UserStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const formData = new FormData();
-          formData.append('file', file);
-          
-          const response = await fetch('/api/v1/media/upload', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-            body: formData,
-          });
-          
-          if (!response.ok) {
-            throw new Error('Upload failed');
-          }
-          
-          const result = await response.json();
-          
+          // Utiliser le service image centralisé
+          const result = await imageService.uploadImage(file);
+
           const currentProfile = useUserStore.getState().profile;
           if (currentProfile && result.data) {
-            // Le service média retourne { data: { url: "...", filename: "..." } }
-            const imageUrl = result.data.url;
+            // Le service média retourne { data: { image_url: "...", filename: "..." } }
+            const imageUrl = result.data.image_url;
             const currentImages = currentProfile.images || [];
             const updatedImages = [...currentImages, imageUrl];
             set({

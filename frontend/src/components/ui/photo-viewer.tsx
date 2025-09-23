@@ -54,13 +54,13 @@ export function ProfilePhotoViewer({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('body-overflow-hidden');
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.classList.remove('body-overflow-hidden');
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.classList.remove('body-overflow-hidden');
     };
   }, [isOpen]);
 
@@ -197,8 +197,7 @@ export function ProfilePhotoViewer({
           <img
             src={currentPhoto.url}
             alt={`Photo ${activeIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: 'calc(100vh - 200px)' }}
+            className="max-w-full max-h-full object-contain photo-viewer-image"
           />
         </div>
 

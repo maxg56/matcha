@@ -1,7 +1,7 @@
 
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from src.auth import authenticate_websocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Depends
+from src.auth import authenticate_websocket, authenticate_http
 from src.notification_manager import NotificationManager
 from src.redis_listener import listen_redis
 import redis.asyncio as aioredis
@@ -24,8 +24,8 @@ async def health_check():
 
 
 @app.get("/api/v1/notifications/get")
-async def get_notifications(user_id: str):
-    user_id = int(user_id)
+async def get_notifications(authenticated_user_id: int = Depends(authenticate_http)):
+    user_id = authenticated_user_id
     conn = db_connection()
     if conn:
         cur = conn.cursor()
@@ -89,10 +89,10 @@ async def gateway_websocket_endpoint(websocket: WebSocket):
         manager.gateway_connection = None
 
 
-@app.get("/delete")
-async def delete_notifications(user_id: int):
-    manager.delete_notification(user_id)
-    return {"status": "deleted", "user_id": user_id}
+@app.delete("/api/v1/notifications/delete")
+async def delete_notifications(authenticated_user_id: int = Depends(authenticate_http)):
+    manager.delete_notification(authenticated_user_id)
+    return {"status": "deleted", "user_id": authenticated_user_id}
 
 
 @app.on_event("startup")
@@ -101,7 +101,7 @@ async def startup_event():
 
 
 @app.post("/api/v1/notifications/send")
-async def send_notification(payload: dict):
+async def send_notification(payload: dict, authenticated_user_id: int = Depends(authenticate_http)):
     """
     payload attendu :
     {

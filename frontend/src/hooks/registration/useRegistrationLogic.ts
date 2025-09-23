@@ -6,6 +6,8 @@ import { useUserStore } from '@/stores/userStore';
 import { RegistrationValidator } from '@/utils/registrationValidator';
 import { authService } from '@/services/auth';
 import { ErrorHandler } from '@/utils/errorHandler';
+import { apiService } from '@/services/api';
+import { imageService } from '@/services/imageService';
 
 /**
  * Hook contenant toute la logique métier pour l'inscription
@@ -190,27 +192,21 @@ export function useRegistrationLogic() {
         console.error('Auth check failed:', authError);
         
         // Essayer de se reconnecter automatiquement avec les credentials stockés
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = authService.getRefreshToken();
         if (refreshToken) {
           try {
             console.log('Attempting to refresh token...');
-            const response = await fetch('/api/v1/auth/refresh', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ refresh_token: refreshToken })
-            });
-            
-            if (response.ok) {
-              const tokenData = await response.json();
-              localStorage.setItem('accessToken', tokenData.access_token);
-              localStorage.setItem('refreshToken', tokenData.refresh_token);
-              
-              // Recheck auth after refresh
-              await useAuthStore.getState().checkAuth();
-              console.log('Token refresh successful');
-            } else {
-              throw new Error('Token refresh failed');
-            }
+            // Utiliser le service API centralisé pour le refresh token
+            const tokenData = await apiService.post<{
+              access_token: string;
+              refresh_token: string;
+            }>('/api/v1/auth/refresh', { refresh_token: refreshToken });
+
+            authService.setTokens(tokenData.access_token, tokenData.refresh_token);
+
+            // Recheck auth after refresh
+            await useAuthStore.getState().checkAuth();
+            console.log('Token refresh successful');
           } catch (refreshError) {
             console.error('Token refresh failed:', refreshError);
             throw new Error('Authentication expired. Please login again.');
@@ -223,21 +219,12 @@ export function useRegistrationLogic() {
       // 1. Upload des images depuis le store
       let imageUrls: string[] = [];
       const uploadPromises = selectedImages.map(async (imagePreview) => {
-        const formData = new FormData();
-        formData.append('file', imagePreview.file);
-        
-        const response = await fetch('/api/v1/media/upload', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to upload image: ${response.statusText}`);
+        try {
+          const result = await imageService.uploadImage(imagePreview.file);
+          return result.data.image_url;
+        } catch (error) {
+          throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-        
-        const result = await response.json();
-        return result.data.url;
       });
       
       imageUrls = await Promise.all(uploadPromises);
@@ -256,8 +243,8 @@ export function useRegistrationLogic() {
       console.log('Auth state before profile update:', {
         user: currentUser,
         isAuthenticated,
-        hasToken: !!localStorage.getItem('accessToken'),
-        hasRefreshToken: !!localStorage.getItem('refreshToken')
+        hasToken: !!authService.getAccessToken(),
+        hasRefreshToken: !!authService.getRefreshToken()
       });
       
       if (!currentUser?.id || !isAuthenticated) {
@@ -266,7 +253,7 @@ export function useRegistrationLogic() {
       }
 
       // Vérifier que le token est valide
-      const token = localStorage.getItem('accessToken');
+      const token = authService.getAccessToken();
       if (!token) {
         console.error('No access token found');
         throw new Error('Authentication token not found, please login again');
@@ -286,8 +273,7 @@ export function useRegistrationLogic() {
       // Gestion des erreurs spécifiques
       if (errorMessage.includes('user not authenticated') || errorMessage.includes('not authenticated')) {
         // Clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        authService.clearTokens();
         useAuthStore.getState().logout();
         
         setErrors({ images: 'Session expirée. Veuillez vous reconnecter et reprendre l\'inscription.' });
@@ -316,8 +302,7 @@ export function useRegistrationLogic() {
       
       if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
         // Clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        authService.clearTokens();
         
         setErrors({ images: 'Session expirée. Veuillez vous reconnecter.' });
         setGlobalError('Session expirée. Redirection en cours...');

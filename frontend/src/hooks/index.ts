@@ -6,7 +6,6 @@ export { usePasswordReset } from './auth/usePasswordReset';
 export { useForgotPassword } from './auth/useForgotPassword';
 
 // API hooks
-export { useDiscoverProfiles } from './api/useDiscoverProfiles';
 export { useEditProfile } from './api/useEditProfile';
 export { useFilters } from './api/useFilters';
 export { useMatches } from './useMatches';

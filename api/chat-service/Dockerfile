@@ -21,7 +21,10 @@ CMD ["air", "-c", ".air.toml"]
 # Production stage
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/chat-service .
+RUN addgroup -g 1001 -S chatservice && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G chatservice chatservice
+WORKDIR /app
+COPY --from=builder --chown=chatservice:chatservice /app/chat-service .
+USER chatservice
 EXPOSE 8004
 CMD ["./chat-service"]

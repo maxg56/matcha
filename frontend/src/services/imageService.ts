@@ -1,4 +1,5 @@
 import { apiService } from './api';
+import secureStorage from './secureStorage';
 
 interface ImageUploadResponse {
   success: boolean;
@@ -22,11 +23,11 @@ class ImageService {
     formData.append('image', file);
 
     try {
-      // Custom fetch for progress tracking
+      const token = secureStorage.getAccessToken();
       const response = await fetch(`${this.baseURL}/api/v1/media/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
@@ -36,7 +37,7 @@ class ImageService {
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Upload failed');
       }
@@ -95,7 +96,7 @@ class ImageService {
 
       // Start upload
       xhr.open('POST', `${this.baseURL}/api/v1/media/upload`);
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('accessToken')}`);
+      xhr.setRequestHeader('Authorization', `Bearer ${secureStorage.getAccessToken()}`);
       xhr.send(formData);
     });
   }
@@ -129,7 +130,7 @@ class ImageService {
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Temporary upload failed');
       }
