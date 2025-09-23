@@ -203,6 +203,17 @@ CREATE TABLE IF NOT EXISTS user_matching_preferences (
     preferred_genders TEXT NOT NULL DEFAULT '["man","woman","other"]',
     required_tags TEXT DEFAULT '[]',
     blocked_tags TEXT DEFAULT '[]',
+    
+    -- Lifestyle preferences
+    smoking_preference VARCHAR(20) DEFAULT 'any',      -- "any", "smoker", "non_smoker"
+    alcohol_preference VARCHAR(20) DEFAULT 'any',      -- "any", "drinker", "non_drinker"
+    drugs_preference VARCHAR(20) DEFAULT 'any',        -- "any", "user", "non_user"
+    cannabis_preference VARCHAR(20) DEFAULT 'any',     -- "any", "user", "non_user"
+    
+    -- Religious preferences
+    religion_preference VARCHAR(20) DEFAULT 'any',     -- "any", "same", "different"
+    blocked_religions TEXT DEFAULT '[]',               -- JSON array of blocked religions
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
