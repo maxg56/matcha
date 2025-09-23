@@ -18,11 +18,19 @@ export function PreferencesActions({
 }: PreferencesActionsProps) {
   if (onClose) {
     // Mode modal - layout spécial avec bouton fermer
+    const handleClose = () => {
+      // Remettre aux valeurs sauvées avant de fermer si il y a des changements
+      if (hasChanges) {
+        onReset();
+      }
+      onClose();
+    };
+
     return (
       <div className="flex justify-between gap-3">
         <Button
           variant="outline"
-          onClick={onClose}
+          onClick={handleClose}
           disabled={saving}
         >
           Fermer
