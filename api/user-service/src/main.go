@@ -82,6 +82,7 @@ func main() {
 		location.GET("/search", handlers.SearchUsersHandler)
 		location.PUT("/location", handlers.UpdateLocationHandler)
 		location.GET("/location", handlers.GetCurrentLocationHandler)
+		location.GET("/reverse-geocode", handlers.ReverseGeocodeHandler)
 	}
 
 	log.Println("User service starting on port 8002")

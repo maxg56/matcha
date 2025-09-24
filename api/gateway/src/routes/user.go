@@ -67,5 +67,6 @@ func SetupUserRoutes(r *gin.Engine) {
 		location.GET("/search", proxy.ProxyRequest("user", "/api/v1/location/search"))
 		location.PUT("/location", proxy.ProxyRequest("user", "/api/v1/location/location"))
 		location.GET("/location", proxy.ProxyRequest("user", "/api/v1/location/location"))
+		location.GET("/reverse-geocode", proxy.ProxyRequest("user", "/api/v1/location/reverse-geocode"))
 	}
 }
