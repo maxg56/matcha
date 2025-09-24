@@ -25,12 +25,12 @@ def upload_file():
         if not user_id:
             return respond_error("Authentication required", 401)
 
-        # Check if file is in request
-        if "file" not in request.files:
+        # Check if file is in request (accept both 'image' and 'file' for compatibility)
+        if "image" not in request.files and "file" not in request.files:
             logger.warning("No file part in request")
             return respond_error("No file part in request", 400)
 
-        file = request.files["file"]
+        file = request.files.get("image") or request.files.get("file")
 
         # Check if file was selected
         if file.filename == "":

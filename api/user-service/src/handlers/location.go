@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -208,5 +210,66 @@ func GetCurrentLocationHandler(c *gin.Context) {
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, locationResp)
+}
+
+// ReverseGeocodeHandler performs reverse geocoding using external API
+func ReverseGeocodeHandler(c *gin.Context) {
+	lat := c.Query("lat")
+	lon := c.Query("lon")
+
+	if lat == "" || lon == "" {
+		utils.RespondError(c, http.StatusBadRequest, "latitude and longitude are required")
+		return
+	}
+
+	// Make request to OpenStreetMap Nominatim API
+	url := fmt.Sprintf("https://nominatim.openstreetmap.org/reverse?format=json&lat=%s&lon=%s&zoom=18&addressdetails=1", lat, lon)
+	
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "failed to create request")
+		return
+	}
+	
+	req.Header.Set("User-Agent", "Matcha-App/1.0")
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "failed to perform geocoding")
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.RespondError(c, http.StatusServiceUnavailable, "geocoding service unavailable")
+		return
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "failed to parse geocoding response")
+		return
+	}
+
+	// Extract city and country from response
+	response := gin.H{}
+	
+	if address, ok := result["address"].(map[string]interface{}); ok {
+		// Try different city field names
+		if city, exists := address["city"]; exists {
+			response["city"] = city
+		} else if town, exists := address["town"]; exists {
+			response["city"] = town
+		} else if village, exists := address["village"]; exists {
+			response["city"] = village
+		}
+		
+		if country, exists := address["country"]; exists {
+			response["country"] = country
+		}
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, response)
 }
 
