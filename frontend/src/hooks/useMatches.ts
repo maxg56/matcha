@@ -29,17 +29,6 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
   });
 
   const fetchCandidates = useCallback(async (params: MatchingAlgorithmParams = {}, isLoadMore = false) => {
-    // Vérifier si un token est présent via le service centralisé
-    const token = authService.getAccessToken();
-    if (!token) {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Vous devez être connecté pour voir des profils'
-      }));
-      return;
-    }
-
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
