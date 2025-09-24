@@ -7,14 +7,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create uploads directory and set permissions
-RUN mkdir -p /app/uploads && chown -R mediaservice:mediaservice /app/uploads
-
 COPY --chown=mediaservice:mediaservice src/ .
 
 # Variables d'environnement pour Flask
 ENV FLASK_APP=main.py
 ENV FLASK_ENV=development
+
+# Create uploads directory with proper permissions before switching user
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
 
 USER mediaservice
 EXPOSE 8006

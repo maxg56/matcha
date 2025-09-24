@@ -127,25 +127,6 @@ export function SideNavigation() {
             );
           })}
         </div>
-
-        {/* Stats */}
-        <div className="mt-8 p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-          <h3 className="font-semibold text-foreground mb-3">Mes stats</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Matches</span>
-              <span className="font-semibold text-primary">24</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Vues de profil</span>
-              <span className="font-semibold text-primary">156</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Likes reçus</span>
-              <span className="font-semibold text-primary">89</span>
-            </div>
-          </div>
-        </div>
       </nav>
 
       {/* Footer */}
