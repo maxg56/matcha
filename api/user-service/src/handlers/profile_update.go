@@ -3,8 +3,10 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"user-service/src/conf"
 	"user-service/src/models"
@@ -113,17 +115,58 @@ func UpdateProfileHandler(c *gin.Context) {
 		}
 	}
 
+	// Handle image reordering if provided
+	if req.Images != nil && len(req.Images) > 0 {
+		if err := updateImageOrder(tx, user.ID, req.Images); err != nil {
+			tx.Rollback()
+			utils.RespondError(c, http.StatusInternalServerError, "failed to update image order: "+err.Error())
+			return
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "failed to commit changes")
 		return
 	}
 
 	// Reload user with relations
-	conf.DB.Preload("Tags").Preload("Images").First(&user, id)
+	conf.DB.Preload("Tags").Preload("Images", func(db *gorm.DB) *gorm.DB {
+		return db.Order("created_at ASC")
+	}).First(&user, id)
 	profile := user.ToPublicProfile()
 
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
 		"message": "Profile updated successfully",
 		"profile": profile,
 	})
+}
+
+// updateImageOrder updates the order of images based on URLs
+func updateImageOrder(tx *gorm.DB, userID uint, imageURLs []string) error {
+	// Get all active images for the user
+	var userImages []models.Image
+	if err := tx.Where("user_id = ? AND is_active = ?", userID, true).Find(&userImages).Error; err != nil {
+		return err
+	}
+
+	// Create a map of URL to image for quick lookup
+	imageMap := make(map[string]*models.Image)
+	for i := range userImages {
+		imageMap[userImages[i].URL()] = &userImages[i]
+	}
+
+	// Update the order by updating the ID (simple approach)
+	// We'll use a more sophisticated approach: update created_at to preserve order
+	baseTime := userImages[0].CreatedAt
+	for i, url := range imageURLs {
+		if image, exists := imageMap[url]; exists {
+			// Set created_at to ensure order (adding seconds for each position)
+			newTime := baseTime.Add(time.Duration(i) * time.Second)
+			if err := tx.Model(image).Update("created_at", newTime).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

@@ -7,7 +7,7 @@ export function useEditProfile(initialUser: UserProfile) {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [tempData, setTempData] = useState<Partial<UserProfile>>({});
   const [hasChanges, setHasChanges] = useState(false);
-  const { updateProfile, fetchProfile } = useUserStore();
+  const { updateProfile } = useUserStore();
 
   // Mettre à jour l'utilisateur quand initialUser change (données fraîches du store)
   useEffect(() => {
@@ -44,20 +44,10 @@ export function useEditProfile(initialUser: UserProfile) {
     // Auto-sauvegarder immédiatement en base de données
     try {
       const storeFormatData = convertToStoreFormat(updatedUser);
-      console.log('🔄 Auto-saving section data:', storeFormatData);
-      
       await updateProfile(storeFormatData);
-      console.log('✅ Auto-save successful');
-      
       setHasChanges(false); // Plus de modifications en attente
-      
-      // Force un rechargement des données depuis le serveur pour s'assurer que l'UI est à jour
-      await fetchProfile();
     } catch (error) {
-      console.error('❌ Failed to auto-save section:', error);
       setHasChanges(true); // Garder le flag pour retry plus tard
-      
-      // Afficher l'erreur à l'utilisateur
       alert(`Erreur de sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
@@ -110,8 +100,7 @@ export function useEditProfile(initialUser: UserProfile) {
         const storeFormatData = convertToStoreFormat(user);
         await updateProfile(storeFormatData);
         
-        // Force un rechargement des données depuis le serveur
-        await fetchProfile();
+        // Note: Pas de fetchProfile() ici car updateProfile met déjà à jour le store
       }
       
       setHasChanges(false);

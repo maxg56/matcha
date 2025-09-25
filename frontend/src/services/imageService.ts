@@ -1,12 +1,16 @@
 import { apiService } from './api';
-import secureStorage from './secureStorage';
 
 interface ImageUploadResponse {
   success: boolean;
   data: {
-    image_id: string;
-    image_url: string;
-    thumbnail_url?: string;
+    id: number;
+    filename: string;
+    url: string;
+    original_name: string;
+    file_size: number;
+    width?: number;
+    height?: number;
+    mime_type: string;
   };
 }
 
@@ -18,17 +22,14 @@ interface ImageDeleteResponse {
 class ImageService {
   private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8443';
 
-  async uploadImage(file: File, onProgress?: (progress: number) => void): Promise<ImageUploadResponse> {
+  async uploadImage(file: File, _onProgress?: (progress: number) => void): Promise<ImageUploadResponse> {
     const formData = new FormData();
     formData.append('image', file);
 
     try {
-      const token = secureStorage.getAccessToken();
       const response = await fetch(`${this.baseURL}/api/v1/media/upload`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include', // Important: utiliser les cookies pour l'authentification
         body: formData,
       });
 
@@ -44,7 +45,6 @@ class ImageService {
 
       return data;
     } catch (error) {
-      console.error('Image upload failed:', error);
       throw error;
     }
   }
@@ -96,13 +96,13 @@ class ImageService {
 
       // Start upload
       xhr.open('POST', `${this.baseURL}/api/v1/media/upload`);
-      xhr.setRequestHeader('Authorization', `Bearer ${secureStorage.getAccessToken()}`);
+      xhr.withCredentials = true; // Important: utiliser les cookies pour l'authentification
       xhr.send(formData);
     });
   }
 
   async deleteImage(imageId: string): Promise<ImageDeleteResponse> {
-    return apiService.delete<ImageDeleteResponse>(`/api/v1/media/images/${imageId}`);
+    return apiService.delete<ImageDeleteResponse>(`/api/v1/media/delete/${imageId}`);
   }
 
   async getUserImages(userId?: number): Promise<string[]> {
@@ -137,7 +137,6 @@ class ImageService {
 
       return data;
     } catch (error) {
-      console.error('Temporary image upload failed:', error);
       throw error;
     }
   }
@@ -181,6 +180,12 @@ class ImageService {
     if (url && !url.startsWith('http')) {
       URL.revokeObjectURL(url);
     }
+  }
+
+  // Note: Image reordering is now handled via the profile update API
+  // This method is kept for future potential use with a dedicated reorder endpoint
+  async reorderImages(_userId: number, _newOrder: string[]): Promise<void> {
+    throw new Error('Image reordering should use the profile update API');
   }
 }
 
