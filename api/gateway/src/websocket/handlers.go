@@ -126,13 +126,13 @@ func handleClientWrites(client *Client) {
 	}
 }
 
-// HandleChatMessage routes chat messages to chat service or broadcasts them
+// HandleChatMessage routes chat messages to chat service via WebSocket
 func HandleChatMessage(msg Message, userID, token string) {
 	startTime := time.Now()
 	defer func() {
 		LogPerformance("chat_message", time.Since(startTime), "user:", userID)
 	}()
-	
+
 	// Parse chat message data
 	chatData, err := parseChatMessageData(msg.Data)
 	if err != nil {
@@ -140,57 +140,45 @@ func HandleChatMessage(msg Message, userID, token string) {
 		SendErrorToUser(userID, "invalid_chat_data", err.Error())
 		return
 	}
-	
+
 	// Validate required fields
 	if chatData.ConversationID == "" {
 		LogError(userID, "chat_validation_error", fmt.Errorf("missing conversation_id"))
 		SendErrorToUser(userID, "missing_conversation_id", "Missing conversation_id in chat message")
 		return
 	}
-	
+
 	if chatData.Message == "" {
 		LogError(userID, "chat_validation_error", fmt.Errorf("empty message"))
 		SendErrorToUser(userID, "empty_message", "Message cannot be empty")
 		return
 	}
-	
+
 	LogMessage(userID, "chat_processing", "conversation:", chatData.ConversationID, "message_length:", len(chatData.Message))
-	
+
 	// Validate user access to conversation
 	if !validateUserInConversation(userID, chatData.ConversationID, token) {
 		LogError(userID, "chat_access_denied", fmt.Errorf("access denied to conversation %s", chatData.ConversationID))
 		SendErrorToUser(userID, "access_denied", "Access denied to conversation")
 		return
 	}
-	
-	// Enrich message data with sender info and timestamp
-	enrichedData := ChatMessageData{
-		ConversationID: chatData.ConversationID,
-		Message:        chatData.Message,
-		FromUser:       userID,
-		Timestamp:      time.Now().Unix(),
-		Type:           "chat_message",
+
+	// Check if chat service client is connected
+	if GlobalChatClient == nil || !GlobalChatClient.IsConnected() {
+		LogError(userID, "chat_service_unavailable", fmt.Errorf("chat service WebSocket not available"))
+		SendErrorToUser(userID, "service_unavailable", "Chat service is currently unavailable")
+		return
 	}
-	
-	// Persist message to chat service (async, don't block the broadcast)
-	go func() {
-		if err := sendMessageToChatService(userID, chatData.ConversationID, chatData.Message, token); err != nil {
-			LogError(userID, "chat_persistence_failed", err, "conversation:", chatData.ConversationID)
-		}
-	}()
-	
-	// Broadcast to conversation participants
-	channelName := fmt.Sprintf("chat_%s", chatData.ConversationID)
-	GlobalManager.SendToChannel(channelName, string(MessageTypeChatMessage), enrichedData, userID)
-	
-	// Send acknowledgment to sender
-	GlobalManager.SendToUser(userID, string(MessageTypeChatAck), map[string]any{
-		"status":          "sent",
-		"timestamp":       time.Now().Unix(),
-		"conversation_id": chatData.ConversationID,
-	})
-	
-	LogMessage(userID, "chat_sent", "conversation:", chatData.ConversationID)
+
+	// Send message through WebSocket to Chat Service
+	err = GlobalChatClient.SendMessage(userID, chatData.ConversationID, chatData.Message, token)
+	if err != nil {
+		LogError(userID, "chat_relay_failed", err, "conversation:", chatData.ConversationID)
+		SendErrorToUser(userID, "message_failed", "Failed to send message")
+		return
+	}
+
+	LogMessage(userID, "chat_relayed", "conversation:", chatData.ConversationID)
 }
 
 // HandleNotificationMessage handles notification-related messages

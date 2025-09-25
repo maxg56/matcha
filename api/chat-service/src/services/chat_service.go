@@ -111,9 +111,9 @@ func (s *chatService) SendMessage(senderID, conversationID uint, content string)
 		return nil, err
 	}
 	
-	// Broadcast to participants
-	go s.BroadcastMessage(*message)
-	
+	// Note: Broadcasting is now handled by Gateway WebSocket relay system
+	// Local broadcasting is disabled in favor of Gateway pass-through architecture
+
 	return message, nil
 }
 

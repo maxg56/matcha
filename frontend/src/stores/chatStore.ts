@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
 import { webSocketService, MessageType, type MessageHandler } from '@/services/websocket';
+import { useAuthStore } from '@/stores/authStore';
 
 // Type pour les données brutes retournées par l'API
 interface RawConversation {
@@ -133,9 +134,8 @@ export const useChatStore = create<ChatStore>()(
         try {
           const rawConversations = await apiService.get<RawConversation[]>('/api/v1/chat/conversations');
 
-          // TODO: Récupérer l'ID de l'utilisateur actuel depuis le contexte d'auth
-          // Pour l'instant, on utilise une valeur mock
-          const currentUserId = 501; // Mock - devrait venir du contexte d'auth
+          // Récupérer l'ID de l'utilisateur actuel depuis le store d'auth
+          const currentUserId = useAuthStore.getState().user?.id;
 
           // Adapter les données brutes en format frontend
           const conversations = rawConversations.map(raw =>
@@ -285,12 +285,33 @@ export const useChatStore = create<ChatStore>()(
         const chatMessageHandler: MessageHandler = (data, message) => {
           if (message.type === MessageType.CHAT_MESSAGE) {
             // Convertir les données WebSocket au format Message
+            // Fonction utilitaire pour gérer différents formats de timestamp
+            const parseTimestamp = (timestamp: any): string => {
+              if (typeof timestamp === 'number') {
+                // Timestamp Unix (en secondes)
+                return new Date(timestamp * 1000).toISOString();
+              } else if (typeof timestamp === 'string') {
+                // Chaîne de caractères (format ISO ou timestamp)
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) {
+                  // Si ce n'est pas une date valide, utiliser la date actuelle
+                  console.warn('Invalid timestamp format:', timestamp);
+                  return new Date().toISOString();
+                }
+                return date.toISOString();
+              } else {
+                // Fallback : utiliser la date actuelle
+                console.warn('Unknown timestamp format:', timestamp);
+                return new Date().toISOString();
+              }
+            };
+
             const chatMessage: Partial<Message> = {
               id: Date.now(), // ID temporaire
               conv_id: parseInt(data.conversation_id),
               sender_id: parseInt(data.from_user),
               msg: data.message,
-              time: new Date(data.timestamp * 1000).toISOString(),
+              time: parseTimestamp(data.timestamp),
               is_read: false
             };
             

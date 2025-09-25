@@ -1,8 +1,8 @@
 package websocket
 
 import (
+	"chat-service/src/logger"
 	"chat-service/src/types"
-	"log"
 	"sync"
 	"time"
 
@@ -64,7 +64,7 @@ func (c *Connection) SetReadDeadline(deadline any) error {
 		return c.conn.SetReadDeadline(t)
 	}
 	// If the type assertion fails, log warning and return error
-	log.Printf("Warning: Invalid deadline type for SetReadDeadline: %T", deadline)
+	logger.WarnWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "Invalid deadline type for SetReadDeadline: %T", deadline)
 	return ErrInvalidMessage
 }
 
@@ -74,7 +74,7 @@ func (c *Connection) SetWriteDeadline(deadline any) error {
 		return c.conn.SetWriteDeadline(t)
 	}
 	// If the type assertion fails, log warning and return error
-	log.Printf("Warning: Invalid deadline type for SetWriteDeadline: %T", deadline)
+	logger.WarnWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "Invalid deadline type for SetWriteDeadline: %T", deadline)
 	return ErrInvalidMessage
 }
 
@@ -105,7 +105,7 @@ func (c *Connection) readPump(chatService types.ChatService) {
 		err := c.conn.ReadJSON(&msg)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket error for user %d: %v", c.userID, err)
+				logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "WebSocket error: %v", err)
 			}
 			break
 		}
@@ -131,7 +131,7 @@ func (c *Connection) writePump() {
 			}
 
 			if err := c.conn.WriteJSON(message); err != nil {
-				log.Printf("Write error for user %d: %v", c.userID, err)
+				logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "Write error: %v", err)
 				return
 			}
 
@@ -173,7 +173,7 @@ func (c *Connection) handleSendMessage(msg IncomingMessage, chatService types.Ch
 
 	message, err := chatService.SendMessage(c.userID, msg.ConversationID, msg.Content)
 	if err != nil {
-		log.Printf("[ERROR] [WS] [%d] [error_chat_message_send] [%v]", c.userID, err)
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("send_message"), "Failed to send chat message: %v", err)
 		return err
 	}
 
@@ -192,7 +192,7 @@ func (c *Connection) handleSendMessage(msg IncomingMessage, chatService types.Ch
 	})
 
 	// Update monitoring stats (would normally be done via callback or interface)
-	log.Printf("Message sent by user %d in conversation %d", c.userID, msg.ConversationID)
+	logger.InfoWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithConversation(msg.ConversationID).WithAction("message_sent"), "Message sent successfully")
 
 	return nil
 }
@@ -206,15 +206,15 @@ func (c *Connection) handleJoinConversation(msg IncomingMessage, chatService typ
 	err := chatService.MarkMessagesAsRead(c.userID, msg.ConversationID)
 	if err != nil {
 		if err.Error() == "conversation not found" {
-			log.Printf("[ERROR] [WS] [%d] [error_chat_validation_not_found] [conversation %d not found, status: 404]", c.userID, msg.ConversationID)
+			logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithConversation(msg.ConversationID), "Conversation not found (404)")
 		} else if err.Error() == "access denied" {
-			log.Printf("[ERROR] [WS] [%d] [error_chat_access_denied] [access denied to conversation %d]", c.userID, msg.ConversationID)
+			logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithConversation(msg.ConversationID), "Access denied to conversation")
 		}
-		log.Printf("[ERROR] [WS] [%d] [error_user_error_sent] [error_type: %s, message: %s]", c.userID, "access_denied", err.Error())
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("access_validation"), "Access denied: %s", err.Error())
 		return err
 	}
 
-	log.Printf("[INFO] [WS] [system] [performance_chat_message] [duration: 1.000000ms user: %d]", c.userID)
+	logger.DebugWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithDuration(1*time.Millisecond), "Message processing completed")
 	return nil
 }
 
@@ -279,7 +279,7 @@ func (c *Connection) checkRateLimit() bool {
 	
 	// Check if we're over the limit
 	if len(c.messageTimes) >= maxMessages {
-		log.Printf("Rate limit exceeded for user %d: %d messages in last minute", c.userID, len(c.messageTimes))
+		logger.WarnWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("rate_limit").WithExtra("message_count", len(c.messageTimes)), "Rate limit exceeded: %d messages in last minute", len(c.messageTimes))
 		return false
 	}
 	

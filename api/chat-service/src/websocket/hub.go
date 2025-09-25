@@ -1,9 +1,13 @@
 package websocket
 
 import (
+	"chat-service/src/logger"
 	"chat-service/src/types"
-	"log"
+	"strconv"
 	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 // Hub manages WebSocket connections
@@ -51,7 +55,7 @@ func NewHub(chatService types.ChatService, repository types.ChatRepository) *Hub
 
 // Run starts the hub's main loop
 func (h *Hub) Run() {
-	log.Println("🔌 WebSocket Hub started")
+	logger.InfoWithContext(logger.WithComponent("websocket_hub"), "🔌 WebSocket Hub started")
 	
 	for {
 		select {
@@ -126,11 +130,11 @@ func (h *Hub) registerConnection(conn *Connection) {
 	// Close existing connection if any
 	if existing, exists := h.connections[conn.userID]; exists {
 		existing.Close()
-		log.Printf("Replaced existing connection for user %d", conn.userID)
+		logger.WarnWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "Replaced existing connection")
 	}
 	
 	h.connections[conn.userID] = conn
-	log.Printf("User %d connected, total: %d", conn.userID, len(h.connections))
+	logger.InfoWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "User connected, total: %d", len(h.connections))
 	
 	// Send connected confirmation
 	conn.sendMessage(OutgoingMessage{
@@ -153,7 +157,7 @@ func (h *Hub) unregisterConnection(conn *Connection) {
 	if _, exists := h.connections[conn.userID]; exists {
 		delete(h.connections, conn.userID)
 		conn.Close()
-		log.Printf("User %d disconnected, total: %d", conn.userID, len(h.connections))
+		logger.InfoWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "User disconnected, total: %d", len(h.connections))
 		
 		// Notify other users (if needed)
 		h.notifyUserStatus(conn.userID, "offline")
@@ -165,7 +169,7 @@ func (h *Hub) handleBroadcast(broadcastMsg BroadcastMessage) {
 	// Get conversation participants
 	participants, err := h.getConversationParticipants(broadcastMsg.ConversationID)
 	if err != nil {
-		log.Printf("Failed to get participants for conversation %d: %v", broadcastMsg.ConversationID, err)
+		logger.ErrorWithContext(logger.WithComponent("websocket_hub").WithConversation(broadcastMsg.ConversationID), "Failed to get participants: %v", err)
 		return
 	}
 	
@@ -187,7 +191,7 @@ func (h *Hub) handleBroadcast(broadcastMsg BroadcastMessage) {
 // getConversationParticipants gets participants for a conversation
 func (h *Hub) getConversationParticipants(conversationID uint) ([]uint, error) {
 	if h.repository == nil {
-		log.Printf("Warning: No repository available for getting conversation participants")
+		logger.WarnWithContext(logger.WithComponent("websocket_hub"), "No repository available for getting conversation participants")
 		return []uint{}, nil
 	}
 	
@@ -198,14 +202,14 @@ func (h *Hub) getConversationParticipants(conversationID uint) ([]uint, error) {
 func (h *Hub) notifyUserStatus(userID uint, status string) {
 	// This could be used to notify friends/contacts about user status
 	// Implementation depends on requirements
-	log.Printf("User %d is now %s", userID, status)
+	logger.DebugWithContext(logger.WithComponent("websocket_hub").WithUser(userID), "User is now %s", status)
 }
 
 // Implement types.ConnectionManager interface
 func (h *Hub) AddConnection(userID uint, conn types.WebSocketConnection) error {
 	// This is a compatibility method for the interface
 	// In practice, connections should be added through RegisterConnection
-	log.Printf("AddConnection called for user %d", userID)
+	logger.DebugWithContext(logger.WithComponent("websocket_hub").WithUser(userID), "AddConnection called")
 	return nil
 }
 
@@ -230,7 +234,7 @@ func (h *Hub) GetConnection(userID uint) (types.WebSocketConnection, bool) {
 func (h *Hub) BroadcastToUsers(userIDs []uint, message any) error {
 	msg, ok := message.(OutgoingMessage)
 	if !ok {
-		log.Printf("Invalid message type for broadcast")
+		logger.ErrorWithContext(logger.WithComponent("websocket_hub"), "Invalid message type for broadcast")
 		return ErrInvalidMessage
 	}
 	
@@ -254,4 +258,246 @@ func (h *Hub) GetChatService() types.ChatService {
 // SetChatService sets the chat service (used for dependency injection)
 func (h *Hub) SetChatService(chatService types.ChatService) {
 	h.chatService = chatService
+}
+
+// GatewayMessage represents messages from Gateway
+type GatewayMessage struct {
+	Type           string                 `json:"type"`
+	UserID         string                 `json:"user_id"`
+	ConversationID string                 `json:"conversation_id"`
+	Content        string                 `json:"content,omitempty"`
+	Token          string                 `json:"token,omitempty"`
+	RequestID      string                 `json:"request_id,omitempty"`
+	Data           map[string]interface{} `json:"data,omitempty"`
+}
+
+// GatewayResponse represents responses to Gateway
+type GatewayResponse struct {
+	Type           string                 `json:"type"`
+	RequestID      string                 `json:"request_id,omitempty"`
+	Status         string                 `json:"status,omitempty"`
+	Message        string                 `json:"message,omitempty"`
+	ConversationID string                 `json:"conversation_id,omitempty"`
+	UserID         string                 `json:"user_id,omitempty"`
+	Data           map[string]interface{} `json:"data,omitempty"`
+	Error          string                 `json:"error,omitempty"`
+}
+
+// HandleGatewayConnection handles WebSocket connection from Gateway
+func (h *Hub) HandleGatewayConnection(conn *websocket.Conn) {
+	logger.InfoWithContext(logger.WithComponent("websocket_hub").WithAction("gateway_connection"), "Gateway WebSocket connection established")
+
+	defer func() {
+		conn.Close()
+		logger.InfoWithContext(logger.WithComponent("websocket_hub").WithAction("gateway_disconnection"), "Gateway WebSocket connection closed")
+	}()
+
+	// Set read deadline for ping/pong
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	// Listen for messages from Gateway
+	for {
+		var gatewayMsg GatewayMessage
+		err := conn.ReadJSON(&gatewayMsg)
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				logger.ErrorWithContext(logger.WithComponent("websocket_hub").WithAction("gateway_read_error"), "Gateway WebSocket read error: %v", err)
+			}
+			break
+		}
+
+		// Handle the message from Gateway
+		h.handleGatewayMessage(gatewayMsg, conn)
+	}
+}
+
+// handleGatewayMessage processes messages from Gateway
+func (h *Hub) handleGatewayMessage(msg GatewayMessage, conn *websocket.Conn) {
+	logger.DebugWithContext(
+		logger.WithComponent("websocket_hub").WithAction("gateway_message"),
+		"Received from Gateway: type=%s, user=%s", msg.Type, msg.UserID,
+	)
+
+	switch msg.Type {
+	case "chat_message":
+		h.handleGatewayChatMessage(msg, conn)
+	case "join_conversation":
+		h.handleGatewayJoinConversation(msg, conn)
+	case "typing":
+		h.handleGatewayTyping(msg, conn)
+	default:
+		logger.WarnWithContext(
+			logger.WithComponent("websocket_hub").WithAction("unknown_gateway_message"),
+			"Unknown message type from Gateway: %s", msg.Type,
+		)
+	}
+}
+
+// handleGatewayChatMessage handles chat messages from Gateway
+func (h *Hub) handleGatewayChatMessage(msg GatewayMessage, conn *websocket.Conn) {
+	// Parse user and conversation IDs
+	userID := parseUintFromString(msg.UserID)
+	conversationID := parseUintFromString(msg.ConversationID)
+
+	if userID == 0 || conversationID == 0 || msg.Content == "" {
+		h.sendErrorToGateway(conn, msg.RequestID, "Invalid message parameters")
+		return
+	}
+
+	// Send message through chat service
+	message, err := h.chatService.SendMessage(userID, conversationID, msg.Content)
+	if err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub").WithUser(userID).WithConversation(conversationID),
+			"Failed to send message via Gateway: %v", err,
+		)
+		h.sendErrorToGateway(conn, msg.RequestID, err.Error())
+		return
+	}
+
+	// Send the message back to Gateway for broadcasting to users
+	broadcastResponse := GatewayResponse{
+		Type:           "chat_message",
+		ConversationID: msg.ConversationID,
+		UserID:         msg.UserID,
+		Message:        message.Msg,
+		Data: map[string]interface{}{
+			"message_id":   message.ID,
+			"sender_id":    message.SenderID,
+			"message":      message.Msg,
+			"timestamp":    message.Time.Unix(),
+			"read_at":      message.ReadAt,
+		},
+	}
+
+	if err := conn.WriteJSON(broadcastResponse); err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub"),
+			"Failed to send broadcast message to Gateway: %v", err,
+		)
+	}
+
+	// Send acknowledgment to Gateway
+	ackResponse := GatewayResponse{
+		Type:           "chat_ack",
+		RequestID:      msg.RequestID,
+		Status:         "success",
+		ConversationID: msg.ConversationID,
+		UserID:         msg.UserID,
+		Data: map[string]interface{}{
+			"message_id": message.ID,
+			"timestamp":  message.Time.Unix(),
+		},
+	}
+
+	if err := conn.WriteJSON(ackResponse); err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub"),
+			"Failed to send ack to Gateway: %v", err,
+		)
+	}
+
+	logger.InfoWithContext(
+		logger.WithComponent("websocket_hub").WithUser(userID).WithConversation(conversationID),
+		"Message relayed from Gateway successfully",
+	)
+}
+
+// handleGatewayJoinConversation handles join requests from Gateway
+func (h *Hub) handleGatewayJoinConversation(msg GatewayMessage, conn *websocket.Conn) {
+	userID := parseUintFromString(msg.UserID)
+	conversationID := parseUintFromString(msg.ConversationID)
+
+	if userID == 0 || conversationID == 0 {
+		h.sendErrorToGateway(conn, msg.RequestID, "Invalid join parameters")
+		return
+	}
+
+	err := h.chatService.MarkMessagesAsRead(userID, conversationID)
+	if err != nil {
+		h.sendErrorToGateway(conn, msg.RequestID, err.Error())
+		return
+	}
+
+	// Send success response
+	response := GatewayResponse{
+		Type:           "response",
+		RequestID:      msg.RequestID,
+		Status:         "success",
+		ConversationID: msg.ConversationID,
+		UserID:         msg.UserID,
+	}
+
+	if err := conn.WriteJSON(response); err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub"),
+			"Failed to send join response to Gateway: %v", err,
+		)
+	}
+}
+
+// handleGatewayTyping handles typing notifications from Gateway
+func (h *Hub) handleGatewayTyping(msg GatewayMessage, conn *websocket.Conn) {
+	userID := parseUintFromString(msg.UserID)
+	conversationID := parseUintFromString(msg.ConversationID)
+
+	if userID == 0 || conversationID == 0 {
+		return
+	}
+
+	isTyping := false
+	if msg.Data != nil {
+		if typing, ok := msg.Data["is_typing"].(bool); ok {
+			isTyping = typing
+		}
+	}
+
+	// Broadcast typing notification to other users in conversation
+	typingMsg := OutgoingMessage{
+		Type:           MessageTypeTyping,
+		ConversationID: conversationID,
+		Data: TypingData{
+			UserID:   userID,
+			IsTyping: isTyping,
+		},
+		Timestamp: time.Now(),
+	}
+
+	h.BroadcastToConversation(conversationID, typingMsg, userID)
+}
+
+// sendErrorToGateway sends error response to Gateway
+func (h *Hub) sendErrorToGateway(conn *websocket.Conn, requestID, errorMsg string) {
+	response := GatewayResponse{
+		Type:      "response",
+		RequestID: requestID,
+		Status:    "error",
+		Error:     errorMsg,
+	}
+
+	if err := conn.WriteJSON(response); err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub"),
+			"Failed to send error to Gateway: %v", err,
+		)
+	}
+}
+
+// parseUintFromString safely parses a string to uint
+func parseUintFromString(s string) uint {
+	if s == "" {
+		return 0
+	}
+
+	val, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		logger.WarnWithContext(logger.WithComponent("websocket_hub"), "Failed to parse uint from string: %s", s)
+		return 0
+	}
+
+	return uint(val)
 }

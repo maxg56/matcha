@@ -6,6 +6,7 @@ import { ChatInput } from '@/components/chat/ChatInput';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { WebSocketStatus } from '@/components/WebSocketStatus';
 import { useChatStore, type Message } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useWebSocketChat } from '@/hooks/useWebSocketConnection';
 
 // Type pour les messages de l'interface UI (compatible avec ChatBubble)
@@ -21,7 +22,7 @@ export default function ChatPageWebSocket() {
   const navigate = useNavigate();
   const { matchId } = useParams<{ matchId: string }>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Store et hooks WebSocket
   const {
     activeConversation,
@@ -36,6 +37,8 @@ export default function ChatPageWebSocket() {
     unsubscribeFromConversation,
     sendWebSocketMessage
   } = useChatStore();
+
+  const { user } = useAuthStore();
   
   const { addChatHandler, removeChatHandler } = useWebSocketChat(matchId);
   
@@ -122,7 +125,7 @@ export default function ChatPageWebSocket() {
             minute: '2-digit'
           })
         : '--:--',
-      isOwn: msg.sender_id === activeConversation?.user?.id,
+      isOwn: msg.sender_id === user?.id,
       status: msg.is_read ? 'read' : 'delivered'
     };
   });

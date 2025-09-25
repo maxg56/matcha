@@ -54,16 +54,20 @@ func main() {
 
 	// Chat API routes
 	chat := r.Group("/api/v1/chat")
+
+	// Gateway WebSocket endpoint (no auth middleware - gateway handles auth)
+	chat.GET("/gateway-ws", handlers.HandleGatewayWebSocket)
+
 	chat.Use(middleware.AuthMiddleware())
 	{
-		// WebSocket endpoint
+		// Regular WebSocket endpoint
 		chat.GET("/ws", handlers.HandleWebSocket)
-		
+
 		// Conversation endpoints
 		chat.GET("/conversations", chatHandlers.GetUserConversations)
 		chat.GET("/conversations/:conversationID", chatHandlers.GetConversation)
 		chat.POST("/conversations", chatHandlers.CreateConversation)
-		
+
 		// Message endpoints
 		chat.GET("/conversations/:conversationID/messages", chatHandlers.GetMessages)
 		chat.POST("/messages", chatHandlers.SendMessage)

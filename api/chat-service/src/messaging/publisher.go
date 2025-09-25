@@ -41,64 +41,28 @@ func (mp *messagePublisher) PublishMessage(message models.Message, participants 
 		return nil
 	}
 	
-	err := mp.connMgr.BroadcastToUsers(recipients, wsMessage)
-	if err != nil {
-		log.Printf("Failed to broadcast message %d: %v", message.ID, err)
-		return err
-	}
-	
-	log.Printf("Message %d broadcasted to %d recipients", message.ID, len(recipients))
+	// Note: Broadcasting is now handled by Gateway WebSocket relay
+	// Local broadcasting is disabled in favor of Gateway pass-through architecture
+	log.Printf("Message %d will be broadcasted to %d recipients via Gateway", message.ID, len(recipients))
 	return nil
 }
 
 func (mp *messagePublisher) NotifyOnline(userIDs []uint, message any) error {
-	wsMessage := types.WebSocketMessage{
-		Type: types.MessageTypeOnline,
-		Data: message,
-	}
-	
-	return mp.connMgr.BroadcastToUsers(userIDs, wsMessage)
+	// Note: Online notifications are now handled by Gateway WebSocket relay
+	log.Printf("Online notification will be sent to %d users via Gateway", len(userIDs))
+	return nil
 }
 
 // NotifyTyping sends typing notification
 func (mp *messagePublisher) NotifyTyping(conversationID, senderID uint, participants []uint, isTyping bool) error {
-	wsMessage := types.WebSocketMessage{
-		Type: types.MessageTypeTyping,
-		Data: map[string]any{
-			"conversation_id": conversationID,
-			"sender_id":       senderID,
-			"is_typing":       isTyping,
-		},
-	}
-	
-	// Send to all participants except sender
-	var recipients []uint
-	for _, participantID := range participants {
-		if participantID != senderID {
-			recipients = append(recipients, participantID)
-		}
-	}
-	
-	return mp.connMgr.BroadcastToUsers(recipients, wsMessage)
+	// Note: Typing notifications are now handled by Gateway WebSocket relay
+	log.Printf("Typing notification (isTyping=%v) will be sent via Gateway for conversation %d", isTyping, conversationID)
+	return nil
 }
 
 // NotifyMessageRead sends read notification
 func (mp *messagePublisher) NotifyMessageRead(conversationID, readerID uint, participants []uint) error {
-	wsMessage := types.WebSocketMessage{
-		Type: types.MessageTypeRead,
-		Data: map[string]any{
-			"conversation_id": conversationID,
-			"reader_id":       readerID,
-		},
-	}
-	
-	// Send to all participants except reader
-	var recipients []uint
-	for _, participantID := range participants {
-		if participantID != readerID {
-			recipients = append(recipients, participantID)
-		}
-	}
-	
-	return mp.connMgr.BroadcastToUsers(recipients, wsMessage)
+	// Note: Read notifications are now handled by Gateway WebSocket relay
+	log.Printf("Read notification will be sent via Gateway for conversation %d", conversationID)
+	return nil
 }
