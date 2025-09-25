@@ -77,6 +77,10 @@ func (h *Hub) handleGatewayMessage(msg GatewayMessage, conn *websocket.Conn) {
 		h.handleGatewayJoinConversation(msg, conn)
 	case "typing":
 		h.handleGatewayTyping(msg, conn)
+	case "reaction_add":
+		h.handleGatewayReactionAdd(msg, conn)
+	case "reaction_remove":
+		h.handleGatewayReactionRemove(msg, conn)
 	default:
 		logger.WarnWithContext(
 			logger.WithComponent("websocket_hub").WithAction("unknown_gateway_message"),
@@ -233,6 +237,189 @@ func (h *Hub) sendErrorToGateway(conn *websocket.Conn, requestID, errorMsg strin
 			"Failed to send error to Gateway: %v", err,
 		)
 	}
+}
+
+// handleGatewayReactionAdd handles reaction add requests from Gateway
+func (h *Hub) handleGatewayReactionAdd(msg GatewayMessage, conn *websocket.Conn) {
+	userID := parseUintFromString(msg.UserID)
+	if userID == 0 {
+		h.sendErrorToGateway(conn, msg.RequestID, "Invalid user ID")
+		return
+	}
+
+	// Extract message_id and emoji from Data
+	var messageID uint
+	var emoji string
+
+	if msg.Data != nil {
+		if msgIDInterface, exists := msg.Data["message_id"]; exists {
+			switch msgIDVal := msgIDInterface.(type) {
+			case float64:
+				messageID = uint(msgIDVal)
+			case int:
+				messageID = uint(msgIDVal)
+			case uint:
+				messageID = msgIDVal
+			default:
+				h.sendErrorToGateway(conn, msg.RequestID, "Invalid message_id format")
+				return
+			}
+		}
+
+		if emojiInterface, exists := msg.Data["emoji"]; exists {
+			if emojiStr, ok := emojiInterface.(string); ok {
+				emoji = emojiStr
+			} else {
+				h.sendErrorToGateway(conn, msg.RequestID, "Invalid emoji format")
+				return
+			}
+		}
+	}
+
+	if messageID == 0 || emoji == "" {
+		h.sendErrorToGateway(conn, msg.RequestID, "Missing message_id or emoji")
+		return
+	}
+
+	// Add reaction through chat service
+	reaction, err := h.chatService.AddReaction(userID, messageID, emoji)
+	if err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub").WithUser(userID),
+			"Failed to add reaction via Gateway: %v", err,
+		)
+		h.sendErrorToGateway(conn, msg.RequestID, err.Error())
+		return
+	}
+
+	// Get the message to find the conversation ID for broadcasting
+	message, err := h.chatService.GetMessage(messageID)
+	if err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub").WithUser(userID),
+			"Failed to get message for reaction broadcast: %v", err,
+		)
+		return
+	}
+
+	// Broadcast reaction update to all users in the conversation
+	broadcastResponse := GatewayResponse{
+		Type:           "reaction_update",
+		ConversationID: strconv.FormatUint(uint64(message.ConvID), 10),
+		UserID:         strconv.FormatUint(uint64(userID), 10),
+		Data: map[string]interface{}{
+			"conversation_id": message.ConvID,
+			"message_id":      messageID,
+			"user_id":         userID,
+			"emoji":           emoji,
+			"action":          "add",
+			"reaction_id":     reaction.ID,
+			"timestamp":       reaction.CreatedAt.Unix(),
+		},
+	}
+
+	if err := conn.WriteJSON(broadcastResponse); err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub"),
+			"Failed to send reaction broadcast to Gateway: %v", err,
+		)
+	}
+
+	logger.InfoWithContext(
+		logger.WithComponent("websocket_hub").WithUser(userID),
+		"Reaction add relayed from Gateway successfully: message=%d, emoji=%s", messageID, emoji,
+	)
+}
+
+// handleGatewayReactionRemove handles reaction remove requests from Gateway
+func (h *Hub) handleGatewayReactionRemove(msg GatewayMessage, conn *websocket.Conn) {
+	userID := parseUintFromString(msg.UserID)
+	if userID == 0 {
+		h.sendErrorToGateway(conn, msg.RequestID, "Invalid user ID")
+		return
+	}
+
+	// Extract message_id and emoji from Data
+	var messageID uint
+	var emoji string
+
+	if msg.Data != nil {
+		if msgIDInterface, exists := msg.Data["message_id"]; exists {
+			switch msgIDVal := msgIDInterface.(type) {
+			case float64:
+				messageID = uint(msgIDVal)
+			case int:
+				messageID = uint(msgIDVal)
+			case uint:
+				messageID = msgIDVal
+			default:
+				h.sendErrorToGateway(conn, msg.RequestID, "Invalid message_id format")
+				return
+			}
+		}
+
+		if emojiInterface, exists := msg.Data["emoji"]; exists {
+			if emojiStr, ok := emojiInterface.(string); ok {
+				emoji = emojiStr
+			} else {
+				h.sendErrorToGateway(conn, msg.RequestID, "Invalid emoji format")
+				return
+			}
+		}
+	}
+
+	if messageID == 0 || emoji == "" {
+		h.sendErrorToGateway(conn, msg.RequestID, "Missing message_id or emoji")
+		return
+	}
+
+	// Remove reaction through chat service
+	err := h.chatService.RemoveReaction(userID, messageID, emoji)
+	if err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub").WithUser(userID),
+			"Failed to remove reaction via Gateway: %v", err,
+		)
+		h.sendErrorToGateway(conn, msg.RequestID, err.Error())
+		return
+	}
+
+	// Get the message to find the conversation ID for broadcasting
+	message, err := h.chatService.GetMessage(messageID)
+	if err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub").WithUser(userID),
+			"Failed to get message for reaction broadcast: %v", err,
+		)
+		return
+	}
+
+	// Broadcast reaction update to all users in the conversation
+	broadcastResponse := GatewayResponse{
+		Type:           "reaction_update",
+		ConversationID: strconv.FormatUint(uint64(message.ConvID), 10),
+		UserID:         strconv.FormatUint(uint64(userID), 10),
+		Data: map[string]interface{}{
+			"conversation_id": message.ConvID,
+			"message_id":      messageID,
+			"user_id":         userID,
+			"emoji":           emoji,
+			"action":          "remove",
+			"timestamp":       time.Now().Unix(),
+		},
+	}
+
+	if err := conn.WriteJSON(broadcastResponse); err != nil {
+		logger.ErrorWithContext(
+			logger.WithComponent("websocket_hub"),
+			"Failed to send reaction broadcast to Gateway: %v", err,
+		)
+	}
+
+	logger.InfoWithContext(
+		logger.WithComponent("websocket_hub").WithUser(userID),
+		"Reaction remove relayed from Gateway successfully: message=%d, emoji=%s", messageID, emoji,
+	)
 }
 
 // parseUintFromString safely parses a string to uint

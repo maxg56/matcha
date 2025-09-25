@@ -81,6 +81,7 @@ type ChatService interface {
 	
 	// Message methods
 	GetMessages(userID, conversationID uint, limit, offset int) ([]models.Message, error)
+	GetMessage(messageID uint) (*models.Message, error)
 	SendMessage(senderID, conversationID uint, content string) (*models.Message, error)
 	MarkMessagesAsRead(userID, conversationID uint) error
 

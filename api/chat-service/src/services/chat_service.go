@@ -83,6 +83,10 @@ func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int
 	return s.repo.GetMessages(conversationID, limit, offset)
 }
 
+func (s *chatService) GetMessage(messageID uint) (*models.Message, error) {
+	return s.repo.GetMessage(messageID)
+}
+
 func (s *chatService) SendMessage(senderID, conversationID uint, content string) (*models.Message, error) {
 	// Verify access
 	hasAccess, err := s.repo.IsUserInConversation(senderID, conversationID)

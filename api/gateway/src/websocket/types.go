@@ -10,16 +10,27 @@ const (
 	MessageTypeSubscribe     MessageType = "subscribe"
 	MessageTypeUnsubscribe   MessageType = "unsubscribe"
 	MessageTypePing          MessageType = "ping"
-	
+	MessageTypeSendMessage   MessageType = "send_message"
+	MessageTypeJoinConversation MessageType = "join_conversation"
+	MessageTypeTyping        MessageType = "typing"
+	MessageTypeReactionAdd   MessageType = "reaction_add"
+	MessageTypeReactionRemove MessageType = "reaction_remove"
+
 	// Server to client message types
 	MessageTypeChatMessage    MessageType = "chat_message"
 	MessageTypeChatAck        MessageType = "chat_ack"
+	MessageTypeNewMessage     MessageType = "new_message"
+	MessageTypeNotificationReceived MessageType = "notification_received"
 	MessageTypeNotificationRead MessageType = "notification_marked_read"
 	MessageTypeAllNotificationRead MessageType = "all_notifications_marked_read"
 	MessageTypeSubscriptionAck   MessageType = "subscription_ack"
 	MessageTypeUnsubscriptionAck MessageType = "unsubscription_ack"
 	MessageTypePong             MessageType = "pong"
 	MessageTypeConnectionAck    MessageType = "connection_ack"
+	MessageTypeConnected        MessageType = "connected"
+	MessageTypeDisconnected     MessageType = "disconnected"
+	MessageTypeReactionUpdate   MessageType = "reaction_update"
+	MessageTypePresenceUpdate   MessageType = "presence_update"
 	MessageTypeError           MessageType = "error"
 )
 
@@ -52,6 +63,12 @@ type ErrorData struct {
 	ErrorType string `json:"error_type"`
 	Message   string `json:"message"`
 	Timestamp int64  `json:"timestamp"`
+}
+
+// ReactionData represents reaction message data
+type ReactionData struct {
+	MessageID uint   `json:"message_id"`
+	Emoji     string `json:"emoji"`
 }
 
 // ConnectionStatus represents client connection status

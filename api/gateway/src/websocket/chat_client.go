@@ -234,6 +234,14 @@ func (c *ChatServiceClient) handleResponse(response ChatServiceResponse) {
 		// Handle user status updates
 		c.handleUserStatus(response)
 
+	case "reaction_update":
+		// Handle reaction updates
+		c.handleReactionUpdate(response)
+
+	case "presence_update":
+		// Handle presence updates
+		c.handlePresenceUpdate(response)
+
 	case "response":
 		// Handle request responses
 		if response.RequestID != "" {
@@ -305,6 +313,54 @@ func (c *ChatServiceClient) handleUserStatus(response ChatServiceResponse) {
 	log.Printf("👤 User status update: %s", response.UserID)
 }
 
+// handleReactionUpdate handles reaction updates from chat service
+func (c *ChatServiceClient) handleReactionUpdate(response ChatServiceResponse) {
+	log.Printf("👍 Reaction update: user=%s, data=%+v", response.UserID, response.Data)
+
+	// Broadcast reaction update to all users in the conversation
+	if response.Data != nil {
+		if conversationID, exists := response.Data["conversation_id"]; exists {
+			channelName := fmt.Sprintf("chat_%s", conversationID)
+
+			reactionData := map[string]interface{}{
+				"type": "reaction_update",
+				"timestamp": time.Now().Unix(),
+			}
+
+			// Copy all data from response
+			for k, v := range response.Data {
+				reactionData[k] = v
+			}
+
+			GlobalManager.SendToChannel(channelName, "reaction_update", reactionData, response.UserID)
+			log.Printf("📢 Broadcasted reaction update to channel: %s", channelName)
+		}
+	}
+}
+
+// handlePresenceUpdate handles user presence updates from chat service
+func (c *ChatServiceClient) handlePresenceUpdate(response ChatServiceResponse) {
+	log.Printf("🟢 Presence update: user=%s, data=%+v", response.UserID, response.Data)
+
+	// Broadcast presence update to relevant users
+	if response.Data != nil {
+		presenceData := map[string]interface{}{
+			"type": "presence_update",
+			"user_id": response.UserID,
+			"timestamp": time.Now().Unix(),
+		}
+
+		// Copy presence data
+		for k, v := range response.Data {
+			presenceData[k] = v
+		}
+
+		// Broadcast to all users (or specific channels based on business logic)
+		GlobalManager.SendToChannel("user-updates", "presence_update", presenceData, response.UserID)
+		log.Printf("📢 Broadcasted presence update for user: %s", response.UserID)
+	}
+}
+
 // forwardResponse forwards request responses to waiting handlers
 func (c *ChatServiceClient) forwardResponse(response ChatServiceResponse) {
 	c.handlerMutex.RLock()
@@ -365,6 +421,66 @@ func (c *ChatServiceClient) SendMessage(userID, conversationID, content, token s
 		return nil
 	case <-time.After(5 * time.Second):
 		return fmt.Errorf("timeout sending message")
+	}
+}
+
+// SendReaction sends a reaction to the chat service
+func (c *ChatServiceClient) SendReaction(userID string, messageID uint, emoji, action, token string) error {
+	c.mutex.RLock()
+	connected := c.connected
+	c.mutex.RUnlock()
+
+	if !connected {
+		return fmt.Errorf("not connected to chat service")
+	}
+
+	messageType := "reaction_add"
+	if action == "remove" {
+		messageType = "reaction_remove"
+	}
+
+	message := ChatServiceMessage{
+		Type:      messageType,
+		UserID:    userID,
+		Token:     token,
+		RequestID: generateRequestID(),
+		Data: map[string]interface{}{
+			"message_id": messageID,
+			"emoji":      emoji,
+		},
+	}
+
+	select {
+	case c.messageChan <- message:
+		return nil
+	case <-time.After(5 * time.Second):
+		return fmt.Errorf("timeout sending reaction")
+	}
+}
+
+// SendTyping sends a typing indicator to the chat service
+func (c *ChatServiceClient) SendTyping(userID, conversationID, token string) error {
+	c.mutex.RLock()
+	connected := c.connected
+	c.mutex.RUnlock()
+
+	if !connected {
+		return fmt.Errorf("not connected to chat service")
+	}
+
+	message := ChatServiceMessage{
+		Type:           "typing",
+		UserID:         userID,
+		ConversationID: conversationID,
+		Token:          token,
+		RequestID:      generateRequestID(),
+	}
+
+	select {
+	case c.messageChan <- message:
+		return nil
+	case <-time.After(5 * time.Second):
+		return fmt.Errorf("timeout sending typing indicator")
 	}
 }
 
