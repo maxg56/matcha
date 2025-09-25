@@ -112,6 +112,14 @@ func (h *Hub) registerConnection(conn *Connection) {
 	h.connections[conn.userID] = conn
 	logger.InfoWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "User connected, total: %d", len(h.connections))
 
+	// Update user presence to online
+	if h.chatService != nil {
+		err := h.chatService.SetUserOnline(conn.userID)
+		if err != nil {
+			logger.ErrorWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "Failed to set user online: %v", err)
+		}
+	}
+
 	// Send connected confirmation
 	conn.sendMessage(OutgoingMessage{
 		Type: MessageTypeConnected,
@@ -121,7 +129,7 @@ func (h *Hub) registerConnection(conn *Connection) {
 		},
 	})
 
-	// Notify other users (if needed)
+	// Notify other users about online status
 	h.notifyUserStatus(conn.userID, "online")
 }
 
@@ -135,16 +143,53 @@ func (h *Hub) unregisterConnection(conn *Connection) {
 		conn.Close()
 		logger.InfoWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "User disconnected, total: %d", len(h.connections))
 
-		// Notify other users (if needed)
+		// Update user presence to offline
+		if h.chatService != nil {
+			err := h.chatService.SetUserOffline(conn.userID)
+			if err != nil {
+				logger.ErrorWithContext(logger.WithComponent("websocket_hub").WithUser(conn.userID), "Failed to set user offline: %v", err)
+			}
+		}
+
+		// Notify other users about offline status
 		h.notifyUserStatus(conn.userID, "offline")
 	}
 }
 
 // notifyUserStatus notifies about user online/offline status
 func (h *Hub) notifyUserStatus(userID uint, status string) {
-	// This could be used to notify friends/contacts about user status
-	// Implementation depends on requirements
-	logger.DebugWithContext(logger.WithComponent("websocket_hub").WithUser(userID), "User is now %s", status)
+	// Get user presence information
+	if h.chatService == nil {
+		logger.WarnWithContext(logger.WithComponent("websocket_hub").WithUser(userID), "No chat service available for presence broadcasting")
+		return
+	}
+
+	presence, err := h.chatService.GetUserPresence(userID)
+	if err != nil {
+		logger.ErrorWithContext(logger.WithComponent("websocket_hub").WithUser(userID), "Failed to get user presence: %v", err)
+		return
+	}
+
+	// Broadcast presence update to all connected users
+	// In a real application, you'd want to broadcast only to relevant users (friends, conversation participants, etc.)
+	presenceMsg := OutgoingMessage{
+		Type: MessageTypePresenceUpdate,
+		Data: PresenceData{
+			UserID:   userID,
+			IsOnline: presence.IsOnline,
+			LastSeen: presence.LastSeen,
+		},
+	}
+
+	// Get all connected users to broadcast to
+	connectedUsers := h.GetConnectedUsers()
+	for _, connectedUserID := range connectedUsers {
+		if connectedUserID != userID { // Don't broadcast to the user themselves
+			h.BroadcastToUser(connectedUserID, presenceMsg)
+		}
+	}
+
+	logger.DebugWithContext(logger.WithComponent("websocket_hub").WithUser(userID), "User presence broadcasted: %s", status)
 }
 
 // GetChatService returns the chat service instance

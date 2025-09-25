@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"chat-service/src/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -35,7 +36,26 @@ func ConnectDB() {
 func AutoMigrate() {
 	if getEnv("AUTO_MIGRATE", "true") == "true" {
 		log.Println("Running database auto-migration...")
-		// Note: Tables are managed by auth-service, we just verify they exist
+
+		// Migrate chat service tables
+		err := DB.AutoMigrate(
+			&models.Message{},
+			&models.Discussion{},
+			&models.MessageReaction{},
+			&models.UserPresence{},
+		)
+		if err != nil {
+			log.Printf("Migration error: %v", err)
+		}
+
+		// Create unique constraint for message reactions (one reaction per user per message per emoji)
+		DB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_message_reactions_unique
+				  ON message_reactions (message_id, user_id, emoji)`)
+
+		// Create index for better performance on presence queries
+		DB.Exec(`CREATE INDEX IF NOT EXISTS idx_user_presence_activity
+				  ON user_presence (is_online, last_activity)`)
+
 		log.Println("Chat service migration completed")
 	}
 }

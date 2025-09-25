@@ -70,6 +70,16 @@ func main() {
 		chat.GET("/conversations/:conversationID/messages", chatHandlers.GetMessages)
 		chat.POST("/messages", chatHandlers.SendMessage)
 		chat.PUT("/conversations/:conversationID/read", chatHandlers.MarkMessagesAsRead)
+
+		// Reaction endpoints
+		chat.POST("/reactions", chatHandlers.AddReaction)
+		chat.DELETE("/messages/:messageID/reactions/:emoji", chatHandlers.RemoveReaction)
+		chat.GET("/messages/:messageID/reactions", chatHandlers.GetMessageReactions)
+
+		// User presence endpoints
+		chat.PUT("/presence/online", chatHandlers.SetUserOnline)
+		chat.PUT("/presence/offline", chatHandlers.SetUserOffline)
+		chat.GET("/users/:userID/presence", chatHandlers.GetUserPresence)
 	}
 
 	log.Println("✅ Chat service starting on port 8004")

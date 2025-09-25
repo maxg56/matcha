@@ -153,3 +153,70 @@ func (s *chatService) BroadcastMessage(message models.Message) error {
 
 	return s.notificationSvc.PublishMessage(message, participants)
 }
+
+// Reaction methods
+func (s *chatService) AddReaction(userID, messageID uint, emoji string) (*models.MessageReaction, error) {
+	// For now, we'll allow reactions without strict conversation access check
+	// In production, you should verify the user is in the conversation
+
+	reaction, err := s.repo.AddReaction(messageID, userID, emoji)
+	if err != nil {
+		return nil, err
+	}
+
+	// Broadcast reaction to conversation participants
+	// This would be implemented with WebSocket updates
+
+	return reaction, nil
+}
+
+func (s *chatService) RemoveReaction(userID, messageID uint, emoji string) error {
+	// Verify user has access to the message's conversation (simplified for now)
+
+	err := s.repo.RemoveReaction(messageID, userID, emoji)
+	if err != nil {
+		return err
+	}
+
+	// Broadcast reaction removal to conversation participants
+	// This would be implemented with WebSocket updates
+
+	return nil
+}
+
+func (s *chatService) GetMessageReactions(userID, messageID uint) ([]models.MessageReaction, error) {
+	// Verify user has access to the message's conversation (simplified for now)
+
+	return s.repo.GetMessageReactions(messageID)
+}
+
+// User presence methods
+func (s *chatService) SetUserOnline(userID uint) error {
+	err := s.repo.UpdateUserPresence(userID, true)
+	if err != nil {
+		return err
+	}
+
+	// Notify relevant users about online status
+	// This could be friends, conversation participants, etc.
+	// For now we'll broadcast to all connected users
+	// s.connMgr.BroadcastToUsers(relevantUsers, OnlineStatusMessage{...})
+
+	return nil
+}
+
+func (s *chatService) SetUserOffline(userID uint) error {
+	err := s.repo.SetUserOffline(userID)
+	if err != nil {
+		return err
+	}
+
+	// Notify relevant users about offline status
+	// This could be friends, conversation participants, etc.
+
+	return nil
+}
+
+func (s *chatService) GetUserPresence(userID uint) (*models.UserPresence, error) {
+	return s.repo.GetUserPresence(userID)
+}

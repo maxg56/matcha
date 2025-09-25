@@ -22,6 +22,10 @@ func (c *Connection) handleMessage(msg IncomingMessage, chatService types.ChatSe
 		return c.handleJoinConversation(msg, chatService)
 	case MessageTypeTyping:
 		return c.handleTyping(msg)
+	case MessageTypeReactionAdd:
+		return c.handleReactionAdd(msg, chatService)
+	case MessageTypeReactionRemove:
+		return c.handleReactionRemove(msg, chatService)
 	default:
 		return ErrUnknownMessageType
 	}
@@ -127,4 +131,88 @@ func (c *Connection) checkRateLimit() bool {
 	// Add current message time
 	c.messageTimes = append(c.messageTimes, now)
 	return true
+}
+
+// handleReactionAdd processes add reaction requests
+func (c *Connection) handleReactionAdd(msg IncomingMessage, chatService types.ChatService) error {
+	if msg.MessageID == 0 || msg.Emoji == "" {
+		return ErrInvalidMessage
+	}
+
+	_, err := chatService.AddReaction(c.userID, msg.MessageID, msg.Emoji)
+	if err != nil {
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("add_reaction"), "Failed to add reaction: %v", err)
+		return err
+	}
+
+	// Broadcast reaction to conversation participants
+	// First get the message to find the conversation
+	participants, err := c.getMessageConversationParticipants(msg.MessageID, chatService)
+	if err != nil {
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("get_participants"), "Failed to get participants: %v", err)
+		return err
+	}
+
+	c.hub.BroadcastToUsers(participants, OutgoingMessage{
+		Type: MessageTypeReactionUpdate,
+		Data: ReactionData{
+			MessageID: msg.MessageID,
+			UserID:    c.userID,
+			Emoji:     msg.Emoji,
+		},
+		Timestamp: time.Now(),
+	})
+
+	logger.InfoWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("reaction_added"), "Reaction added successfully")
+	return nil
+}
+
+// handleReactionRemove processes remove reaction requests
+func (c *Connection) handleReactionRemove(msg IncomingMessage, chatService types.ChatService) error {
+	if msg.MessageID == 0 || msg.Emoji == "" {
+		return ErrInvalidMessage
+	}
+
+	err := chatService.RemoveReaction(c.userID, msg.MessageID, msg.Emoji)
+	if err != nil {
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("remove_reaction"), "Failed to remove reaction: %v", err)
+		return err
+	}
+
+	// Broadcast reaction removal to conversation participants
+	participants, err := c.getMessageConversationParticipants(msg.MessageID, chatService)
+	if err != nil {
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("get_participants"), "Failed to get participants: %v", err)
+		return err
+	}
+
+	c.hub.BroadcastToUsers(participants, OutgoingMessage{
+		Type: MessageTypeReactionUpdate,
+		Data: ReactionData{
+			MessageID: msg.MessageID,
+			UserID:    c.userID,
+			Emoji:     msg.Emoji,
+		},
+		Timestamp: time.Now(),
+	})
+
+	logger.InfoWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("reaction_removed"), "Reaction removed successfully")
+	return nil
+}
+
+// getMessageConversationParticipants helper to get conversation participants for a message
+func (c *Connection) getMessageConversationParticipants(messageID uint, chatService types.ChatService) ([]uint, error) {
+	// Get the message to find its conversation ID
+	message, err := c.hub.repository.GetMessage(messageID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the conversation participants
+	participants, err := c.hub.repository.GetConversationParticipants(message.ConvID)
+	if err != nil {
+		return nil, err
+	}
+
+	return participants, nil
 }
