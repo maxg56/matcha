@@ -29,6 +29,7 @@ type UpdateProfileRequest struct {
 	Gender              *string  `json:"gender,omitempty"`
 	SexPref             *string  `json:"sex_pref,omitempty"`
 	Tags                []string `json:"tags,omitempty"`
+	Images              []string `json:"images,omitempty"`
 }
 
 // Location-related types
