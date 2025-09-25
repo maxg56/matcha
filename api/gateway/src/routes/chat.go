@@ -21,7 +21,7 @@ func SetupChatRoutes(r *gin.Engine) {
 		chat.PUT("/conversations/:id/read", proxy.ProxyRequest("chat", "/api/v1/chat/conversations/:id/read"))
 
 		chat.GET("/conversations/:id/messages", proxy.ProxyRequest("chat", "/api/v1/chat/conversations/:id/messages"))
-		chat.POST("/conversations/:id/messages", proxy.ProxyRequest("chat", "/api/v1/chat/conversations/:id/messages"))
+		chat.POST("/messages", proxy.ProxyRequest("chat", "/api/v1/chat/messages"))
 
 	} // All chat routes require authentication
 	

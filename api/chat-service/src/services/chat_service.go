@@ -36,9 +36,14 @@ func (s *chatService) GetConversation(userID, conversationID uint) (*models.Disc
 		return nil, err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return nil, errors.New("conversation not found")
+		}
 		return nil, errors.New("access denied")
 	}
-	
+
 	return s.repo.GetConversation(conversationID)
 }
 
@@ -58,6 +63,11 @@ func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int
 		return nil, err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return nil, errors.New("conversation not found")
+		}
 		return nil, errors.New("access denied")
 	}
 	
@@ -79,6 +89,11 @@ func (s *chatService) SendMessage(senderID, conversationID uint, content string)
 		return nil, err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return nil, errors.New("conversation not found")
+		}
 		return nil, errors.New("access denied")
 	}
 	
@@ -109,6 +124,11 @@ func (s *chatService) MarkMessagesAsRead(userID, conversationID uint) error {
 		return err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return errors.New("conversation not found")
+		}
 		return errors.New("access denied")
 	}
 	

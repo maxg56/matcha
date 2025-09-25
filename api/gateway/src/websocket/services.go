@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"gateway/src/config"
@@ -43,8 +44,8 @@ func validateUserInConversation(userID, conversationID, token string) bool {
 		return false
 	}
 	
-	// Prepare the validation request
-	url := fmt.Sprintf("%s/api/v1/chat/conversations/%s/validate", chatService.URL, conversationID)
+	// Prepare the validation request using existing conversation endpoint
+	url := fmt.Sprintf("%s/api/v1/chat/conversations/%s", chatService.URL, conversationID)
 	
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -187,12 +188,16 @@ func sendMessageToChatService(userID, conversationID, message, token string) err
 		return fmt.Errorf("chat service not configured")
 	}
 	
-	// Prepare message payload
+	// Convert conversationID to uint for the API
+	convID, err := strconv.ParseUint(conversationID, 10, 32)
+	if err != nil {
+		return fmt.Errorf("invalid conversation ID: %w", err)
+	}
+
+	// Prepare message payload matching MessageRequest structure
 	payload := map[string]any{
-		"conversation_id": conversationID,
+		"conversation_id": uint(convID),
 		"message":        message,
-		"from_user":      userID,
-		"timestamp":      time.Now().Unix(),
 	}
 	
 	payloadBytes, err := json.Marshal(payload)
@@ -201,7 +206,7 @@ func sendMessageToChatService(userID, conversationID, message, token string) err
 	}
 	
 	// Prepare the request
-	url := fmt.Sprintf("%s/api/v1/chat/conversations/%s/messages", chatService.URL, conversationID)
+	url := fmt.Sprintf("%s/api/v1/chat/messages", chatService.URL)
 	
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {

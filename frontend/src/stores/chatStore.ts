@@ -3,6 +3,17 @@ import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
 import { webSocketService, MessageType, type MessageHandler } from '@/services/websocket';
 
+// Type pour les données brutes retournées par l'API
+interface RawConversation {
+  id: number;
+  user1_id: number;
+  user2_id: number;
+  last_message_content: string;
+  last_message_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface Message {
   id: number;
   conversation_id: number;
@@ -61,6 +72,36 @@ interface ChatActions {
   reset: () => void;
 }
 
+// Fonction pour adapter les données brutes de l'API en format frontend
+const adaptRawConversationToConversation = (raw: RawConversation, currentUserId?: number): Conversation => {
+  // Déterminer l'ID de l'autre utilisateur
+  const otherUserId = currentUserId && raw.user1_id === currentUserId ? raw.user2_id : raw.user1_id;
+
+  return {
+    id: raw.id,
+    user: {
+      id: otherUserId,
+      username: `user_${otherUserId}`, // Mock - devrait venir d'une API utilisateur
+      first_name: `User${otherUserId}`, // Mock - devrait venir d'une API utilisateur
+      last_name: `Surname${otherUserId}`, // Mock - devrait venir d'une API utilisateur
+      profile_image: `https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop`, // Mock
+      is_online: Math.random() > 0.5, // Mock - devrait venir d'une API de statut
+      last_seen: new Date().toISOString() // Mock
+    },
+    last_message: raw.last_message_content ? {
+      id: 0, // Mock ID
+      conversation_id: raw.id,
+      sender_id: otherUserId, // Assumption - devrait être dans les données
+      recipient_id: currentUserId || 0,
+      content: raw.last_message_content,
+      sent_at: raw.last_message_at || raw.updated_at || new Date().toISOString(),
+      is_read: false // Mock - devrait venir des données
+    } : undefined,
+    unread_count: 0, // Mock - devrait être calculé
+    updated_at: raw.updated_at
+  };
+};
+
 type ChatStore = ChatState & ChatActions;
 
 export const useChatStore = create<ChatStore>()(
@@ -90,10 +131,19 @@ export const useChatStore = create<ChatStore>()(
 
       fetchConversations: async () => {
         set({ isLoading: true, error: null });
-        
+
         try {
-          const conversations = await apiService.get<Conversation[]>('/api/v1/chat/conversations');
-          
+          const rawConversations = await apiService.get<RawConversation[]>('/api/v1/chat/conversations');
+
+          // TODO: Récupérer l'ID de l'utilisateur actuel depuis le contexte d'auth
+          // Pour l'instant, on utilise une valeur mock
+          const currentUserId = 501; // Mock - devrait venir du contexte d'auth
+
+          // Adapter les données brutes en format frontend
+          const conversations = rawConversations.map(raw =>
+            adaptRawConversationToConversation(raw, currentUserId)
+          );
+
           set({
             conversations,
             isLoading: false,
@@ -134,8 +184,9 @@ export const useChatStore = create<ChatStore>()(
 
       sendMessage: async (conversationId: number, content: string) => {
         try {
-          const message = await apiService.post<Message>(`/api/v1/chat/conversations/${conversationId}/messages`, {
-            content,
+          const message = await apiService.post<Message>(`/api/v1/chat/messages`, {
+            conversation_id: conversationId,
+            message: content,
           });
           
           const currentMessages = get().messages;
@@ -191,8 +242,8 @@ export const useChatStore = create<ChatStore>()(
               return {
                 ...conv,
                 last_message: message,
-                unread_count: message.sender_id !== get().activeConversation?.user.id 
-                  ? conv.unread_count + 1 
+                unread_count: message.sender_id !== get().activeConversation?.user?.id
+                  ? conv.unread_count + 1
                   : conv.unread_count,
                 updated_at: message.sent_at,
               };

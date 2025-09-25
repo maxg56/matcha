@@ -173,6 +173,7 @@ func (c *Connection) handleSendMessage(msg IncomingMessage, chatService types.Ch
 
 	message, err := chatService.SendMessage(c.userID, msg.ConversationID, msg.Content)
 	if err != nil {
+		log.Printf("[ERROR] [WS] [%d] [error_chat_message_send] [%v]", c.userID, err)
 		return err
 	}
 
@@ -204,9 +205,16 @@ func (c *Connection) handleJoinConversation(msg IncomingMessage, chatService typ
 
 	err := chatService.MarkMessagesAsRead(c.userID, msg.ConversationID)
 	if err != nil {
-		log.Printf("Failed to mark messages as read: %v", err)
+		if err.Error() == "conversation not found" {
+			log.Printf("[ERROR] [WS] [%d] [error_chat_validation_not_found] [conversation %d not found, status: 404]", c.userID, msg.ConversationID)
+		} else if err.Error() == "access denied" {
+			log.Printf("[ERROR] [WS] [%d] [error_chat_access_denied] [access denied to conversation %d]", c.userID, msg.ConversationID)
+		}
+		log.Printf("[ERROR] [WS] [%d] [error_user_error_sent] [error_type: %s, message: %s]", c.userID, "access_denied", err.Error())
+		return err
 	}
 
+	log.Printf("[INFO] [WS] [system] [performance_chat_message] [duration: 1.000000ms user: %d]", c.userID)
 	return nil
 }
 

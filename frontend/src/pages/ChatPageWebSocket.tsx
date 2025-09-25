@@ -23,17 +23,18 @@ export default function ChatPageWebSocket() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Store et hooks WebSocket
-  const { 
-    activeConversation, 
-    messages, 
-    isLoading, 
+  const {
+    activeConversation,
+    messages,
+    isLoading,
     error,
     isConnected,
-    fetchMessages, 
+    fetchConversations,
+    fetchMessages,
     setActiveConversation,
     subscribeToConversation,
     unsubscribeFromConversation,
-    sendWebSocketMessage 
+    sendWebSocketMessage
   } = useChatStore();
   
   const { addChatHandler, removeChatHandler } = useWebSocketChat(matchId);
@@ -53,41 +54,46 @@ export default function ChatPageWebSocket() {
   // Initialisation de la conversation
   useEffect(() => {
     if (matchId) {
-      const conversationId = parseInt(matchId);
-      
-      // Charger les messages existants
-      fetchMessages(conversationId).catch(error => {
-        console.error('Failed to load messages:', error);
-      });
-      
-      // S'abonner aux nouveaux messages WebSocket
-      subscribeToConversation(conversationId);
-      
-      // Mock de conversation active pour l'exemple
-      setActiveConversation({
-        id: conversationId,
-        user: {
-          id: 123,
-          username: 'emma',
-          first_name: 'Emma',
-          last_name: 'Dubois',
-          profile_image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-          is_online: true,
-          last_seen: new Date().toISOString()
-        },
-        unread_count: 0,
-        updated_at: new Date().toISOString()
-      });
-      
+      const initializeConversation = async () => {
+        try {
+          // Récupérer toutes les conversations de l'utilisateur
+          await fetchConversations();
+          const allConversations = useChatStore.getState().conversations;
+
+          // Chercher une conversation existante avec ce match/utilisateur
+          // Pour l'instant, on utilise matchId comme conversationId
+          // TODO: Implémenter la logique pour trouver la vraie conversation basée sur le matchId
+          const conversationId = parseInt(matchId);
+          const existingConversation = allConversations.find(conv => conv.id === conversationId);
+
+          if (existingConversation && existingConversation.user) {
+            // Conversation trouvée avec données utilisateur complètes, charger les messages
+            setActiveConversation(existingConversation);
+            await fetchMessages(conversationId);
+            subscribeToConversation(conversationId);
+          } else {
+            // Conversation non trouvée ou données manquantes
+            console.error(`Conversation ${conversationId} not found or missing user data`);
+            navigate('/app/messages');
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to initialize conversation:', error);
+        }
+      };
+
+      initializeConversation();
+
       return () => {
+        const conversationId = parseInt(matchId);
         unsubscribeFromConversation(conversationId);
       };
     }
-  }, [matchId, fetchMessages, subscribeToConversation, unsubscribeFromConversation, setActiveConversation]);
+  }, [matchId, fetchConversations, fetchMessages, subscribeToConversation, unsubscribeFromConversation, setActiveConversation, navigate]);
 
   // Handler pour les messages WebSocket entrants
   useEffect(() => {
-    const chatHandler = (data: any, message: any) => {
+    const chatHandler = (data: unknown, message: { type: string }) => {
       if (message.type === 'chat_message') {
         console.log('Nouveau message WebSocket reçu:', data);
         // Le message sera automatiquement ajouté au store via chatStore
@@ -102,16 +108,24 @@ export default function ChatPageWebSocket() {
   }, [addChatHandler, removeChatHandler]);
 
   // Convertir les messages du store au format UI
-  const uiMessages: UIMessage[] = messages.map((msg: Message) => ({
-    id: msg.id.toString(),
-    content: msg.content,
-    timestamp: new Date(msg.sent_at).toLocaleTimeString('fr-FR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }),
-    isOwn: msg.sender_id === activeConversation?.user.id,
-    status: msg.is_read ? 'read' : 'delivered'
-  }));
+  const uiMessages: UIMessage[] = messages.map((msg: Message) => {
+    // Gestion sécurisée des dates
+    const messageDate = msg.sent_at ? new Date(msg.sent_at) : new Date();
+    const isValidDate = messageDate instanceof Date && !isNaN(messageDate.getTime());
+
+    return {
+      id: msg.id.toString(),
+      content: msg.content,
+      timestamp: isValidDate
+        ? messageDate.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : '--:--',
+      isOwn: msg.sender_id === activeConversation?.user?.id,
+      status: msg.is_read ? 'read' : 'delivered'
+    };
+  });
 
   const handleSendMessage = (content: string) => {
     if (!matchId) return;
@@ -173,7 +187,7 @@ export default function ChatPageWebSocket() {
           />
           
           {/* Match info */}
-          {activeConversation && (
+          {activeConversation && activeConversation.user && (
             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
               <div className="relative">
                 <Avatar className="w-8 h-8 ring-2 ring-white/20">
