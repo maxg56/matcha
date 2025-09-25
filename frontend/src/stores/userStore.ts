@@ -124,6 +124,8 @@ export const useUserStore = create<UserStore>()(
           
           const updatedProfile = response.profile;
           
+
+          
           set({
             profile: updatedProfile,
             isLoading: false,
@@ -149,8 +151,9 @@ export const useUserStore = create<UserStore>()(
 
           const currentProfile = useUserStore.getState().profile;
           if (currentProfile && result.data) {
-            // Le service média retourne { data: { image_url: "...", filename: "..." } }
-            const imageUrl = result.data.image_url;
+            
+            // Le service média retourne { data: { url: "...", filename: "..." } }
+            const imageUrl = result.data.url;
             const currentImages = currentProfile.images || [];
             const updatedImages = [...currentImages, imageUrl];
             set({
@@ -172,7 +175,8 @@ export const useUserStore = create<UserStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          await apiService.delete(`/api/v1/media/delete/${imageId}`);
+          // Utiliser le service image centralisé
+          await imageService.deleteImage(imageId);
           
           const currentProfile = useUserStore.getState().profile;
           if (currentProfile) {

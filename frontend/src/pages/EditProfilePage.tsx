@@ -192,7 +192,10 @@ export default function EditProfilePage() {
         onSaveChanges={saveChanges}
         onCancelEditing={cancelEditing}
       >
-        <PhotosSection photos={user.photos} />
+        <PhotosSection 
+          photos={user.photos} 
+          isEditing={editingSection === 'photos'}
+        />
       </SettingSection>
 
       {/* Toutes les sections */}
