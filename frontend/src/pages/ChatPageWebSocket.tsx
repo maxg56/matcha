@@ -110,12 +110,12 @@ export default function ChatPageWebSocket() {
   // Convertir les messages du store au format UI
   const uiMessages: UIMessage[] = messages.map((msg: Message) => {
     // Gestion sécurisée des dates
-    const messageDate = msg.sent_at ? new Date(msg.sent_at) : new Date();
+    const messageDate = msg.time ? new Date(msg.time) : new Date();
     const isValidDate = messageDate instanceof Date && !isNaN(messageDate.getTime());
 
     return {
       id: msg.id.toString(),
-      content: msg.content,
+      content: msg.msg,        // Utilise "msg" au lieu de "content"
       timestamp: isValidDate
         ? messageDate.toLocaleTimeString('fr-FR', {
             hour: '2-digit',

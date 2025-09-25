@@ -16,13 +16,12 @@ interface RawConversation {
 
 interface Message {
   id: number;
-  conversation_id: number;
+  conv_id: number;
   sender_id: number;
-  recipient_id: number;
-  content: string;
-  sent_at: string;
+  msg: string;           // Le backend utilise "msg", pas "content"
+  time: string;          // Le backend utilise "time", pas "sent_at"
   read_at?: string;
-  is_read: boolean;
+  is_read?: boolean;     // Peut ne pas être présent dans l'API
 }
 
 interface Conversation {
@@ -90,11 +89,10 @@ const adaptRawConversationToConversation = (raw: RawConversation, currentUserId?
     },
     last_message: raw.last_message_content ? {
       id: 0, // Mock ID
-      conversation_id: raw.id,
+      conv_id: raw.id,
       sender_id: otherUserId, // Assumption - devrait être dans les données
-      recipient_id: currentUserId || 0,
-      content: raw.last_message_content,
-      sent_at: raw.last_message_at || raw.updated_at || new Date().toISOString(),
+      msg: raw.last_message_content,
+      time: raw.last_message_at || raw.updated_at || new Date().toISOString(),
       is_read: false // Mock - devrait venir des données
     } : undefined,
     unread_count: 0, // Mock - devrait être calculé
@@ -167,7 +165,7 @@ export const useChatStore = create<ChatStore>()(
           const messages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
           
           set({
-            messages: messages.sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()),
+            messages: messages.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
             isLoading: false,
             error: null,
           });
@@ -212,8 +210,8 @@ export const useChatStore = create<ChatStore>()(
               : conv
           );
           
-          const messages = get().messages.map(msg => 
-            msg.conversation_id === conversationId && !msg.is_read
+          const messages = get().messages.map(msg =>
+            msg.conv_id === conversationId && !msg.is_read
               ? { ...msg, is_read: true, read_at: new Date().toISOString() }
               : msg
           );
@@ -232,20 +230,20 @@ export const useChatStore = create<ChatStore>()(
         
         if (!messageExists) {
           const sortedMessages = [...currentMessages, message].sort(
-            (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
           );
           
           set({ messages: sortedMessages });
           
           const conversations = get().conversations.map(conv => {
-            if (conv.id === message.conversation_id) {
+            if (conv.id === message.conv_id) {
               return {
                 ...conv,
                 last_message: message,
                 unread_count: message.sender_id !== get().activeConversation?.user?.id
                   ? conv.unread_count + 1
                   : conv.unread_count,
-                updated_at: message.sent_at,
+                updated_at: message.time,
               };
             }
             return conv;
@@ -289,10 +287,10 @@ export const useChatStore = create<ChatStore>()(
             // Convertir les données WebSocket au format Message
             const chatMessage: Partial<Message> = {
               id: Date.now(), // ID temporaire
-              conversation_id: parseInt(data.conversation_id),
+              conv_id: parseInt(data.conversation_id),
               sender_id: parseInt(data.from_user),
-              content: data.message,
-              sent_at: new Date(data.timestamp * 1000).toISOString(),
+              msg: data.message,
+              time: new Date(data.timestamp * 1000).toISOString(),
               is_read: false
             };
             
