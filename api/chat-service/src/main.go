@@ -6,7 +6,6 @@ import (
 
 	"chat-service/src/conf"
 	"chat-service/src/handlers"
-	"chat-service/src/messaging"
 	"chat-service/src/middleware"
 	"chat-service/src/repository"
 	"chat-service/src/services"
@@ -28,10 +27,9 @@ func main() {
 	// Initialize WebSocket hub first
 	hub := websocket.NewHub(nil, chatRepo) // Will set chatService after creation
 	go hub.Run()
-	
-	// Initialize publisher and service with hub as connection manager
-	publisher := messaging.NewMessagePublisher(hub)
-	chatService := services.NewChatService(chatRepo, publisher, hub)
+
+	// Initialize chat service with hub as connection manager
+	chatService := services.NewChatService(chatRepo, hub)
 	
 	// Update hub with chat service
 	hub.SetChatService(chatService)

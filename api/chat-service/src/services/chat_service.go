@@ -7,20 +7,21 @@ import (
 )
 
 type chatService struct {
-	repo      types.ChatRepository
-	publisher types.MessagePublisher
-	connMgr   types.ConnectionManager
+	repo            types.ChatRepository
+	connMgr         types.ConnectionManager
+	messageService  *MessageService
+	notificationSvc *NotificationService
 }
 
 func NewChatService(
 	repo types.ChatRepository,
-	publisher types.MessagePublisher,
 	connMgr types.ConnectionManager,
 ) types.ChatService {
 	return &chatService{
-		repo:      repo,
-		publisher: publisher,
-		connMgr:   connMgr,
+		repo:            repo,
+		connMgr:         connMgr,
+		messageService:  NewMessageService(),
+		notificationSvc: NewNotificationService(),
 	}
 }
 
@@ -105,14 +106,18 @@ func (s *chatService) SendMessage(senderID, conversationID uint, content string)
 		return nil, errors.New("message too long")
 	}
 	
-	// Save message
-	message, err := s.repo.SaveMessage(senderID, conversationID, content)
+	// Save message using the message service
+	message, err := s.messageService.SaveMessage(senderID, conversationID, content)
 	if err != nil {
 		return nil, err
 	}
-	
-	// Note: Broadcasting is now handled by Gateway WebSocket relay system
-	// Local broadcasting is disabled in favor of Gateway pass-through architecture
+
+	// Send notifications using the notification service
+	participants, err := s.repo.GetConversationParticipants(conversationID)
+	if err == nil {
+		// Don't fail the message send if notifications fail
+		_ = s.notificationSvc.PublishMessage(*message, participants)
+	}
 
 	return message, nil
 }
@@ -145,6 +150,6 @@ func (s *chatService) BroadcastMessage(message models.Message) error {
 	if err != nil {
 		return err
 	}
-	
-	return s.publisher.PublishMessage(message, participants)
+
+	return s.notificationSvc.PublishMessage(message, participants)
 }
