@@ -22,7 +22,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const longPressTimer = useRef<NodeJS.Timeout>();
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
   // Debug: log message data
