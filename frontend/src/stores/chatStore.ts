@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
 import { webSocketService, MessageType, type MessageHandler } from '@/services/websocket';
 import { useAuthStore } from '@/stores/authStore';
+import type { MessageReaction, UserPresence } from '@/services/websocket/types';
 
 // Type pour les données brutes retournées par l'API
 interface RawConversation {
@@ -23,6 +24,7 @@ interface Message {
   time: string;          // Le backend utilise "time", pas "sent_at"
   read_at?: string;
   is_read?: boolean;     // Peut ne pas être présent dans l'API
+  reactions?: MessageReaction[];
 }
 
 interface Conversation {
@@ -69,6 +71,15 @@ interface ChatActions {
   initializeWebSocket: () => void;
   subscribeToConversation: (conversationId: number) => void;
   unsubscribeFromConversation: (conversationId: number) => void;
+  // Reaction methods
+  addReaction: (messageId: number, emoji: string) => Promise<void>;
+  removeReaction: (messageId: number, emoji: string) => Promise<void>;
+  sendReactionWebSocket: (messageId: number, emoji: string, action: 'add' | 'remove') => void;
+  updateMessageReactions: (messageId: number, reactions: MessageReaction[]) => void;
+  // Presence methods
+  updateUserPresence: (userId: number, presence: UserPresence) => void;
+  setUserOnline: (userId: number) => Promise<void>;
+  setUserOffline: (userId: number) => Promise<void>;
   reset: () => void;
 }
 
@@ -160,10 +171,18 @@ export const useChatStore = create<ChatStore>()(
 
       fetchMessages: async (conversationId: number) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const messages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
-          
+
+          console.log('ChatStore: fetchMessages response:', {
+            conversationId,
+            messagesCount: messages.length,
+            messagesWithReactions: messages.filter(m => m.reactions && m.reactions.length > 0).length,
+            sampleMessage: messages[0],
+            allMessages: messages.map(m => ({ id: m.id, hasReactions: !!m.reactions, reactionsCount: m.reactions?.length || 0 }))
+          });
+
           set({
             messages: messages.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
             isLoading: false,
@@ -330,10 +349,81 @@ export const useChatStore = create<ChatStore>()(
           }
         };
 
+        // Handler pour les réactions
+        const reactionHandler: MessageHandler = (data, message) => {
+          if (message.type === MessageType.REACTION_UPDATE) {
+            console.log('Reaction update received:', data);
+
+            try {
+              // Extraire les données de la réaction
+              const messageId = data.message_id;
+              const userId = data.user_id;
+              const emoji = data.emoji;
+              const action = data.action; // 'add' ou 'remove'
+              const timestamp = data.timestamp || Date.now();
+
+              if (!messageId || !userId || !emoji || !action) {
+                console.warn('Incomplete reaction update data:', data);
+                return;
+              }
+
+              // Mettre à jour les réactions pour le message
+              const messages = get().messages;
+              const updatedMessages = messages.map(msg => {
+                if (msg.id === messageId) {
+                  let reactions = msg.reactions || [];
+
+                  if (action === 'add') {
+                    // Ajouter la réaction si elle n'existe pas déjà
+                    const existingReaction = reactions.find(r => r.user_id === userId && r.emoji === emoji);
+                    if (!existingReaction) {
+                      reactions = [...reactions, {
+                        id: Math.random(), // ID temporaire
+                        message_id: messageId,
+                        user_id: userId,
+                        emoji: emoji,
+                        created_at: new Date(timestamp).toISOString()
+                      }];
+                    }
+                  } else if (action === 'remove') {
+                    // Supprimer la réaction
+                    reactions = reactions.filter(r => !(r.user_id === userId && r.emoji === emoji));
+                  }
+
+                  return { ...msg, reactions };
+                }
+                return msg;
+              });
+
+              // Mettre à jour le store
+              set({ messages: updatedMessages });
+            } catch (error) {
+              console.error('Error processing reaction update:', error);
+            }
+          }
+        };
+
+        // Handler pour le statut de présence
+        const presenceHandler: MessageHandler = (data, message) => {
+          if (message.type === MessageType.PRESENCE_UPDATE) {
+            const presenceData = data as { user_id: number; is_online: boolean; last_seen?: string };
+            get().updateUserPresence(presenceData.user_id, {
+              user_id: presenceData.user_id,
+              is_online: presenceData.is_online,
+              last_seen: presenceData.last_seen,
+              last_activity: new Date().toISOString()
+            });
+          }
+        };
+
         // Enregistrer les handlers
         webSocketService.addMessageHandler(MessageType.CHAT_MESSAGE, chatMessageHandler);
         webSocketService.addMessageHandler(MessageType.CHAT_ACK, chatMessageHandler);
+        webSocketService.addMessageHandler(MessageType.NEW_MESSAGE, chatMessageHandler);
         webSocketService.addMessageHandler(MessageType.CONNECTION_ACK, connectionHandler);
+        webSocketService.addMessageHandler(MessageType.CONNECTED, connectionHandler);
+        webSocketService.addMessageHandler(MessageType.REACTION_UPDATE, reactionHandler);
+        webSocketService.addMessageHandler(MessageType.PRESENCE_UPDATE, presenceHandler);
 
         // S'assurer que la connexion WebSocket est établie
         if (!webSocketService.isConnected()) {
@@ -345,6 +435,109 @@ export const useChatStore = create<ChatStore>()(
           });
         } else {
           set({ isConnected: true });
+        }
+      },
+
+      // Reaction methods
+      addReaction: async (messageId: number, emoji: string) => {
+        try {
+          await apiService.post('/api/v1/chat/reactions', {
+            message_id: messageId,
+            emoji
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to add reaction';
+          set({ error: errorMessage });
+          throw error;
+        }
+      },
+
+      removeReaction: async (messageId: number, emoji: string) => {
+        try {
+          await apiService.delete(`/api/v1/chat/messages/${messageId}/reactions/${emoji}`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to remove reaction';
+          set({ error: errorMessage });
+          throw error;
+        }
+      },
+
+      sendReactionWebSocket: (messageId: number, emoji: string, action: 'add' | 'remove') => {
+        console.log('ChatStore: sendReactionWebSocket called:', { messageId, emoji, action, isConnected: webSocketService.isConnected() });
+
+        if (!webSocketService.isConnected()) {
+          console.log('ChatStore: WebSocket not connected, using HTTP fallback');
+          // Fallback to HTTP API
+          if (action === 'add') {
+            get().addReaction(messageId, emoji);
+          } else {
+            get().removeReaction(messageId, emoji);
+          }
+          return;
+        }
+
+        // Send via WebSocket - Format attendu par le backend
+        const message = {
+          type: action === 'add' ? MessageType.REACTION_ADD : MessageType.REACTION_REMOVE,
+          message_id: messageId,
+          emoji
+        };
+        console.log('ChatStore: Sending WebSocket message:', message);
+        webSocketService.sendMessage(message);
+      },
+
+      updateMessageReactions: (messageId: number, reactions: MessageReaction[]) => {
+        const messages = get().messages.map(msg =>
+          msg.id === messageId ? { ...msg, reactions } : msg
+        );
+        set({ messages });
+      },
+
+      // Presence methods
+      updateUserPresence: (userId: number, presence: UserPresence) => {
+        const conversations = get().conversations.map(conv =>
+          conv.user.id === userId
+            ? {
+                ...conv,
+                user: {
+                  ...conv.user,
+                  is_online: presence.is_online,
+                  last_seen: presence.last_seen || conv.user.last_seen
+                }
+              }
+            : conv
+        );
+        set({ conversations });
+      },
+
+      setUserOnline: async (userId: number) => {
+        try {
+          await apiService.put('/api/v1/chat/presence/online');
+          get().updateUserPresence(userId, {
+            user_id: userId,
+            is_online: true,
+            last_activity: new Date().toISOString()
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to set user online';
+          set({ error: errorMessage });
+          throw error;
+        }
+      },
+
+      setUserOffline: async (userId: number) => {
+        try {
+          await apiService.put('/api/v1/chat/presence/offline');
+          get().updateUserPresence(userId, {
+            user_id: userId,
+            is_online: false,
+            last_seen: new Date().toISOString(),
+            last_activity: new Date().toISOString()
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to set user offline';
+          set({ error: errorMessage });
+          throw error;
         }
       },
 

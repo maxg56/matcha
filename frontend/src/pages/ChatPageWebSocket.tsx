@@ -16,6 +16,7 @@ interface UIMessage {
   timestamp: string;
   isOwn: boolean;
   status: 'sent' | 'delivered' | 'read';
+  reactions?: import('@/services/websocket/types').MessageReaction[];
 }
 
 export default function ChatPageWebSocket() {
@@ -126,7 +127,8 @@ export default function ChatPageWebSocket() {
           })
         : '--:--',
       isOwn: msg.sender_id === user?.id,
-      status: msg.is_read ? 'read' : 'delivered'
+      status: msg.is_read ? 'read' : 'delivered',
+      reactions: msg.reactions || []
     };
   });
 
@@ -217,33 +219,42 @@ export default function ChatPageWebSocket() {
 
       {/* Messages container */}
       <div className="flex-1 overflow-y-auto pb-20">
-        <div className="p-4 space-y-1 max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto min-h-full">
           {uiMessages.length === 0 && (
-            <div className="text-center text-gray-500 py-8">
-              <p>Aucun message pour le moment.</p>
-              <p className="text-sm">Envoyez le premier message pour commencer la conversation !</p>
-            </div>
-          )}
-          
-          {uiMessages.map((message) => (
-            <ChatBubble key={message.id} message={message} />
-          ))}
-          
-          {isTyping && (
-            <div className="flex justify-center py-2">
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg px-4 py-2">
-                <div className="flex items-center space-x-1">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce-delay-1"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce-delay-2"></div>
-                  </div>
-                  <span className="text-xs text-gray-500 ml-2">Envoi en cours...</span>
+            <div className="flex flex-col items-center justify-center h-full py-12 px-4">
+              <div className="text-center text-muted-foreground">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </div>
+                <p className="text-lg mb-2">Aucun message pour le moment</p>
+                <p className="text-sm">Envoyez le premier message pour commencer la conversation !</p>
               </div>
             </div>
           )}
-          
+
+          <div className="py-4">
+            {uiMessages.map((message) => (
+              <ChatBubble key={message.id} message={message} />
+            ))}
+
+            {isTyping && (
+              <div className="flex justify-start px-4 mb-3">
+                <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3 max-w-xs">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">en train d'écrire...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div ref={messagesEndRef} />
         </div>
       </div>
