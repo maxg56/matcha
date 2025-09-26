@@ -4,7 +4,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute'
 import DiscoverPage from '../pages/DiscoverPage';
 import MatchesPage from '../pages/MatchesPage';
 import MessagesPage from '../pages/MessagesPage';
-import ChatPage from '../pages/ChatPage';
+import ChatPageWebSocket from '../pages/ChatPageWebSocket';
 import ProfilePage from '../pages/ProfilePage';
 import LoginPage from '../pages/LoginPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
@@ -40,7 +40,7 @@ export function AppWrapper() {
               <Route path="discover" element={<DiscoverPage />} />
               <Route path="matches" element={<MatchesPage />} />
               <Route path="messages" element={<MessagesPage />} />
-              <Route path="chat/:matchId" element={<ChatPage />} />
+              <Route path="chat/:matchId" element={<ChatPageWebSocket />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="edit-profile" element={<EditProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />

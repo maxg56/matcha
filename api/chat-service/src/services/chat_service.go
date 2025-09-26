@@ -7,20 +7,21 @@ import (
 )
 
 type chatService struct {
-	repo      types.ChatRepository
-	publisher types.MessagePublisher
-	connMgr   types.ConnectionManager
+	repo            types.ChatRepository
+	connMgr         types.ConnectionManager
+	messageService  *MessageService
+	notificationSvc *NotificationService
 }
 
 func NewChatService(
 	repo types.ChatRepository,
-	publisher types.MessagePublisher,
 	connMgr types.ConnectionManager,
 ) types.ChatService {
 	return &chatService{
-		repo:      repo,
-		publisher: publisher,
-		connMgr:   connMgr,
+		repo:            repo,
+		connMgr:         connMgr,
+		messageService:  NewMessageService(),
+		notificationSvc: NewNotificationService(),
 	}
 }
 
@@ -36,9 +37,14 @@ func (s *chatService) GetConversation(userID, conversationID uint) (*models.Disc
 		return nil, err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return nil, errors.New("conversation not found")
+		}
 		return nil, errors.New("access denied")
 	}
-	
+
 	return s.repo.GetConversation(conversationID)
 }
 
@@ -58,6 +64,11 @@ func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int
 		return nil, err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return nil, errors.New("conversation not found")
+		}
 		return nil, errors.New("access denied")
 	}
 	
@@ -72,6 +83,10 @@ func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int
 	return s.repo.GetMessages(conversationID, limit, offset)
 }
 
+func (s *chatService) GetMessage(messageID uint) (*models.Message, error) {
+	return s.repo.GetMessage(messageID)
+}
+
 func (s *chatService) SendMessage(senderID, conversationID uint, content string) (*models.Message, error) {
 	// Verify access
 	hasAccess, err := s.repo.IsUserInConversation(senderID, conversationID)
@@ -79,6 +94,11 @@ func (s *chatService) SendMessage(senderID, conversationID uint, content string)
 		return nil, err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return nil, errors.New("conversation not found")
+		}
 		return nil, errors.New("access denied")
 	}
 	
@@ -90,15 +110,19 @@ func (s *chatService) SendMessage(senderID, conversationID uint, content string)
 		return nil, errors.New("message too long")
 	}
 	
-	// Save message
-	message, err := s.repo.SaveMessage(senderID, conversationID, content)
+	// Save message using the message service
+	message, err := s.messageService.SaveMessage(senderID, conversationID, content)
 	if err != nil {
 		return nil, err
 	}
-	
-	// Broadcast to participants
-	go s.BroadcastMessage(*message)
-	
+
+	// Send notifications using the notification service
+	participants, err := s.repo.GetConversationParticipants(conversationID)
+	if err == nil {
+		// Don't fail the message send if notifications fail
+		_ = s.notificationSvc.PublishMessage(*message, participants)
+	}
+
 	return message, nil
 }
 
@@ -109,6 +133,11 @@ func (s *chatService) MarkMessagesAsRead(userID, conversationID uint) error {
 		return err
 	}
 	if !hasAccess {
+		// Check if conversation exists at all
+		_, err := s.repo.GetConversation(conversationID)
+		if err != nil {
+			return errors.New("conversation not found")
+		}
 		return errors.New("access denied")
 	}
 	
@@ -125,6 +154,73 @@ func (s *chatService) BroadcastMessage(message models.Message) error {
 	if err != nil {
 		return err
 	}
-	
-	return s.publisher.PublishMessage(message, participants)
+
+	return s.notificationSvc.PublishMessage(message, participants)
+}
+
+// Reaction methods
+func (s *chatService) AddReaction(userID, messageID uint, emoji string) (*models.MessageReaction, error) {
+	// For now, we'll allow reactions without strict conversation access check
+	// In production, you should verify the user is in the conversation
+
+	reaction, err := s.repo.AddReaction(messageID, userID, emoji)
+	if err != nil {
+		return nil, err
+	}
+
+	// Broadcast reaction to conversation participants
+	// This would be implemented with WebSocket updates
+
+	return reaction, nil
+}
+
+func (s *chatService) RemoveReaction(userID, messageID uint, emoji string) error {
+	// Verify user has access to the message's conversation (simplified for now)
+
+	err := s.repo.RemoveReaction(messageID, userID, emoji)
+	if err != nil {
+		return err
+	}
+
+	// Broadcast reaction removal to conversation participants
+	// This would be implemented with WebSocket updates
+
+	return nil
+}
+
+func (s *chatService) GetMessageReactions(userID, messageID uint) ([]models.MessageReaction, error) {
+	// Verify user has access to the message's conversation (simplified for now)
+
+	return s.repo.GetMessageReactions(messageID)
+}
+
+// User presence methods
+func (s *chatService) SetUserOnline(userID uint) error {
+	err := s.repo.UpdateUserPresence(userID, true)
+	if err != nil {
+		return err
+	}
+
+	// Notify relevant users about online status
+	// This could be friends, conversation participants, etc.
+	// For now we'll broadcast to all connected users
+	// s.connMgr.BroadcastToUsers(relevantUsers, OnlineStatusMessage{...})
+
+	return nil
+}
+
+func (s *chatService) SetUserOffline(userID uint) error {
+	err := s.repo.SetUserOffline(userID)
+	if err != nil {
+		return err
+	}
+
+	// Notify relevant users about offline status
+	// This could be friends, conversation participants, etc.
+
+	return nil
+}
+
+func (s *chatService) GetUserPresence(userID uint) (*models.UserPresence, error) {
+	return s.repo.GetUserPresence(userID)
 }

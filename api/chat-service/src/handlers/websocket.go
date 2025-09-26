@@ -99,3 +99,31 @@ func HandleWebSocket(c *gin.Context) {
 	// Start connection handlers
 	wsConn.StartConnection(globalHub.GetChatService())
 }
+
+// HandleGatewayWebSocket handles WebSocket connections from the Gateway
+func HandleGatewayWebSocket(c *gin.Context) {
+	// Check if hub is initialized
+	if globalHub == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "WebSocket service not initialized"})
+		return
+	}
+
+	// Verify this is a Gateway client connection
+	gatewayHeader := c.GetHeader("X-Gateway-Client")
+	if gatewayHeader != "true" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only Gateway clients are allowed on this endpoint"})
+		return
+	}
+
+	// Upgrade connection to WebSocket
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upgrade connection"})
+		return
+	}
+
+	log.Printf("✅ Gateway WebSocket connection established")
+
+	// Handle Gateway WebSocket communication
+	globalHub.HandleGatewayConnection(conn)
+}
