@@ -26,11 +26,93 @@ func NewChatService(
 }
 
 // Conversation methods
-func (s *chatService) GetUserConversations(userID uint) ([]models.Discussion, error) {
-	return s.repo.GetUserConversations(userID)
+func (s *chatService) GetUserConversations(userID uint) (*types.ConversationListResponse, error) {
+	// Get raw conversations
+	discussions, err := s.repo.GetUserConversations(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(discussions) == 0 {
+		return &types.ConversationListResponse{
+			Conversations: []types.ConversationResponse{},
+			HasMore:       false,
+			Total:         0,
+		}, nil
+	}
+
+	// Collect unique user IDs we need info for (excluding current user)
+	userIDsNeeded := make(map[uint]bool)
+	for _, discussion := range discussions {
+		if discussion.User1ID != userID {
+			userIDsNeeded[discussion.User1ID] = true
+		}
+		if discussion.User2ID != userID {
+			userIDsNeeded[discussion.User2ID] = true
+		}
+	}
+
+	// Convert map to slice
+	userIDs := make([]uint, 0, len(userIDsNeeded))
+	for id := range userIDsNeeded {
+		userIDs = append(userIDs, id)
+	}
+
+	// Get user info for all other users
+	usersInfo, err := s.repo.GetUsersInfo(userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enrich conversations
+	enrichedConversations := make([]types.ConversationResponse, len(discussions))
+	for i, discussion := range discussions {
+		// Determine who is the "other" user
+		var otherUserID uint
+		if discussion.User1ID == userID {
+			otherUserID = discussion.User2ID
+		} else {
+			otherUserID = discussion.User1ID
+		}
+
+		// Get other user info
+		otherUser := usersInfo[otherUserID]
+		if otherUser == nil {
+			// Fallback if user info not found
+			otherUser = &types.UserInfo{
+				ID:       otherUserID,
+				Username: "Unknown",
+				Avatar:   "",
+			}
+		}
+
+		// Get unread count for this user and conversation
+		unreadCount, err := s.repo.GetUnreadCount(discussion.ID, userID)
+		if err != nil {
+			// Don't fail the whole request if unread count fails
+			unreadCount = 0
+		}
+
+		enrichedConversations[i] = types.ConversationResponse{
+			ID:            discussion.ID,
+			User1ID:       discussion.User1ID,
+			User2ID:       discussion.User2ID,
+			LastMessage:   discussion.LastMessageContent, // Map field name
+			LastMessageAt: discussion.LastMessageAt,
+			UnreadCount:   unreadCount,
+			OtherUser:     otherUser,
+			CreatedAt:     discussion.CreatedAt,
+		}
+	}
+
+	return &types.ConversationListResponse{
+		Conversations: enrichedConversations,
+		HasMore:       false, // TODO: Implement pagination
+		Total:         int64(len(enrichedConversations)),
+	}, nil
 }
 
-func (s *chatService) GetConversation(userID, conversationID uint) (*models.Discussion, error) {
+func (s *chatService) GetConversation(userID, conversationID uint) (*types.ConversationResponse, error) {
 	// Verify user has access
 	hasAccess, err := s.repo.IsUserInConversation(userID, conversationID)
 	if err != nil {
@@ -45,7 +127,45 @@ func (s *chatService) GetConversation(userID, conversationID uint) (*models.Disc
 		return nil, errors.New("access denied")
 	}
 
-	return s.repo.GetConversation(conversationID)
+	discussion, err := s.repo.GetConversation(conversationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine other user and get their info
+	var otherUserID uint
+	if discussion.User1ID == userID {
+		otherUserID = discussion.User2ID
+	} else {
+		otherUserID = discussion.User1ID
+	}
+
+	otherUser, err := s.repo.GetUserInfo(otherUserID)
+	if err != nil {
+		// Fallback if user info not found
+		otherUser = &types.UserInfo{
+			ID:       otherUserID,
+			Username: "Unknown",
+			Avatar:   "",
+		}
+	}
+
+	// Get unread count
+	unreadCount, err := s.repo.GetUnreadCount(conversationID, userID)
+	if err != nil {
+		unreadCount = 0
+	}
+
+	return &types.ConversationResponse{
+		ID:            discussion.ID,
+		User1ID:       discussion.User1ID,
+		User2ID:       discussion.User2ID,
+		LastMessage:   discussion.LastMessageContent,
+		LastMessageAt: discussion.LastMessageAt,
+		UnreadCount:   unreadCount,
+		OtherUser:     otherUser,
+		CreatedAt:     discussion.CreatedAt,
+	}, nil
 }
 
 func (s *chatService) CreateConversation(user1ID, user2ID uint) (*models.Discussion, error) {

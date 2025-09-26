@@ -3,8 +3,10 @@ package repository
 import (
 	"chat-service/src/models"
 	"chat-service/src/types"
+	"database/sql"
+	"errors"
 	"time"
-	
+
 	"gorm.io/gorm"
 )
 
@@ -63,6 +65,94 @@ func (r *chatRepository) FindConversationBetweenUsers(user1ID, user2ID uint) (*m
 	).First(&conversation).Error
 	
 	return &conversation, err
+}
+
+// User info operations for enriching conversations
+func (r *chatRepository) GetUserInfo(userID uint) (*types.UserInfo, error) {
+	var user models.Users
+	var avatar sql.NullString
+
+	// Get user basic info
+	err := r.db.Select("id, username").First(&user, userID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get profile image URL
+	err = r.db.Table("images").
+		Select("file_path").
+		Where("user_id = ? AND is_profile = ? AND is_active = ?", userID, true, true).
+		First(&avatar).Error
+
+	// If no profile image, that's OK - we'll use a default
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Only return error if it's not "no record found"
+		return nil, err
+	}
+
+	userInfo := &types.UserInfo{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
+	if avatar.Valid {
+		userInfo.Avatar = avatar.String
+	}
+
+	return userInfo, nil
+}
+
+func (r *chatRepository) GetUsersInfo(userIDs []uint) (map[uint]*types.UserInfo, error) {
+	if len(userIDs) == 0 {
+		return make(map[uint]*types.UserInfo), nil
+	}
+
+	// Get users basic info
+	var users []models.Users
+	err := r.db.Select("id, username").Where("id IN ?", userIDs).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get profile images for these users
+	type UserAvatar struct {
+		UserID   uint   `gorm:"column:user_id"`
+		FilePath string `gorm:"column:file_path"`
+	}
+
+	var avatars []UserAvatar
+	err = r.db.Table("images").
+		Select("user_id, file_path").
+		Where("user_id IN ? AND is_profile = ? AND is_active = ?", userIDs, true, true).
+		Find(&avatars).Error
+
+	// If no avatars, that's OK - we'll continue without them
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	// Create avatar map for quick lookup
+	avatarMap := make(map[uint]string)
+	for _, avatar := range avatars {
+		avatarMap[avatar.UserID] = avatar.FilePath
+	}
+
+	// Combine user info with avatars
+	result := make(map[uint]*types.UserInfo)
+	for _, user := range users {
+		userInfo := &types.UserInfo{
+			ID:       user.ID,
+			Username: user.Username,
+		}
+
+		if avatarPath, exists := avatarMap[user.ID]; exists {
+			userInfo.Avatar = avatarPath
+		}
+
+		result[user.ID] = userInfo
+	}
+
+	return result, nil
 }
 
 func (r *chatRepository) IsUserInConversation(userID, conversationID uint) (bool, error) {
