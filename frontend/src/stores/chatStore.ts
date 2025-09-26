@@ -2,18 +2,30 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
 import { webSocketService, MessageType, type MessageHandler } from '@/services/websocket';
-import { useAuthStore } from '@/stores/authStore';
 import type { MessageReaction, UserPresence } from '@/services/websocket/types';
 
-// Type pour les données brutes retournées par l'API
-interface RawConversation {
+// Types pour les données retournées par l'API (maintenant enrichies)
+interface ConversationResponse {
   id: number;
   user1_id: number;
   user2_id: number;
-  last_message_content: string;
+  last_message: string;
   last_message_at: string | null;
+  unread_count: number;
+  other_user: {
+    id: number;
+    username: string;
+    first_name: string;
+    last_name: string;
+    avatar?: string;
+  };
   created_at: string;
-  updated_at: string;
+}
+
+interface ConversationListResponse {
+  conversations: ConversationResponse[];
+  has_more: boolean;
+  total: number;
 }
 
 interface Message {
@@ -83,32 +95,32 @@ interface ChatActions {
   reset: () => void;
 }
 
-// Fonction pour adapter les données brutes de l'API en format frontend
-const adaptRawConversationToConversation = (raw: RawConversation, currentUserId?: number): Conversation => {
-  // Déterminer l'ID de l'autre utilisateur
-  const otherUserId = currentUserId && raw.user1_id === currentUserId ? raw.user2_id : raw.user1_id;
+// Fonction pour adapter les données enrichies de l'API en format frontend
+const adaptConversationResponseToConversation = (response: ConversationResponse): Conversation => {
+  // Construire le nom complet à partir de first_name et last_name
+  const fullName = `${response.other_user.first_name} ${response.other_user.last_name}`.trim();
 
   return {
-    id: raw.id,
+    id: response.id,
     user: {
-      id: otherUserId,
-      username: `user_${otherUserId}`, // Mock - devrait venir d'une API utilisateur
-      first_name: `User${otherUserId}`, // Mock - devrait venir d'une API utilisateur
-      last_name: `Surname${otherUserId}`, // Mock - devrait venir d'une API utilisateur
-      profile_image: `https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop`, // Mock
-      is_online: Math.random() > 0.5, // Mock - devrait venir d'une API de statut
-      last_seen: new Date().toISOString() // Mock
+      id: response.other_user.id,
+      username: response.other_user.username,
+      first_name: response.other_user.first_name,
+      last_name: response.other_user.last_name,
+      profile_image: response.other_user.avatar || '/default-avatar.png',
+      is_online: false, // À implémenter via presence
+      last_seen: new Date().toISOString()
     },
-    last_message: raw.last_message_content ? {
-      id: 0, // Mock ID
-      conv_id: raw.id,
-      sender_id: otherUserId, // Assumption - devrait être dans les données
-      msg: raw.last_message_content,
-      time: raw.last_message_at || raw.updated_at || new Date().toISOString(),
-      is_read: false // Mock - devrait venir des données
+    last_message: response.last_message ? {
+      id: 0, // Mock ID - peut être amélioré
+      conv_id: response.id,
+      sender_id: response.other_user.id, // Assumption
+      msg: response.last_message,
+      time: response.last_message_at || response.created_at,
+      is_read: response.unread_count === 0
     } : undefined,
-    unread_count: 0, // Mock - devrait être calculé
-    updated_at: raw.updated_at
+    unread_count: response.unread_count,
+    updated_at: response.last_message_at || response.created_at
   };
 };
 
@@ -143,15 +155,10 @@ export const useChatStore = create<ChatStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const rawConversations = await apiService.get<RawConversation[]>('/api/v1/chat/conversations');
+          const response = await apiService.get<ConversationListResponse>('/api/v1/chat/conversations');
 
-          // Récupérer l'ID de l'utilisateur actuel depuis le store d'auth
-          const currentUserId = useAuthStore.getState().user?.id;
-
-          // Adapter les données brutes en format frontend
-          const conversations = rawConversations.map(raw =>
-            adaptRawConversationToConversation(raw, currentUserId)
-          );
+          // Adapter les données enrichies en format frontend
+          const conversations = response.conversations.map(adaptConversationResponseToConversation);
 
           set({
             conversations,
