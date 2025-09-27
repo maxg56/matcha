@@ -25,14 +25,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
-  // Debug: log message data
-  console.log('ChatBubble message:', {
-    id: message.id,
-    content: message.content.substring(0, 20) + '...',
-    hasReactions: !!message.reactions,
-    reactionsCount: message.reactions?.length || 0,
-    reactions: message.reactions
-  });
+  
 
   const handleLongPressStart = (e: React.TouchEvent | React.MouseEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -55,8 +48,11 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    // Handled in the context menu component
+    console.log('ChatBubble: Emoji selected:', emoji);
+    // Envoyer la réaction via WebSocket
+    // (La logique d'envoi doit être implémentée dans le store ou le service approprié)
   };
+
 
   const handleMoreEmojis = () => {
     setShowEmojiPicker(true);
@@ -66,16 +62,6 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
     setShowEmojiPicker(false);
   };
 
-  // Test: force reactions for demo - À SUPPRIMER PLUS TARD
-  const testReactions = message.reactions && message.reactions.length > 0 ?
-    message.reactions :
-    (message.id === 1 ? [{
-      id: 999,
-      message_id: 1,
-      user_id: 123,
-      emoji: '👍',
-      created_at: new Date().toISOString()
-    }] : []);
 
   return (
     <div className={cn(
@@ -133,7 +119,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
         {/* Reactions */}
         <MessageReactions
           messageId={messageId}
-          reactions={testReactions}
+          reactions={message.reactions}
           className={message.isOwn ? "mr-2" : "ml-2"}
         />
 
