@@ -39,15 +39,6 @@ export function ChatInput({
       className
     )}>
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="flex-shrink-0 hover:glass-light mb-1 rounded-full"
-          disabled={disabled}
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-
         <div className="flex-1 relative">
           <Textarea
             value={message}
