@@ -10,8 +10,10 @@ export class ChatService {
   sendChatMessage(conversationId: string, message: string): boolean {
     return this.sendMessage({
       type: MessageType.SEND_MESSAGE,
-      conversation_id: parseInt(conversationId),
-      content: message
+      data: {
+        conversation_id: conversationId, // Keep as string to match Gateway expectations
+        message: message // Gateway expects "message" field, not "content"
+      }
     });
   }
 

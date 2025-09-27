@@ -7,6 +7,10 @@ export class WebSocketConnection {
   private isConnecting = false;
   private isAuthenticated = false;
   private config: Required<WebSocketConfig>;
+  private pingInterval: NodeJS.Timeout | null = null;
+  private lastPongReceived = Date.now();
+  private connectionHealth = { healthy: true, lastCheck: Date.now() };
+  private connectionAttemptTimestamp = 0;
 
   constructor(config: WebSocketConfig = {}) {
     this.config = {
@@ -53,10 +57,11 @@ export class WebSocketConnection {
 
     this.isConnecting = true;
     this.isAuthenticated = true;
+    this.connectionAttemptTimestamp = Date.now();
 
     try {
       const url = this.getWebSocketURL();
-      console.log('WebSocket: Connecting...');
+      console.log('WebSocket: Connecting...', { url, attempt: this.reconnectAttempts + 1 });
       this.ws = new WebSocket(url);
       
       await new Promise<void>((resolve, reject) => {
@@ -66,9 +71,16 @@ export class WebSocketConnection {
 
         this.ws!.onopen = () => {
           clearTimeout(timeout);
-          console.log('WebSocket: Connected successfully');
+          const connectionTime = Date.now() - this.connectionAttemptTimestamp;
+          console.log('WebSocket: Connected successfully', {
+            connectionTime: `${connectionTime}ms`,
+            attempt: this.reconnectAttempts + 1
+          });
           this.reconnectAttempts = 0;
           this.isConnecting = false;
+          this.lastPongReceived = Date.now();
+          this.connectionHealth = { healthy: true, lastCheck: Date.now() };
+          this.startPingInterval();
           onOpen?.();
           resolve();
         };
@@ -76,8 +88,18 @@ export class WebSocketConnection {
         this.ws!.onmessage = onMessage || (() => {});
         this.ws!.onclose = (event) => {
           this.isConnecting = false;
+          this.stopPingInterval();
+          this.connectionHealth = { healthy: false, lastCheck: Date.now() };
+
+          console.log('WebSocket: Connection closed', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean,
+            reconnectAttempts: this.reconnectAttempts
+          });
+
           onClose?.(event);
-          
+
           // Gestion automatique de la reconnexion
           if (this.shouldReconnect(event)) {
             this.handleReconnect(onOpen, onMessage, onClose, onError);
@@ -86,6 +108,14 @@ export class WebSocketConnection {
         this.ws!.onerror = (error) => {
           clearTimeout(timeout);
           this.isConnecting = false;
+          this.connectionHealth = { healthy: false, lastCheck: Date.now() };
+
+          console.error('WebSocket: Connection error', {
+            error,
+            readyState: this.ws?.readyState,
+            reconnectAttempts: this.reconnectAttempts
+          });
+
           onError?.(error);
           reject(error);
         };
@@ -152,14 +182,85 @@ export class WebSocketConnection {
     return this.isAuthenticated && event.code !== 1000;
   }
 
+  private startPingInterval(): void {
+    this.stopPingInterval();
+
+    this.pingInterval = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        // Check if we've received a pong recently
+        const timeSinceLastPong = Date.now() - this.lastPongReceived;
+        if (timeSinceLastPong > 90000) { // 90 seconds without pong = connection issue
+          console.warn('WebSocket: No pong received for 90 seconds, assuming connection is dead');
+          this.ws.close(1006, 'No pong received');
+          return;
+        }
+
+        try {
+          console.log('WebSocket: Sending ping');
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        } catch (error) {
+          console.error('WebSocket: Failed to send ping', error);
+          this.ws.close();
+        }
+      }
+    }, 30000); // Ping every 30 seconds
+  }
+
+  private stopPingInterval(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+  }
+
+  private handlePong(): void {
+    this.lastPongReceived = Date.now();
+    console.log('WebSocket: Pong received');
+  }
+
+  // Method to be called by message handler when pong is received
+  onPong(): void {
+    this.handlePong();
+  }
+
+  getConnectionHealth(): { healthy: boolean; lastCheck: number; diagnostics: any } {
+    const now = Date.now();
+    const timeSinceLastPong = now - this.lastPongReceived;
+    const readyState = this.ws?.readyState;
+
+    return {
+      healthy: this.connectionHealth.healthy && readyState === WebSocket.OPEN,
+      lastCheck: now,
+      diagnostics: {
+        readyState,
+        readyStateText: this.getReadyStateText(readyState),
+        timeSinceLastPong,
+        isAuthenticated: this.isAuthenticated,
+        isConnecting: this.isConnecting,
+        reconnectAttempts: this.reconnectAttempts
+      }
+    };
+  }
+
+  private getReadyStateText(readyState?: number): string {
+    switch (readyState) {
+      case WebSocket.CONNECTING: return 'CONNECTING';
+      case WebSocket.OPEN: return 'OPEN';
+      case WebSocket.CLOSING: return 'CLOSING';
+      case WebSocket.CLOSED: return 'CLOSED';
+      default: return 'UNKNOWN';
+    }
+  }
+
   disconnect(): void {
     this.isAuthenticated = false;
-    
+    this.stopPingInterval();
+
     if (this.ws) {
       this.ws.close(1000, 'Client disconnecting');
       this.ws = null;
     }
-    
+
     console.log('WebSocket: Disconnected');
   }
 }

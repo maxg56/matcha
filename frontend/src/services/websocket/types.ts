@@ -3,8 +3,8 @@ export interface WebSocketMessage {
   data?: any;
   to?: string;
   from?: string;
-  // Chat specific fields
-  conversation_id?: number;
+  // Chat specific fields (for backward compatibility)
+  conversation_id?: string;
   content?: string;
   is_typing?: boolean;
   // Reaction specific fields
