@@ -3,6 +3,7 @@ import { useChatStore } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import type { MessageReaction } from '@/services/websocket/types';
 
+
 interface MessageReactionsProps {
   messageId: number;
   reactions?: MessageReaction[];
@@ -14,17 +15,10 @@ export function MessageReactions({ messageId, reactions = [], className }: Messa
   const { user } = useAuthStore();
   const currentUserId = user?.id;
 
-  // Debug
-  console.log('MessageReactions called:', {
-    messageId,
-    reactionsCount: reactions?.length || 0,
-    reactions: reactions,
-    willRender: !!(reactions && reactions.length > 0)
-  });
+
 
   // Ne rien afficher si aucune réaction
   if (!reactions || reactions.length === 0) {
-    console.log('MessageReactions: No reactions, returning null');
     return null;
   }
 

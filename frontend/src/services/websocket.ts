@@ -71,6 +71,10 @@ class WebSocketService {
     this.messageHandler.removeMessageHandler(type, handler);
   }
 
+  clearHandlers(): void {
+    this.messageHandler.clear();
+  }
+
   sendChatMessage(conversationId: string, message: string): boolean {
     return this.chat.sendChatMessage(conversationId, message);
   }
@@ -118,6 +122,14 @@ class WebSocketService {
 
   subscribeToChatConversation(conversationId: string): boolean {
     return this.chat.subscribeToChatConversation(conversationId);
+  }
+
+  addReaction(messageId: number, emoji: string): boolean {
+    return this.chat.addReaction(messageId, emoji);
+  }
+
+  removeReaction(messageId: number, emoji: string): boolean {
+    return this.chat.removeReaction(messageId, emoji);
   }
 
   subscribeToUserUpdates(): boolean {

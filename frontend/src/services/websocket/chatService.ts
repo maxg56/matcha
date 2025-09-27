@@ -9,11 +9,9 @@ export class ChatService {
 
   sendChatMessage(conversationId: string, message: string): boolean {
     return this.sendMessage({
-      type: MessageType.CHAT,
-      data: {
-        conversation_id: conversationId,
-        message: message
-      }
+      type: MessageType.SEND_MESSAGE,
+      conversation_id: parseInt(conversationId),
+      content: message
     });
   }
 
@@ -25,6 +23,22 @@ export class ChatService {
     return this.sendMessage({
       type: MessageType.SUBSCRIBE,
       data: channel
+    });
+  }
+
+  addReaction(messageId: number, emoji: string): boolean {
+    return this.sendMessage({
+      type: MessageType.REACTION_ADD,
+      message_id: messageId,
+      emoji: emoji
+    });
+  }
+
+  removeReaction(messageId: number, emoji: string): boolean {
+    return this.sendMessage({
+      type: MessageType.REACTION_REMOVE,
+      message_id: messageId,
+      emoji: emoji
     });
   }
 }
