@@ -302,7 +302,20 @@ func (h *Hub) handleGatewayReactionAdd(msg GatewayMessage, conn *websocket.Conn)
 		return
 	}
 
-	// Broadcast reaction update to all users in the conversation
+	// Broadcast reaction update to all users in the conversation using the same mechanism as messages
+	h.BroadcastToConversation(message.ConvID, OutgoingMessage{
+		Type:           MessageTypeReactionUpdate,
+		ConversationID: message.ConvID,
+		Data: ReactionData{
+			MessageID: messageID,
+			UserID:    userID,
+			Emoji:     emoji,
+			Action:    "add",
+		},
+		Timestamp: time.Now(),
+	}, 0) // Don't exclude anyone, everyone should see reactions
+
+	// Also send response back to Gateway
 	broadcastResponse := GatewayResponse{
 		Type:           "reaction_update",
 		ConversationID: strconv.FormatUint(uint64(message.ConvID), 10),
@@ -394,7 +407,20 @@ func (h *Hub) handleGatewayReactionRemove(msg GatewayMessage, conn *websocket.Co
 		return
 	}
 
-	// Broadcast reaction update to all users in the conversation
+	// Broadcast reaction removal to all users in the conversation using the same mechanism as messages
+	h.BroadcastToConversation(message.ConvID, OutgoingMessage{
+		Type:           MessageTypeReactionUpdate,
+		ConversationID: message.ConvID,
+		Data: ReactionData{
+			MessageID: messageID,
+			UserID:    userID,
+			Emoji:     emoji,
+			Action:    "remove",
+		},
+		Timestamp: time.Now(),
+	}, 0) // Don't exclude anyone, everyone should see reaction removals
+
+	// Also send response back to Gateway
 	broadcastResponse := GatewayResponse{
 		Type:           "reaction_update",
 		ConversationID: strconv.FormatUint(uint64(message.ConvID), 10),

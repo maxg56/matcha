@@ -21,7 +21,6 @@ type MessageEvent struct {
 	Type           string         `json:"type"`
 	ConversationID uint           `json:"conversation_id"`
 	Message        models.Message `json:"message"`
-	Participants   []uint         `json:"participants"`
 	Timestamp      time.Time      `json:"timestamp"`
 	Data           map[string]any `json:"data,omitempty"`
 }
@@ -41,7 +40,6 @@ func (ns *NotificationService) PublishMessage(message models.Message, participan
 		Type:           "new_message",
 		ConversationID: message.ConvID,
 		Message:        message,
-		Participants:   participants,
 		Timestamp:      time.Now(),
 	}
 
