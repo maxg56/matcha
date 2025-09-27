@@ -285,6 +285,11 @@ func (s *chatService) AddReaction(userID, messageID uint, emoji string) (*models
 
 	reaction, err := s.repo.AddReaction(messageID, userID, emoji)
 	if err != nil {
+		// Check if this was a toggle operation (reaction removal)
+		if err.Error() == "reaction_removed" {
+			// The reaction was removed (toggle), return a special indicator
+			return nil, errors.New("reaction_removed")
+		}
 		return nil, err
 	}
 

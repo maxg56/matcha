@@ -283,13 +283,26 @@ func (h *Hub) handleGatewayReactionAdd(msg GatewayMessage, conn *websocket.Conn)
 
 	// Add reaction through chat service
 	reaction, err := h.chatService.AddReaction(userID, messageID, emoji)
+
+	// Handle the case where reaction was toggled (removed)
+	isToggleRemoval := false
 	if err != nil {
-		logger.ErrorWithContext(
-			logger.WithComponent("websocket_hub").WithUser(userID),
-			"Failed to add reaction via Gateway: %v", err,
-		)
-		h.sendErrorToGateway(conn, msg.RequestID, err.Error())
-		return
+		if err.Error() == "reaction_removed" {
+			// This was a toggle operation - reaction was removed
+			isToggleRemoval = true
+			logger.InfoWithContext(
+				logger.WithComponent("websocket_hub").WithUser(userID),
+				"Reaction toggled (removed): message=%d, emoji=%s", messageID, emoji,
+			)
+		} else {
+			// Real error occurred
+			logger.ErrorWithContext(
+				logger.WithComponent("websocket_hub").WithUser(userID),
+				"Failed to add reaction via Gateway: %v", err,
+			)
+			h.sendErrorToGateway(conn, msg.RequestID, err.Error())
+			return
+		}
 	}
 
 	// Get the message to find the conversation ID for broadcasting
@@ -302,7 +315,27 @@ func (h *Hub) handleGatewayReactionAdd(msg GatewayMessage, conn *websocket.Conn)
 		return
 	}
 
-	// Broadcast reaction update to all users in the conversation using the same mechanism as messages
+	// Determine action and prepare data
+	action := "add"
+	broadcastData := map[string]interface{}{
+		"conversation_id": message.ConvID,
+		"message_id":      messageID,
+		"user_id":         userID,
+		"emoji":           emoji,
+		"timestamp":       time.Now().Unix(),
+	}
+
+	if isToggleRemoval {
+		action = "remove"
+		// For removal, we don't have reaction_id since it was deleted
+	} else {
+		// For addition, include reaction details
+		broadcastData["reaction_id"] = reaction.ID
+		broadcastData["timestamp"] = reaction.CreatedAt.Unix()
+	}
+	broadcastData["action"] = action
+
+	// Broadcast reaction update to all users in the conversation
 	h.BroadcastToConversation(message.ConvID, OutgoingMessage{
 		Type:           MessageTypeReactionUpdate,
 		ConversationID: message.ConvID,
@@ -310,7 +343,7 @@ func (h *Hub) handleGatewayReactionAdd(msg GatewayMessage, conn *websocket.Conn)
 			MessageID: messageID,
 			UserID:    userID,
 			Emoji:     emoji,
-			Action:    "add",
+			Action:    action,
 		},
 		Timestamp: time.Now(),
 	}, 0) // Don't exclude anyone, everyone should see reactions
@@ -320,15 +353,7 @@ func (h *Hub) handleGatewayReactionAdd(msg GatewayMessage, conn *websocket.Conn)
 		Type:           "reaction_update",
 		ConversationID: strconv.FormatUint(uint64(message.ConvID), 10),
 		UserID:         strconv.FormatUint(uint64(userID), 10),
-		Data: map[string]interface{}{
-			"conversation_id": message.ConvID,
-			"message_id":      messageID,
-			"user_id":         userID,
-			"emoji":           emoji,
-			"action":          "add",
-			"reaction_id":     reaction.ID,
-			"timestamp":       reaction.CreatedAt.Unix(),
-		},
+		Data:           broadcastData,
 	}
 
 	if err := conn.WriteJSON(broadcastResponse); err != nil {

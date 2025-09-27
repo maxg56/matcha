@@ -4,6 +4,8 @@ import (
 	"chat-service/src/models"
 	"chat-service/src/types"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -266,20 +268,42 @@ func (r *chatRepository) GetUnreadCount(conversationID, userID uint) (int64, err
 
 // Reaction operations
 func (r *chatRepository) AddReaction(messageID, userID uint, emoji string) (*models.MessageReaction, error) {
+	// First, check if the message exists
+	var messageExists bool
+	err := r.db.Model(&models.Message{}).
+		Select("1").
+		Where("id = ?", messageID).
+		Limit(1).
+		Scan(&messageExists).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to check message existence: %w", err)
+	}
+
+	if !messageExists {
+		return nil, fmt.Errorf("message with ID %d does not exist", messageID)
+	}
+
 	reaction := &models.MessageReaction{
 		MessageID: messageID,
 		UserID:    userID,
 		Emoji:     emoji,
 	}
 
-	// Try to create, if it exists then toggle (remove then re-add)
-	err := r.db.Create(reaction).Error
+	// Try to create the reaction
+	err = r.db.Create(reaction).Error
 	if err != nil {
-		// If constraint violation, user already has this reaction, so remove it
-		if r.db.Error != nil && r.db.Error.Error() != "" {
-			return nil, r.RemoveReaction(messageID, userID, emoji)
+		// Check if it's a unique constraint violation (user already has this reaction)
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "UNIQUE constraint") {
+			// User already has this reaction, this is a toggle operation - remove it
+			removeErr := r.RemoveReaction(messageID, userID, emoji)
+			if removeErr != nil {
+				return nil, fmt.Errorf("failed to remove existing reaction: %w", removeErr)
+			}
+			// Return a special error to indicate this was a toggle (removal)
+			return nil, fmt.Errorf("reaction_removed")
 		}
-		return nil, err
+		return nil, fmt.Errorf("failed to add reaction: %w", err)
 	}
 
 	return reaction, nil
