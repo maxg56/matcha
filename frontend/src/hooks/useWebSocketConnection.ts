@@ -48,13 +48,6 @@ export function useWebSocketConnection(options: UseWebSocketConnectionOptions = 
     }
   }, [user?.id, reconnectOnAuthChange]);
 
-  // Nettoyage à la destruction du composant
-  useEffect(() => {
-    return () => {
-      // Ne pas déconnecter automatiquement, garder la connexion pour les autres composants
-      // webSocketService.disconnect();
-    };
-  }, []);
 
   return webSocketService;
 }
@@ -135,7 +128,9 @@ export function useWebSocketChat(conversationId?: string) {
       ws.removeMessageHandler(MessageType.CHAT_ACK, handler);
     },
     subscribeTo: (conversationId: string) => ws.subscribeToChatConversation(conversationId),
-    unsubscribeFrom: (conversationId: string) => ws.unsubscribe(`chat_${conversationId}`)
+    unsubscribeFrom: (conversationId: string) => ws.unsubscribe(`chat_${conversationId}`),
+    addReaction: (messageId: number, emoji: string) => ws.addReaction(messageId, emoji),
+    removeReaction: (messageId: number, emoji: string) => ws.removeReaction(messageId, emoji)
   };
 }
 
