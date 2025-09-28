@@ -24,29 +24,12 @@ func SetupMatchRoutes(r *gin.Engine) {
 		match.POST("/like", proxy.ProxyRequest("match", "/api/v1/matches/like"))
 		match.POST("/unlike", proxy.ProxyRequest("match", "/api/v1/matches/unlike"))
 		match.POST("/block", proxy.ProxyRequest("match", "/api/v1/matches/block"))
-	}
 
-	// Matrix routes (require authentication)
-	matrix := r.Group("/api/v1/matrix")
-	matrix.Use(middleware.JWTMiddleware())
-	{
-		matrix.GET("/users", proxy.ProxyRequest("match", "/api/v1/matrix/users"))
-		matrix.GET("/compatible/:user_id", proxy.ProxyRequest("match", "/api/v1/matrix/compatible/:user_id"))
-		matrix.POST("/export", proxy.ProxyRequest("match", "/api/v1/matrix/export"))
-	}
+		// Premium features - likes received
+		match.GET("/received-likes", proxy.ProxyRequest("match", "/api/v1/matches/received-likes"))
+		match.GET("/received-likes/preview", proxy.ProxyRequest("match", "/api/v1/matches/received-likes/preview"))
+		match.GET("/like-stats", proxy.ProxyRequest("match", "/api/v1/matches/like-stats"))
 
-	// Admin routes (require authentication and admin privileges)
-	admin := r.Group("/api/v1/admin")
-	admin.Use(middleware.JWTMiddleware())
-	admin.Use(middleware.AdminMiddleware())
-	{
-		// Performance monitoring
-		admin.GET("/performance", proxy.ProxyRequest("match", "/api/v1/admin/performance"))
-		
-		// Cache management
-		admin.POST("/cache/clear", proxy.ProxyRequest("match", "/api/v1/admin/cache/clear"))
-		
-		// Database optimization
-		admin.POST("/indexes/create", proxy.ProxyRequest("match", "/api/v1/admin/indexes/create"))
+		match.GET("/premium/rewind/availability ", proxy.ProxyRequest("match", "/api/v1/matches/premium/rewind/availability"))
 	}
 }

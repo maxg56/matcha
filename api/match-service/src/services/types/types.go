@@ -60,3 +60,32 @@ type AlgorithmInfo struct {
 	OptionalParams []string      `json:"optional_params"`
 	Cacheable      bool          `json:"cacheable"`
 }
+
+// ReceivedLike represents a received like with full user profile (Premium feature)
+type ReceivedLike struct {
+	ID           int         `json:"id"`
+	UserID       int         `json:"user_id"`
+	TargetUserID int         `json:"target_user_id"`
+	UserProfile  MatchResult `json:"user_profile"`
+	CreatedAt    string      `json:"created_at"`
+	IsMutual     bool        `json:"is_mutual"`
+}
+
+// ReceivedLikePreview represents a blurred preview for free users
+type ReceivedLikePreview struct {
+	ID                string `json:"id"`
+	CreatedAt         string `json:"created_at"`
+	BlurredImage      string `json:"blurred_image"`
+	TimestampRelative string `json:"timestamp_relative"`
+}
+
+// LikeStats represents statistics about received likes
+type LikeStats struct {
+	TotalLikesReceived   int     `json:"total_likes_received"`
+	LikesToday          int     `json:"likes_today"`
+	LikesThisWeek       int     `json:"likes_this_week"`
+	LikesThisMonth      int     `json:"likes_this_month"`
+	MostLikedPhoto      *string `json:"most_liked_photo,omitempty"`
+	LikeRateTrend       string  `json:"like_rate_trend"`
+	AverageLikesPerDay  float64 `json:"average_likes_per_day"`
+}

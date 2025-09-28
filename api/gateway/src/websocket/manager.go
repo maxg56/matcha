@@ -145,8 +145,7 @@ func (m *Manager) registerClient(client *Client) {
 	
 	// Close existing connection if user reconnects
 	if existingClient, exists := m.clients[client.ID]; exists {
-		close(existingClient.Send)
-		existingClient.Conn.Close()
+		existingClient.Close()
 	}
 	
 	m.clients[client.ID] = client
@@ -164,7 +163,7 @@ func (m *Manager) registerClient(client *Client) {
 	select {
 	case client.Send <- m.messageToBytes(welcome):
 	default:
-		close(client.Send)
+		client.Close()
 		delete(m.clients, client.ID)
 	}
 	// Fetch existing notifications for the user from notify-service
@@ -214,8 +213,8 @@ func (m *Manager) unregisterClientUnsafe(client *Client) {
 
 // broadcastMessage sends a message to the appropriate clients
 func (m *Manager) broadcastMessage(message BroadcastMessage) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	
 	messageBytes := m.messageToBytes(message)
 	
@@ -225,7 +224,7 @@ func (m *Manager) broadcastMessage(message BroadcastMessage) {
 			select {
 			case client.Send <- messageBytes:
 			default:
-				close(client.Send)
+				client.Close()
 				delete(m.clients, message.UserID)
 			}
 		}
@@ -236,7 +235,7 @@ func (m *Manager) broadcastMessage(message BroadcastMessage) {
 				select {
 				case client.Send <- messageBytes:
 				default:
-					close(client.Send)
+					client.Close()
 					delete(m.clients, userID)
 					delete(subscribers, userID)
 				}
@@ -248,7 +247,7 @@ func (m *Manager) broadcastMessage(message BroadcastMessage) {
 			select {
 			case client.Send <- messageBytes:
 			default:
-				close(client.Send)
+				client.Close()
 				delete(m.clients, userID)
 			}
 		}

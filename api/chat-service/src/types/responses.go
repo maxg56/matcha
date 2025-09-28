@@ -30,9 +30,11 @@ type MessageResponse struct {
 
 // UserInfo represents basic user information
 type UserInfo struct {
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-	Avatar   string `json:"avatar,omitempty"`
+	ID        uint   `json:"id"`
+	Username  string `json:"username"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Avatar    string `json:"avatar,omitempty"`
 }
 
 // MessagesResponse represents paginated messages

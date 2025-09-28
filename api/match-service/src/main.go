@@ -42,7 +42,6 @@ func main() {
 			"cache_stats": cacheStats,
 		})
 	})
-
 	// API routes
 	api := r.Group("/api/v1")
 	{
@@ -58,6 +57,21 @@ func main() {
 			matches.GET("/algorithm", handlers.MatchingAlgorithmHandler)
 			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
 			matches.DELETE("/seen", handlers.ResetSeenProfilesHandler)
+
+			// Premium features - likes received
+			matches.GET("/received-likes", handlers.GetReceivedLikesHandler)
+			matches.GET("/received-likes/preview", handlers.GetReceivedLikesPreviewHandler)
+			matches.GET("/like-stats", handlers.GetLikeStatsHandler)
+
+			// Premium features - rewind functionality
+			premium := matches.Group("/premium")
+			{
+				rewind := premium.Group("/rewind")
+				{
+					rewind.GET("/availability", handlers.GetRewindAvailabilityHandler)
+					rewind.POST("/perform", handlers.PerformRewindHandler)
+				}
+			}
 		}
 
 

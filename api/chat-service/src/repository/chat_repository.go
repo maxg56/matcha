@@ -3,8 +3,11 @@ package repository
 import (
 	"chat-service/src/models"
 	"chat-service/src/types"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
-	
+
 	"gorm.io/gorm"
 )
 
@@ -63,6 +66,113 @@ func (r *chatRepository) FindConversationBetweenUsers(user1ID, user2ID uint) (*m
 	).First(&conversation).Error
 	
 	return &conversation, err
+}
+
+// User info operations for enriching conversations
+func (r *chatRepository) GetUserInfo(userID uint) (*types.UserInfo, error) {
+	var user models.Users
+
+	// Get user basic info including first_name and last_name
+	err := r.db.Select("id, username, first_name, last_name").First(&user, userID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get profile image filename - use a simple string variable instead of sql.NullString
+	var filename string
+	err = r.db.Table("images").
+		Select("filename").
+		Where("user_id = ? AND is_profile = ? AND is_active = ?", userID, true, true).
+		First(&filename).Error
+
+	userInfo := &types.UserInfo{
+		ID:        user.ID,
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	// If profile image found, build full URL
+	if err == nil && filename != "" {
+		// Build full image URL - assuming images are served from /api/v1/media/images/
+		userInfo.Avatar = "/api/v1/media/images/" + filename
+	}
+	// If no profile image found, that's OK - we'll use default in frontend
+
+	return userInfo, nil
+}
+
+func (r *chatRepository) GetUsersInfo(userIDs []uint) (map[uint]*types.UserInfo, error) {
+	if len(userIDs) == 0 {
+		return make(map[uint]*types.UserInfo), nil
+	}
+
+	// Get users basic info including first_name and last_name
+	var users []models.Users
+	err := r.db.Select("id, username, first_name, last_name").Where("id IN ?", userIDs).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get profile images for these users - use struct with proper tags
+	type UserAvatar struct {
+		UserID   uint   `gorm:"column:user_id"`
+		Filename string `gorm:"column:filename"`
+	}
+
+	var avatars []UserAvatar
+	err = r.db.Table("images").
+		Select("user_id, filename").
+		Where("user_id IN ? AND is_profile = ? AND is_active = ?", userIDs, true, true).
+		Scan(&avatars).Error // Use Scan instead of Find to avoid GORM model issues
+
+	// If no avatars found, that's OK - we'll continue without them
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Log the error but don't fail the whole request
+		return r.buildUsersInfoWithoutAvatars(users), nil
+	}
+
+	// Create avatar map for quick lookup
+	avatarMap := make(map[uint]string)
+	for _, avatar := range avatars {
+		if avatar.Filename != "" {
+			// Build full image URL
+			avatarMap[avatar.UserID] = "/api/v1/media/images/" + avatar.Filename
+		}
+	}
+
+	// Combine user info with avatars
+	result := make(map[uint]*types.UserInfo)
+	for _, user := range users {
+		userInfo := &types.UserInfo{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+		}
+
+		if avatarURL, exists := avatarMap[user.ID]; exists {
+			userInfo.Avatar = avatarURL
+		}
+
+		result[user.ID] = userInfo
+	}
+
+	return result, nil
+}
+
+// Helper function to build user info without avatars
+func (r *chatRepository) buildUsersInfoWithoutAvatars(users []models.Users) map[uint]*types.UserInfo {
+	result := make(map[uint]*types.UserInfo)
+	for _, user := range users {
+		result[user.ID] = &types.UserInfo{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+		}
+	}
+	return result
 }
 
 func (r *chatRepository) IsUserInConversation(userID, conversationID uint) (bool, error) {
@@ -158,20 +268,42 @@ func (r *chatRepository) GetUnreadCount(conversationID, userID uint) (int64, err
 
 // Reaction operations
 func (r *chatRepository) AddReaction(messageID, userID uint, emoji string) (*models.MessageReaction, error) {
+	// First, check if the message exists
+	var messageExists bool
+	err := r.db.Model(&models.Message{}).
+		Select("1").
+		Where("id = ?", messageID).
+		Limit(1).
+		Scan(&messageExists).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to check message existence: %w", err)
+	}
+
+	if !messageExists {
+		return nil, fmt.Errorf("message with ID %d does not exist", messageID)
+	}
+
 	reaction := &models.MessageReaction{
 		MessageID: messageID,
 		UserID:    userID,
 		Emoji:     emoji,
 	}
 
-	// Try to create, if it exists then toggle (remove then re-add)
-	err := r.db.Create(reaction).Error
+	// Try to create the reaction
+	err = r.db.Create(reaction).Error
 	if err != nil {
-		// If constraint violation, user already has this reaction, so remove it
-		if r.db.Error != nil && r.db.Error.Error() != "" {
-			return nil, r.RemoveReaction(messageID, userID, emoji)
+		// Check if it's a unique constraint violation (user already has this reaction)
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "UNIQUE constraint") {
+			// User already has this reaction, this is a toggle operation - remove it
+			removeErr := r.RemoveReaction(messageID, userID, emoji)
+			if removeErr != nil {
+				return nil, fmt.Errorf("failed to remove existing reaction: %w", removeErr)
+			}
+			// Return a special error to indicate this was a toggle (removal)
+			return nil, fmt.Errorf("reaction_removed")
 		}
-		return nil, err
+		return nil, fmt.Errorf("failed to add reaction: %w", err)
 	}
 
 	return reaction, nil

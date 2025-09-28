@@ -2,42 +2,71 @@ package main
 
 import (
     "log"
-    "os"
-    "time"
 
     "github.com/gin-gonic/gin"
-    "github.com/joho/godotenv"
-    "github.com/gin-contrib/cors"
-    "github.com/matcha/api/paiements-service/src/stripe"
+    "github.com/matcha/api/paiements-service/src/handlers"
+    "github.com/matcha/api/paiements-service/src/conf"
+    "github.com/matcha/api/paiements-service/src/middleware"
 )
 
 func main() {
-    // Charger le .env
-    if err := godotenv.Load(".env"); err != nil {
-        log.Println("No .env file found, relying on environment variables")
-        log.Println(os.Getenv("STRIPE_PRICE_MENSUEL"))
-        log.Println(os.Getenv("STRIPE_PRICE_ANNUEL"))
+    // Initialize environment configuration
+    conf.InitEnv()
+
+    // Initialize database
+    conf.InitDB()
+
+    // Set Gin mode based on environment
+    if conf.Env.IsProduction() {
+        gin.SetMode(gin.ReleaseMode)
     }
 
     r := gin.Default()
 
-    // Middleware CORS
-    r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:5173"}, // ton frontend
-        AllowMethods:     []string{"POST", "GET", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type"},
-        AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
-    }))
-
-    // Enregistrer les routes Stripe
-    stripe.RegisterRoutes(r)
-
-    port := os.Getenv("PAYOUT_SERVICE_PORT")
-    if port == "" {
-        port = "8085" // port par défaut pour le microservice paiement
+    // Configure trusted proxies for security
+    if conf.Env.IsProduction() {
+        r.SetTrustedProxies([]string{"127.0.0.1"}) // Only trust localhost in production
+    } else {
+        r.SetTrustedProxies([]string{"127.0.0.1", "172.16.0.0/12", "192.168.0.0/16"}) // Docker networks
     }
 
-    log.Printf("Paiement service running on :%s", port)
-    r.Run(":" + port)
+
+    // Health check endpoint
+    r.GET("/health", func(c *gin.Context) {
+        c.JSON(200, gin.H{"status": "healthy", "service": "paiements"})
+    })
+
+    // Register Stripe routes
+    r.POST("/api/stripe/webhook", handlers.HandleStripeWebhook)
+	
+	// Test endpoint (no auth required) - remove in production
+	r.GET("/api/stripe/test", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"success": true,
+			"message": "Payment service is working",
+			"data": gin.H{
+				"service": "paiements-service",
+				"version": "2.0",
+				"endpoints": []string{
+					"POST /api/stripe/create-checkout-session",
+					"GET /api/stripe/subscription/status",
+					"POST /api/stripe/webhook",
+				},
+			},
+		})
+	})
+
+	// Protected routes (require authentication)
+	stripeGroup := r.Group("/api/stripe")
+	stripeGroup.Use(middleware.AuthMiddleware())
+	{
+		stripeGroup.POST("/create-checkout-session", handlers.CreateCheckoutSession)
+		stripeGroup.GET("/subscription/status", handlers.GetSubscriptionStatus)
+	}
+
+    log.Printf("🚀 Payment service running on port %s (mode: %s)", conf.Env.Port, conf.Env.GinMode)
+
+    if err := r.Run(":" + conf.Env.Port); err != nil {
+        log.Fatalf("❌ Failed to start server: %v", err)
+    }
 }

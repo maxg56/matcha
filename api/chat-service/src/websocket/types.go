@@ -80,6 +80,7 @@ type ReactionData struct {
 	MessageID uint   `json:"message_id"`
 	UserID    uint   `json:"user_id"`
 	Emoji     string `json:"emoji"`
+	Action    string `json:"action"` // "add" or "remove"
 }
 
 // PresenceData represents user presence data

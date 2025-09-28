@@ -30,13 +30,13 @@ func (h *ChatHandlers) GetUserConversations(c *gin.Context) {
 		return
 	}
 
-	conversations, err := h.chatService.GetUserConversations(userID)
+	conversationsResponse, err := h.chatService.GetUserConversations(userID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to retrieve conversations")
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, conversations)
+	utils.RespondSuccess(c, http.StatusOK, conversationsResponse)
 }
 
 // GetConversation retrieves a specific conversation
@@ -53,7 +53,7 @@ func (h *ChatHandlers) GetConversation(c *gin.Context) {
 		return
 	}
 
-	conversation, err := h.chatService.GetConversation(userID, conversationID)
+	conversationResponse, err := h.chatService.GetConversation(userID, conversationID)
 	if err != nil {
 		if err.Error() == "access denied" {
 			utils.RespondError(c, http.StatusForbidden, "Access denied")
@@ -63,7 +63,7 @@ func (h *ChatHandlers) GetConversation(c *gin.Context) {
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, conversation)
+	utils.RespondSuccess(c, http.StatusOK, conversationResponse)
 }
 
 // CreateConversation creates a new conversation

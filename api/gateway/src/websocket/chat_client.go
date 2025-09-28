@@ -320,7 +320,19 @@ func (c *ChatServiceClient) handleReactionUpdate(response ChatServiceResponse) {
 	// Broadcast reaction update to all users in the conversation
 	if response.Data != nil {
 		if conversationID, exists := response.Data["conversation_id"]; exists {
-			channelName := fmt.Sprintf("chat_%s", conversationID)
+			// Convert conversation_id to string (it might be a number)
+			var conversationIDStr string
+			switch v := conversationID.(type) {
+			case string:
+				conversationIDStr = v
+			case float64:
+				conversationIDStr = fmt.Sprintf("%.0f", v)
+			case int:
+				conversationIDStr = fmt.Sprintf("%d", v)
+			default:
+				conversationIDStr = fmt.Sprintf("%v", v)
+			}
+			channelName := fmt.Sprintf("chat_%s", conversationIDStr)
 
 			reactionData := map[string]interface{}{
 				"type": "reaction_update",
@@ -332,7 +344,7 @@ func (c *ChatServiceClient) handleReactionUpdate(response ChatServiceResponse) {
 				reactionData[k] = v
 			}
 
-			GlobalManager.SendToChannel(channelName, "reaction_update", reactionData, response.UserID)
+			GlobalManager.SendToChannel(channelName, "reaction_update", reactionData, "")
 			log.Printf("📢 Broadcasted reaction update to channel: %s", channelName)
 		}
 	}

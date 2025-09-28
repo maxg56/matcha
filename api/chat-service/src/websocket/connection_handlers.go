@@ -145,23 +145,33 @@ func (c *Connection) handleReactionAdd(msg IncomingMessage, chatService types.Ch
 		return err
 	}
 
-	// Broadcast reaction to conversation participants
-	// First get the message to find the conversation
-	participants, err := c.getMessageConversationParticipants(msg.MessageID, chatService)
+	// Get the conversation ID from the message
+	message, err := chatService.GetMessage(msg.MessageID)
 	if err != nil {
-		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("get_participants"), "Failed to get participants: %v", err)
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("get_message"), "Failed to get message: %v", err)
 		return err
 	}
 
-	c.hub.BroadcastToUsers(participants, OutgoingMessage{
-		Type: MessageTypeReactionUpdate,
+	// Broadcast reaction to conversation participants using the same mechanism as messages
+	reactionMsg := OutgoingMessage{
+		Type:           MessageTypeReactionUpdate,
+		ConversationID: message.ConvID,
 		Data: ReactionData{
 			MessageID: msg.MessageID,
 			UserID:    c.userID,
 			Emoji:     msg.Emoji,
+			Action:    "add",
 		},
 		Timestamp: time.Now(),
-	})
+	}
+
+	logger.InfoWithContext(
+		logger.WithComponent("websocket_conn").WithUser(c.userID).WithConversation(message.ConvID),
+		"🚀 Broadcasting reaction ADD: messageID=%d, emoji=%s, userID=%d",
+		msg.MessageID, msg.Emoji, c.userID,
+	)
+
+	c.hub.BroadcastToConversation(message.ConvID, reactionMsg, 0) // Don't exclude anyone, everyone should see reactions
 
 	logger.InfoWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("reaction_added"), "Reaction added successfully")
 	return nil
@@ -179,22 +189,33 @@ func (c *Connection) handleReactionRemove(msg IncomingMessage, chatService types
 		return err
 	}
 
-	// Broadcast reaction removal to conversation participants
-	participants, err := c.getMessageConversationParticipants(msg.MessageID, chatService)
+	// Get the conversation ID from the message
+	message, err := chatService.GetMessage(msg.MessageID)
 	if err != nil {
-		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("get_participants"), "Failed to get participants: %v", err)
+		logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("get_message"), "Failed to get message: %v", err)
 		return err
 	}
 
-	c.hub.BroadcastToUsers(participants, OutgoingMessage{
-		Type: MessageTypeReactionUpdate,
+	// Broadcast reaction removal to conversation participants using the same mechanism as messages
+	reactionMsg := OutgoingMessage{
+		Type:           MessageTypeReactionUpdate,
+		ConversationID: message.ConvID,
 		Data: ReactionData{
 			MessageID: msg.MessageID,
 			UserID:    c.userID,
 			Emoji:     msg.Emoji,
+			Action:    "remove",
 		},
 		Timestamp: time.Now(),
-	})
+	}
+
+	logger.InfoWithContext(
+		logger.WithComponent("websocket_conn").WithUser(c.userID).WithConversation(message.ConvID),
+		"🚀 Broadcasting reaction REMOVE: messageID=%d, emoji=%s, userID=%d",
+		msg.MessageID, msg.Emoji, c.userID,
+	)
+
+	c.hub.BroadcastToConversation(message.ConvID, reactionMsg, 0) // Don't exclude anyone, everyone should see reaction removals
 
 	logger.InfoWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID).WithAction("reaction_removed"), "Reaction removed successfully")
 	return nil

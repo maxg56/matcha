@@ -171,6 +171,48 @@ func (s *MatchService) GetPopularUsers(userID int, limit int, minFame int) ([]ty
 // ValidateUser checks if a user exists
 func (s *MatchService) ValidateUser(userID int) error {
 	return s.userService.ValidateUserExists(userID)
+}
 
+// ReceivedLike represents a like received by a user
+type ReceivedLike struct {
+	ID           int         `json:"id"`
+	UserID       int         `json:"user_id"`
+	TargetUserID int         `json:"target_user_id"`
+	UserProfile  MatchResult `json:"user_profile"`
+	CreatedAt    string      `json:"created_at"`
+	IsMutual     bool        `json:"is_mutual"`
+}
 
+// ReceivedLikePreview represents a blurred preview for free users
+type ReceivedLikePreview struct {
+	ID                string `json:"id"`
+	CreatedAt         string `json:"created_at"`
+	BlurredImage      string `json:"blurred_image"`
+	TimestampRelative string `json:"timestamp_relative"`
+}
+
+// LikeStats represents statistics about received likes
+type LikeStats struct {
+	TotalLikesReceived   int     `json:"total_likes_received"`
+	LikesToday          int     `json:"likes_today"`
+	LikesThisWeek       int     `json:"likes_this_week"`
+	LikesThisMonth      int     `json:"likes_this_month"`
+	MostLikedPhoto      *string `json:"most_liked_photo,omitempty"`
+	LikeRateTrend       string  `json:"like_rate_trend"`
+	AverageLikesPerDay  float64 `json:"average_likes_per_day"`
+}
+
+// GetReceivedLikes returns all likes received by a user (Premium feature)
+func (s *MatchService) GetReceivedLikes(userID int) ([]ReceivedLike, error) {
+	return s.interactionService.GetReceivedLikes(userID)
+}
+
+// GetReceivedLikesPreview returns limited preview of received likes
+func (s *MatchService) GetReceivedLikesPreview(userID int, limit int) ([]ReceivedLikePreview, error) {
+	return s.interactionService.GetReceivedLikesPreview(userID, limit)
+}
+
+// GetLikeStats returns statistics about likes received by the user
+func (s *MatchService) GetLikeStats(userID int) (*LikeStats, error) {
+	return s.interactionService.GetLikeStats(userID)
 }
