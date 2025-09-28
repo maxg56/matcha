@@ -90,7 +90,9 @@ func CreateCheckoutSession(c *gin.Context) {
 	// Get frontend URL from environment
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
-		frontendURL = "http://localhost:3000" // fallback
+		log.Printf("FRONTEND_URL environment variable is not set")
+		utils.RespondError(c, http.StatusInternalServerError, "Server configuration error: FRONTEND_URL not set")
+		return
 	}
 
 	// Create checkout session
