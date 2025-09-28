@@ -13,7 +13,7 @@ import (
 
 func main() {
     // Charger le .env
-    if err := godotenv.Load("../../../env"); err != nil {
+    if err := godotenv.Load(".env"); err != nil {
         log.Println("No .env file found, relying on environment variables")
         log.Println(os.Getenv("STRIPE_PRICE_MENSUEL"))
         log.Println(os.Getenv("STRIPE_PRICE_ANNUEL"))
