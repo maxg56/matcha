@@ -8,6 +8,7 @@ export { useForgotPassword } from './auth/useForgotPassword';
 // API hooks
 export { useEditProfile } from './api/useEditProfile';
 export { useFilters } from './api/useFilters';
+export { useDiscoverProfiles } from './api/useDiscoverProfiles';
 export { useMatches } from './useMatches';
 
 // Registration hooks

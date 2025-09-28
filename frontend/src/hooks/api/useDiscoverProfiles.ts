@@ -1,44 +1,30 @@
 import { useEffect, useState } from 'react';
-import { useDiscoverStore } from '@/stores/discoverStore';
 
 export function useDiscoverProfiles(initialProfiles = []) {
-  // --- STORE MODE ---
-  const {
-    profiles,
-    currentIndex,
-    hasMoreProfiles,
-    isLoading,
-    error,
-    fetchProfiles,
-    likeProfile,
-    dislikeProfile,
-    superLikeProfile,
-    reportProfile,
-  } = useDiscoverStore();
-
-  // --- MOCK MODE ---
+  // --- MOCK MODE (PRIMARY) ---
   const [mockIndex, setMockIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const isMockMode = initialProfiles.length > 0;
-  const usedProfiles = isMockMode ? initialProfiles : profiles;
-  const currentProfile = usedProfiles[isMockMode ? mockIndex : currentIndex];
+  const usedProfiles = isMockMode ? initialProfiles : [];
+  const currentProfile = usedProfiles[mockIndex];
 
+  // For future API integration
   useEffect(() => {
-    if (!isMockMode && profiles.length === 0 && !isLoading) {
-      fetchProfiles();
+    if (!isMockMode) {
+      // TODO: Implement API profile fetching when discoverStore is available
+      setIsLoading(false);
     }
-  }, [isMockMode, profiles.length, isLoading, fetchProfiles]);
+  }, [isMockMode]);
 
   // Actions adaptées selon le mode
   const handleLike = (id: string | number) => {
     if (isMockMode) {
       setMockIndex((prev) => prev + 1);
     } else {
-      if (typeof id === 'number') {
-        likeProfile(id);
-      } else {
-        console.error('likeProfile expects a number as id');
-      }
+      // TODO: Implement API like when discoverStore is available
+      console.log('Like profile:', id);
     }
   };
 
@@ -46,11 +32,8 @@ export function useDiscoverProfiles(initialProfiles = []) {
     if (isMockMode) {
       setMockIndex((prev) => prev + 1);
     } else {
-      if (typeof id === 'number') {
-        dislikeProfile(id);
-      } else {
-        console.error('dislikeProfile expects a number as id');
-      }
+      // TODO: Implement API dislike when discoverStore is available
+      console.log('Pass profile:', id);
     }
   };
 
@@ -58,40 +41,35 @@ export function useDiscoverProfiles(initialProfiles = []) {
     if (isMockMode) {
       setMockIndex((prev) => prev + 1);
     } else {
-      if (typeof id === 'number') {
-        superLikeProfile(id);
-      } else {
-        console.error('superLikeProfile expects a number as id');
-      }
+      // TODO: Implement API super like when discoverStore is available
+      console.log('Super like profile:', id);
     }
   };
 
   const handleBoost = (_id: string | number) => {
-    // Boost functionality to be implemented
-    // TODO:
+    // TODO: Implement boost functionality
+    console.log('Boost profile:', _id);
   };
 
   const handleMessage = (_id: string | number) => {
-    // Message functionality to be implemented
-    // TODO:  
+    // TODO: Implement message functionality
+    console.log('Message profile:', _id);
   };
 
   const handleReport = (id: string | number, reason: string = 'inappropriate') => {
     if (isMockMode) {
-      // Report functionality to be implemented
-      // TODO:
+      // TODO: Implement report functionality
+      console.log('Report profile:', id, 'Reason:', reason);
     } else {
-      if (typeof id === 'number') {
-        reportProfile(id, reason);
-      } else {
-        console.error('reportProfile expects a number as id');
-      }
+      // TODO: Implement API report when discoverStore is available
+      console.log('Report profile:', id, 'Reason:', reason);
     }
   };
 
   const handleRefresh = () => {
     if (!isMockMode) {
-      fetchProfiles();
+      // TODO: Implement API refresh when discoverStore is available
+      console.log('Refresh profiles');
     } else {
       // En mode mock, on peut juste remettre l'index à 0
       setMockIndex(0);
@@ -100,7 +78,7 @@ export function useDiscoverProfiles(initialProfiles = []) {
 
   return {
     currentProfile,
-    hasMoreProfiles: isMockMode ? mockIndex < initialProfiles.length - 1 : hasMoreProfiles,
+    hasMoreProfiles: isMockMode ? mockIndex < initialProfiles.length - 1 : false,
     isLoading: isMockMode ? false : isLoading,
     error: isMockMode ? null : error,
     actions: {

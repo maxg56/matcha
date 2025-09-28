@@ -7,7 +7,7 @@ import { useMatches, useFilters, useDiscoverProfiles } from '@/hooks';
 import { TestProfiles } from '@/components/discover/mockUsers';
 import { useToast } from '@/hooks/ui/useToast';
 import { LimitCounter, PremiumUpsellModal, ProfileBoost, RewindButton, DistanceSettings } from '@/components/premium';
-import { usePremiumStoreLegacy } from '@/stores/premiumStore';
+import { usePremiumStoreLegacy } from '@/stores';
 import { MatchingPreferencesModal } from '@/components/preferences';
 import { LocationPrompt } from '@/components/LocationPrompt';
 import { useState, useEffect } from 'react';

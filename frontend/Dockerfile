@@ -6,8 +6,8 @@ RUN addgroup -g 1001 -S frontend && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G frontend frontend
 
 # Create cache directories with proper permissions
-RUN mkdir -p /app/.cache/node /app/.pnpm-store /app/node_modules/.cache && \
-    chown -R frontend:frontend /app/.cache /app/.pnpm-store
+RUN mkdir -p /app/.cache/node /app/.pnpm-store /app/node_modules/.cache /tmp/corepack && \
+    chown -R frontend:frontend /app/.cache /app/.pnpm-store /tmp/corepack
 
 COPY package.json pnpm-lock.yaml* ./
 RUN corepack enable && pnpm install --frozen-lockfile
