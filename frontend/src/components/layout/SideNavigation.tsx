@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/stores/userStore';
+
 
 
 const navItems = [
@@ -44,6 +46,7 @@ type MockUser = {
 export function SideNavigation() {
   const location = useLocation();
   const { logout, user } = useAuth();
+  const { profile } = useUserStore();
   
   // Check if user is admin
   const isAdmin = user && (user.username.toLowerCase() === 'admin' || user.username.toLowerCase() === 'administrator' || user.id === 1);
@@ -64,13 +67,18 @@ export function SideNavigation() {
 
   useEffect(() => {
     if (user) {
+      // Utilise la première image du profil comme avatar, ou une image par défaut
+      const avatarImage = profile?.images && profile.images.length > 0 
+        ? profile.images[0] 
+        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop';
+      
       setMockUser({
         name: user.username || 'Utilisateur',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+        avatar: avatarImage,
         initials: user.username ? user.username.substring(0, 2).toUpperCase() : 'U'
       });
     }
-  }, [user]);
+  }, [user, profile?.images]);
   return (
     <aside className="w-80 h-full bg-card border-r border-border flex flex-col flex-shrink-0">
       {/* Header */}
@@ -128,25 +136,6 @@ export function SideNavigation() {
               </Link>
             );
           })}
-        </div>
-
-        {/* Stats */}
-        <div className="mt-8 p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-          <h3 className="font-semibold text-foreground mb-3">Mes stats</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Matches</span>
-              <span className="font-semibold text-primary">24</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Vues de profil</span>
-              <span className="font-semibold text-primary">156</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Likes reçus</span>
-              <span className="font-semibold text-primary">89</span>
-            </div>
-          </div>
         </div>
       </nav>
 

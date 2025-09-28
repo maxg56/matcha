@@ -32,7 +32,6 @@ export function useDiscoverProfiles(initialProfiles = []) {
   // Actions adaptées selon le mode
   const handleLike = (id: string | number) => {
     if (isMockMode) {
-      console.log('Liked:', id);
       setMockIndex((prev) => prev + 1);
     } else {
       if (typeof id === 'number') {
@@ -45,7 +44,6 @@ export function useDiscoverProfiles(initialProfiles = []) {
 
   const handlePass = (id: string | number) => {
     if (isMockMode) {
-      console.log('Passed:', id);
       setMockIndex((prev) => prev + 1);
     } else {
       if (typeof id === 'number') {
@@ -58,7 +56,6 @@ export function useDiscoverProfiles(initialProfiles = []) {
 
   const handleSuperLike = (id: string | number) => {
     if (isMockMode) {
-      console.log('SuperLiked:', id);
       setMockIndex((prev) => prev + 1);
     } else {
       if (typeof id === 'number') {
@@ -69,17 +66,20 @@ export function useDiscoverProfiles(initialProfiles = []) {
     }
   };
 
-  const handleBoost = (id: string | number) => {
-    console.log('Boosted:', id);
+  const handleBoost = (_id: string | number) => {
+    // Boost functionality to be implemented
+    // TODO:
   };
 
-  const handleMessage = (id: string | number) => {
-    console.log('Message:', id);
+  const handleMessage = (_id: string | number) => {
+    // Message functionality to be implemented
+    // TODO:  
   };
 
   const handleReport = (id: string | number, reason: string = 'inappropriate') => {
     if (isMockMode) {
-      console.log('Reported:', id, reason);
+      // Report functionality to be implemented
+      // TODO:
     } else {
       if (typeof id === 'number') {
         reportProfile(id, reason);

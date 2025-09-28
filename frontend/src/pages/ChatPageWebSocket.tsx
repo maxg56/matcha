@@ -6,6 +6,7 @@ import { ChatInput } from '@/components/chat/ChatInput';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { WebSocketStatus } from '@/components/WebSocketStatus';
 import { useChatStore, type Message } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useWebSocketChat } from '@/hooks/useWebSocketConnection';
 
 // Type pour les messages de l'interface UI (compatible avec ChatBubble)
@@ -15,26 +16,30 @@ interface UIMessage {
   timestamp: string;
   isOwn: boolean;
   status: 'sent' | 'delivered' | 'read';
+  reactions?: import('@/services/websocket/types').MessageReaction[];
 }
 
 export default function ChatPageWebSocket() {
   const navigate = useNavigate();
   const { matchId } = useParams<{ matchId: string }>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Store et hooks WebSocket
-  const { 
-    activeConversation, 
-    messages, 
-    isLoading, 
+  const {
+    activeConversation,
+    messages,
+    isLoading,
     error,
     isConnected,
-    fetchMessages, 
+    fetchConversations,
+    fetchMessages,
     setActiveConversation,
     subscribeToConversation,
     unsubscribeFromConversation,
-    sendWebSocketMessage 
+    sendWebSocketMessage
   } = useChatStore();
+
+  const { user } = useAuthStore();
   
   const { addChatHandler, removeChatHandler } = useWebSocketChat(matchId);
   
@@ -53,41 +58,46 @@ export default function ChatPageWebSocket() {
   // Initialisation de la conversation
   useEffect(() => {
     if (matchId) {
-      const conversationId = parseInt(matchId);
-      
-      // Charger les messages existants
-      fetchMessages(conversationId).catch(error => {
-        console.error('Failed to load messages:', error);
-      });
-      
-      // S'abonner aux nouveaux messages WebSocket
-      subscribeToConversation(conversationId);
-      
-      // Mock de conversation active pour l'exemple
-      setActiveConversation({
-        id: conversationId,
-        user: {
-          id: 123,
-          username: 'emma',
-          first_name: 'Emma',
-          last_name: 'Dubois',
-          profile_image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-          is_online: true,
-          last_seen: new Date().toISOString()
-        },
-        unread_count: 0,
-        updated_at: new Date().toISOString()
-      });
-      
+      const initializeConversation = async () => {
+        try {
+          // Récupérer toutes les conversations de l'utilisateur
+          await fetchConversations();
+          const allConversations = useChatStore.getState().conversations;
+
+          // Chercher une conversation existante avec ce match/utilisateur
+          // Pour l'instant, on utilise matchId comme conversationId
+          // TODO: Implémenter la logique pour trouver la vraie conversation basée sur le matchId
+          const conversationId = parseInt(matchId);
+          const existingConversation = allConversations.find(conv => conv.id === conversationId);
+
+          if (existingConversation && existingConversation.user) {
+            // Conversation trouvée avec données utilisateur complètes, charger les messages
+            setActiveConversation(existingConversation);
+            await fetchMessages(conversationId);
+            subscribeToConversation(conversationId);
+          } else {
+            // Conversation non trouvée ou données manquantes
+            console.error(`Conversation ${conversationId} not found or missing user data`);
+            navigate('/app/messages');
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to initialize conversation:', error);
+        }
+      };
+
+      initializeConversation();
+
       return () => {
+        const conversationId = parseInt(matchId);
         unsubscribeFromConversation(conversationId);
       };
     }
-  }, [matchId, fetchMessages, subscribeToConversation, unsubscribeFromConversation, setActiveConversation]);
+  }, [matchId, fetchConversations, fetchMessages, subscribeToConversation, unsubscribeFromConversation, setActiveConversation, navigate]);
 
   // Handler pour les messages WebSocket entrants
   useEffect(() => {
-    const chatHandler = (data: any, message: any) => {
+    const chatHandler = (data: unknown, message: { type: string }) => {
       if (message.type === 'chat_message') {
         console.log('Nouveau message WebSocket reçu:', data);
         // Le message sera automatiquement ajouté au store via chatStore
@@ -102,16 +112,25 @@ export default function ChatPageWebSocket() {
   }, [addChatHandler, removeChatHandler]);
 
   // Convertir les messages du store au format UI
-  const uiMessages: UIMessage[] = messages.map((msg: Message) => ({
-    id: msg.id.toString(),
-    content: msg.content,
-    timestamp: new Date(msg.sent_at).toLocaleTimeString('fr-FR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }),
-    isOwn: msg.sender_id === activeConversation?.user.id,
-    status: msg.is_read ? 'read' : 'delivered'
-  }));
+  const uiMessages: UIMessage[] = messages.map((msg: Message) => {
+    // Gestion sécurisée des dates
+    const messageDate = msg.time ? new Date(msg.time) : new Date();
+    const isValidDate = messageDate instanceof Date && !isNaN(messageDate.getTime());
+
+    return {
+      id: msg.id.toString(),
+      content: msg.msg,        // Utilise "msg" au lieu de "content"
+      timestamp: isValidDate
+        ? messageDate.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : '--:--',
+      isOwn: msg.sender_id === user?.id,
+      status: msg.is_read ? 'read' : 'delivered',
+      reactions: msg.reactions || []
+    };
+  });
 
   const handleSendMessage = (content: string) => {
     if (!matchId) return;
@@ -173,7 +192,7 @@ export default function ChatPageWebSocket() {
           />
           
           {/* Match info */}
-          {activeConversation && (
+          {activeConversation && activeConversation.user && (
             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3">
               <div className="relative">
                 <Avatar className="w-8 h-8 ring-2 ring-white/20">
@@ -200,33 +219,42 @@ export default function ChatPageWebSocket() {
 
       {/* Messages container */}
       <div className="flex-1 overflow-y-auto pb-20">
-        <div className="p-4 space-y-1 max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto min-h-full">
           {uiMessages.length === 0 && (
-            <div className="text-center text-gray-500 py-8">
-              <p>Aucun message pour le moment.</p>
-              <p className="text-sm">Envoyez le premier message pour commencer la conversation !</p>
-            </div>
-          )}
-          
-          {uiMessages.map((message) => (
-            <ChatBubble key={message.id} message={message} />
-          ))}
-          
-          {isTyping && (
-            <div className="flex justify-center py-2">
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg px-4 py-2">
-                <div className="flex items-center space-x-1">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                  <span className="text-xs text-gray-500 ml-2">Envoi en cours...</span>
+            <div className="flex flex-col items-center justify-center h-full py-12 px-4">
+              <div className="text-center text-muted-foreground">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </div>
+                <p className="text-lg mb-2">Aucun message pour le moment</p>
+                <p className="text-sm">Envoyez le premier message pour commencer la conversation !</p>
               </div>
             </div>
           )}
-          
+
+          <div className="py-4">
+            {uiMessages.map((message) => (
+              <ChatBubble key={message.id} message={message} />
+            ))}
+
+            {isTyping && (
+              <div className="flex justify-start px-4 mb-3">
+                <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3 max-w-xs">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">en train d'écrire...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div ref={messagesEndRef} />
         </div>
       </div>

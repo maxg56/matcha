@@ -2,22 +2,44 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { apiService } from '@/services/api';
 import { useAuthStore } from './authStore';
+import { imageService } from '@/services/imageService';
 
 interface UserProfile {
   id: number;
   username: string;
-  email: string;
+  email?: string;
   first_name: string;
-  last_name: string;
-  birth_date: string;
+  last_name?: string;
+  birth_date?: string;
+  age: number;
   gender: string;
   sex_pref: string;
   bio?: string;
-  location?: string;
-  occupation?: string;
-  interests: string[];
-  images: string[];
+  current_city?: string;
+  job?: string;
+  interests?: string[];
+  images?: string[];
   height?: number;
+  alcohol_consumption?: string;
+  smoking?: string;
+  cannabis?: string;
+  drugs?: string;
+  pets?: string;
+  social_activity_level?: string;
+  sport_activity?: string;
+  education_level?: string;
+  personal_opinion?: string;
+  birth_city?: string;
+  religion?: string;
+  relationship_type?: string;
+  children_status?: string;
+  zodiac_sign?: string;
+  hair_color?: string;
+  skin_color?: string;
+  eye_color?: string;
+  political_view?: string;
+  fame?: number;
+  tags?: string[];
   looking_for?: string;
   age_range_min?: number;
   age_range_max?: number;
@@ -65,9 +87,8 @@ export const useUserStore = create<UserStore>()(
         try {
 
           const endpoint = userId ? `/api/v1/users/profile/${userId}` : '/api/v1/users/profile';
-          const profile = await apiService.get<UserProfile>(endpoint);
-          console.log('Fetched profile:', profile);
-
+          const response = await apiService.get<{ message?: string, profile: UserProfile }>(endpoint);
+          const profile = response.profile;
           set({
             profile,
             isLoading: false,
@@ -97,13 +118,20 @@ export const useUserStore = create<UserStore>()(
             throw new Error('User ID not found');
           }
           
-          const updatedProfile = await apiService.put<UserProfile>(`/api/v1/users/profile/${profileId}`, profileData);
+          const endpoint = `/api/v1/users/profile/${profileId}`;
+          
+          const response = await apiService.put<{ message?: string, profile: UserProfile }>(endpoint, profileData);
+          
+          const updatedProfile = response.profile;
+          
+
           
           set({
             profile: updatedProfile,
             isLoading: false,
             error: null,
           });
+          
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
           set({
@@ -118,28 +146,16 @@ export const useUserStore = create<UserStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          const formData = new FormData();
-          formData.append('file', file);
-          
-          const response = await fetch('/api/v1/media/upload', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-            body: formData,
-          });
-          
-          if (!response.ok) {
-            throw new Error('Upload failed');
-          }
-          
-          const result = await response.json();
-          
+          // Utiliser le service image centralisé
+          const result = await imageService.uploadImage(file);
+
           const currentProfile = useUserStore.getState().profile;
           if (currentProfile && result.data) {
+            
             // Le service média retourne { data: { url: "...", filename: "..." } }
             const imageUrl = result.data.url;
-            const updatedImages = [...currentProfile.images, imageUrl];
+            const currentImages = currentProfile.images || [];
+            const updatedImages = [...currentImages, imageUrl];
             set({
               profile: { ...currentProfile, images: updatedImages },
               isLoading: false,
@@ -159,11 +175,13 @@ export const useUserStore = create<UserStore>()(
         set({ isLoading: true, error: null });
         
         try {
-          await apiService.delete(`/api/v1/media/delete/${imageId}`);
+          // Utiliser le service image centralisé
+          await imageService.deleteImage(imageId);
           
           const currentProfile = useUserStore.getState().profile;
           if (currentProfile) {
-            const updatedImages = currentProfile.images.filter(img => !img.includes(imageId));
+            const currentImages = currentProfile.images || [];
+            const updatedImages = currentImages.filter(img => !img.includes(imageId));
             set({
               profile: { ...currentProfile, images: updatedImages },
               isLoading: false,

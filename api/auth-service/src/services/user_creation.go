@@ -93,6 +93,14 @@ func CreateUser(req types.RegisterRequest) (*models.Users, error) {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	// Setup default preferences in user-service (non-blocking)
+	go func() {
+		if err := CallUserSetup(user.ID, user.Age, user.SexPref); err != nil {
+			// Log error but don't fail the registration
+			fmt.Printf("Warning: Failed to setup user preferences for user %d: %v\n", user.ID, err)
+		}
+	}()
+
 	return &user, nil
 }
 

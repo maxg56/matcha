@@ -3,7 +3,6 @@ import { authService } from '@/services/auth';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useUserStore } from '@/stores/userStore';
 import { useChatStore } from '@/stores/chatStore';
-import { useDiscoverStore } from '@/stores/discoverStore';
 import { webSocketService } from '@/services/websocket';
 
 interface AuthResponse {
@@ -172,7 +171,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       useNotificationStore.getState().reset();
       useUserStore.getState().reset();
       useChatStore.getState().reset();
-      useDiscoverStore.getState().reset();
       // Note: We don't reset filters as users may want to keep their filter preferences
     }
   };

@@ -39,6 +39,10 @@ func SetupUserRoutes(r *gin.Engine) {
 		protected.GET("/:id/preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/preferences"))
 		protected.PUT("/:id/preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/preferences"))
 
+		// User setup and initialization
+		protected.POST("/setup", proxy.ProxyRequest("user", "/api/v1/users/setup"))
+		protected.POST("/:id/initialize-preferences", proxy.ProxyRequest("user", "/api/v1/users/:id/initialize-preferences"))
+
 		// User reporting
 		protected.POST("/reports", proxy.ProxyRequest("user", "/api/v1/users/reports"))
 		protected.GET("/reports", proxy.ProxyRequest("user", "/api/v1/users/reports"))
@@ -53,5 +57,16 @@ func SetupUserRoutes(r *gin.Engine) {
 		protected.PUT("/:id/images/order", proxy.ProxyRequest("user", "/api/v1/users/:id/images/order"))
 		protected.DELETE("/:id/images/:image_id", proxy.ProxyRequest("user", "/api/v1/users/:id/images/:image_id"))
 		protected.PUT("/:id/images/:image_id", proxy.ProxyRequest("user", "/api/v1/users/:id/images/:image_id"))
+	}
+
+	// Location API routes (matching frontend expectations)
+	location := r.Group("/api/v1/location")
+	location.Use(middleware.JWTMiddleware())
+	{
+		location.GET("/nearby", proxy.ProxyRequest("user", "/api/v1/location/nearby"))
+		location.GET("/search", proxy.ProxyRequest("user", "/api/v1/location/search"))
+		location.PUT("/location", proxy.ProxyRequest("user", "/api/v1/location/location"))
+		location.GET("/location", proxy.ProxyRequest("user", "/api/v1/location/location"))
+		location.GET("/reverse-geocode", proxy.ProxyRequest("user", "/api/v1/location/reverse-geocode"))
 	}
 }

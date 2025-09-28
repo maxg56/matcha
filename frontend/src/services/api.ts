@@ -1,3 +1,6 @@
+import secureStorage from './secureStorage';
+import cookieManager from './cookieManager';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
   import.meta.env.DEV ? 'http://localhost:8080' : 'https://localhost:8443'
 );
@@ -15,12 +18,22 @@ interface ApiError extends Error {
 class ApiService {
   private baseURL = API_BASE_URL;
 
+  private retryCount = 0;
+  private maxRetries = 2;
+  private readonly retryDelay = 1000; // 1 seconde
+
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry = false
   ): Promise<T> {
+    // Réinitialiser le compteur de retry pour chaque nouvelle requête (pas pour les retries)
+    if (!isRetry) {
+      this.retryCount = 0;
+    }
+    
     const url = `${this.baseURL}${endpoint}`;
-    const token = localStorage.getItem('accessToken');
+    const token = secureStorage.getAccessToken();
 
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
@@ -83,15 +96,64 @@ class ApiService {
         console.error('API error response:', data);
         let errorMessage = data.error || `HTTP ${response.status}: ${response.statusText}`;
         
-        // Messages d'erreur plus explicites
-        if (response.status === 401) {
-          errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
+        // Gérer le rafraîchissement du token en cas d'erreur 401
+        if (response.status === 401 && !isRetry && endpoint !== '/api/v1/auth/refresh') {
+          if (this.retryCount >= this.maxRetries) {
+            // Réinitialiser le compteur et déconnecter l'utilisateur
+            this.retryCount = 0;
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            cookieManager.clearCookie('access_token');
+            errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
+            throw new Error(errorMessage);
+          }
+
+          try {
+            this.retryCount++;
+            
+            // Attendre un délai avant de réessayer
+            await new Promise(resolve => setTimeout(resolve, this.retryDelay * this.retryCount));
+            
+            const refreshToken = secureStorage.getRefreshToken();
+            if (refreshToken) {
+              // Faire l'appel de refresh directement sans passer par this.post pour éviter la récursion
+              const refreshResponse = await fetch(`${this.baseURL}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh_token: refreshToken })
+              });
+
+              if (refreshResponse.ok) {
+                const refreshData = await refreshResponse.json();
+                // La réponse a la structure { success: true, data: { access_token, refresh_token } }
+                const tokenData = refreshData.data;
+
+                // Mettre à jour les tokens de manière sécurisée
+                secureStorage.setTokens(tokenData.access_token, tokenData.refresh_token);
+                cookieManager.setAuthTokenCookie('access_token', tokenData.access_token, 3600);
+                
+                // Réessayer la requête originale avec le flag isRetry
+                return this.makeRequest<T>(endpoint, options, true);
+              } else {
+                throw new Error('Refresh token invalid');
+              }
+            }
+          } catch (refreshError) {
+            // Si le refresh échoue, on déconnecte l'utilisateur
+            this.retryCount = 0;
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            cookieManager.clearCookie('access_token');
+            errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
+          }
         } else if (response.status === 429) {
           errorMessage = 'Trop de requêtes. Veuillez patienter quelques secondes avant de réessayer.';
         } else if (response.status === 500 && data.error && 
                   (data.error.includes('duplicate key') || 
-                   data.error.includes('unique constraint') ||
-                   data.error.includes('SQLSTATE 23505'))) {
+                    data.error.includes('unique constraint') ||
+                    data.error.includes('SQLSTATE 23505'))) {
           errorMessage = 'duplicate_interaction';
         }
         

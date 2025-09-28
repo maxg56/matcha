@@ -1,0 +1,362 @@
+services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy-prod
+    environment:
+      VITE_HOSTNAME: ${VITE_HOSTNAME:-localhost}
+    volumes:
+      - ./services/proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    ports:
+      - "8000:80"
+      - "8443:443"
+    depends_on:
+      - gateway
+      - frontend
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-matcha}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./services/database:/docker-entrypoint-initdb.d
+    networks:
+      - DB
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+  adminer:
+    image: adminer
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - DB
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  gateway:
+    build:
+      context: ./api/gateway
+      target: production
+    environment:
+      PORT: 8080
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      GIN_MODE: release
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      - auth-service
+      - user-service
+      - match-service
+      - chat-service
+      - notify-service
+      - media-service
+      - paiements-service
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  auth-service:
+    build:
+      context: ./api/auth-service
+      target: production
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      GIN_MODE: release
+      JWT_SECRET: ${JWT_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-your-email@gmail.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-your-app-password}
+      FROM_EMAIL: ${FROM_EMAIL}
+      FROM_NAME: ${FROM_NAME}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CLEANUP_INTERVAL_MINUTES: ${CLEANUP_INTERVAL_MINUTES:-30}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  user-service:
+    build:
+      context: ./api/user-service
+      target: production
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      GIN_MODE: release
+    depends_on:
+      - postgres
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  match-service:
+    build:
+      context: ./api/match-service
+      target: production
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      PORT: 8003
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      USE_REDIS_CACHE: ${USE_REDIS_CACHE:-true}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  chat-service:
+    build:
+      context: ./api/chat-service
+      target: production
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ENABLE_DETAILED_LOGS: ${ENABLE_DETAILED_LOGS:-false}
+      METRICS_ENABLED: ${METRICS_ENABLED:-true}
+      RATE_LIMIT_MESSAGES: ${RATE_LIMIT_MESSAGES:-10}
+      RATE_LIMIT_WINDOW_MINUTES: ${RATE_LIMIT_WINDOW_MINUTES:-1}
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      GIN_MODE: release
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  notify-service:
+    build:
+      context: ./api/notify-service
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      PORT: 8005
+      JWT_SECRET: ${JWT_SECRET}
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  media-service:
+    build: ./api/media-service
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      PORT: 8006
+      JWT_SECRET: ${JWT_SECRET}
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
+    volumes:
+      - media_uploads_prod:/app/uploads
+    depends_on:
+      - postgres
+    networks:
+      - DB
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  paiements-service:
+    build:
+      context: ./api/paiements-service
+      target: production
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - backend
+      - DB
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
+    depends_on:
+      - gateway
+    networks:
+      - frontend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+      - /app/.vite
+      - /app/.cache
+      - /app/.cache/node
+      - /app/.pnpm-store
+      - /app/node_modules/.cache
+
+  user-creation:
+    build: ./api/user-creation
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASSWORD:-password}
+    networks:
+      - DB
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  postgres_data_prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/data_prod
+      o: bind
+  redis_data_prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/redis_prod
+      o: bind
+  media_uploads_prod:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/media_uploads_prod
+      o: bind
+  frontend_node_modules:
+  caddy_data:
+
+networks:
+  frontend:
+  backend:
+  DB:

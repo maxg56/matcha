@@ -35,6 +35,9 @@ func main() {
 	// Initialize WebSocket manager
 	websocket.InitManager()
 
+	// Initialize Chat Service WebSocket client
+	websocket.InitChatServiceClient()
+
 	// Initialize rate limiter
 	if cfg.RateLimitEnabled {
 		middleware.InitRateLimiter(cfg.RateLimitRPS)

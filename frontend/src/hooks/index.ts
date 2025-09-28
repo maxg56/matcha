@@ -6,7 +6,6 @@ export { usePasswordReset } from './auth/usePasswordReset';
 export { useForgotPassword } from './auth/useForgotPassword';
 
 // API hooks
-export { useDiscoverProfiles } from './api/useDiscoverProfiles';
 export { useEditProfile } from './api/useEditProfile';
 export { useFilters } from './api/useFilters';
 export { useMatches } from './useMatches';
@@ -25,5 +24,9 @@ export { useNotifications } from './ui/useNotifications';
 export { useProfileNotifications } from './ui/useProfileNotifications';
 export { useTheme } from './ui/useTheme';
 export { useToast } from './ui/useToast';
+
+// Preferences hooks
+export { usePreferences } from './usePreferences';
+export { useMatchingFilter, useFilterStats } from './useMatchingFilter';
 
 // NOTE: NotifImage.ts is not exported as it's an internal utility

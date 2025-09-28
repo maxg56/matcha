@@ -110,6 +110,7 @@ func copyHeaders(c *gin.Context, req *http.Request) {
 	if v, ok := c.Get(middleware.CtxUserIDKey); ok {
 		if s, ok := v.(string); ok && s != "" {
 			req.Header.Set("X-User-ID", s)
+			utils.LogDebug("proxy", "User authenticated and ID propagated to service")
 		}
 	}
 

@@ -53,8 +53,10 @@ func main() {
 			matches.POST("/like", handlers.LikeUserHandler)
 			matches.POST("/unlike", handlers.UnlikeUserHandler)
 			matches.POST("/block", handlers.BlockUserHandler)
+			matches.POST("/unmatch", handlers.UnmatchHandler)
 			matches.GET("/algorithm", handlers.MatchingAlgorithmHandler)
 			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
+			matches.DELETE("/seen", handlers.ResetSeenProfilesHandler)
 
 			// Premium features - likes received
 			matches.GET("/received-likes", handlers.GetReceivedLikesHandler)

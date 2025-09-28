@@ -6,6 +6,7 @@ services:
       VITE_HOSTNAME: ${VITE_HOSTNAME:-localhost}
     volumes:
       - ./services/proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
     ports:
       - "8000:80"
       - "8443:443"
@@ -16,6 +17,12 @@ services:
       - frontend
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
 
   postgres:
     image: postgres:15-alpine
@@ -29,6 +36,16 @@ services:
     networks:
       - DB
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
 
   adminer:
     image: adminer
@@ -36,12 +53,29 @@ services:
       - DB
       - backend
     restart: unless-stopped
-    
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
   redis:
     image: redis:7-alpine
     networks:
       - DB
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /tmp
 
 
   # Gateway for development
@@ -54,6 +88,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       GIN_MODE: debug
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
     volumes:
       - ./api/gateway/src:/app/src
       - ./api/gateway/go.mod:/app/go.mod
@@ -71,6 +106,10 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   auth-service:
     build:
@@ -107,12 +146,15 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   user-service:
     build:
       context: ./api/user-service
       target: development
-
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -131,9 +173,13 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   match-service:
-    build: 
+    build:
       context: ./api/match-service
       target: development
     environment:
@@ -160,12 +206,15 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   chat-service:
     build:
       context: ./api/chat-service
       target: development
-
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -195,6 +244,10 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   notify-service:
     build:
@@ -208,6 +261,7 @@ services:
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: 6379
       PORT: 8005
+      JWT_SECRET: ${JWT_SECRET}
       FLASK_ENV: development
       FLASK_DEBUG: 1
     volumes:
@@ -219,6 +273,10 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   media-service:
     build: ./api/media-service
@@ -229,6 +287,7 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8006
+      JWT_SECRET: ${JWT_SECRET}
       FLASK_ENV: development
       FLASK_DEBUG: 1
     volumes:
@@ -240,36 +299,12 @@ services:
       - DB
       - backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
-  admin-service:
-    build:
-      context: ./api/admin-servise
-      target: development
-    environment:
-      DB_HOST: ${DB_HOST:-postgres}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-matcha}
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-password}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: 6379
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:-${JWT_SECRET}}
-      ADMIN_PORT: 8007
-      GIN_MODE: debug
-    volumes:
-      - ./api/admin-servise/src:/app/src
-      - ./api/admin-servise/go.mod:/app/go.mod
-      - ./api/admin-servise/go.sum:/app/go.sum
-      - ./api/admin-servise/.air.toml:/app/.air.toml
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - DB
-      - backend
-    restart: unless-stopped
+  
 
   paiements-service:
     build:
@@ -299,6 +334,10 @@ services:
       - backend
       - DB
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   frontend:
     build:
@@ -316,6 +355,17 @@ services:
     networks:
       - frontend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+      - /app/.vite
+      - /app/.cache
+      - /app/.cache/node
+      - /app/.pnpm-store
+      - /app/node_modules/.cache
 
   user-creation:
     build: ./api/user-creation
@@ -330,6 +380,10 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 volumes:
   postgres_data_dev:
@@ -351,6 +405,7 @@ volumes:
       device: ./volumes/media_uploads
       o: bind
   frontend_node_modules:
+  caddy_data:
 
 networks:
   frontend:

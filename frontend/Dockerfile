@@ -2,10 +2,18 @@
 FROM node:20-alpine AS development
 WORKDIR /app
 
+RUN addgroup -g 1001 -S frontend && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G frontend frontend
+
+# Create cache directories with proper permissions
+RUN mkdir -p /app/.cache/node /app/.pnpm-store /app/node_modules/.cache && \
+    chown -R frontend:frontend /app/.cache /app/.pnpm-store
+
 COPY package.json pnpm-lock.yaml* ./
 RUN corepack enable && pnpm install --frozen-lockfile
 
-COPY . .
+COPY --chown=frontend:frontend . .
+USER frontend
 EXPOSE 5173
 CMD ["pnpm", "dev", "--host", "0.0.0.0"]
 
@@ -31,10 +39,13 @@ RUN pnpm build
 FROM node:20-alpine AS production
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
+RUN addgroup -g 1001 -S frontend && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G frontend frontend
+
+COPY --from=builder --chown=frontend:frontend /app/dist ./dist
 RUN npm install -g serve
 
 ENV NODE_ENV=production
-USER node
+USER frontend
 EXPOSE 5173
 CMD ["serve", "-s", "-l", "5173", "dist"]

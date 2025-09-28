@@ -38,7 +38,7 @@ export const EmailVerificationStep: React.FC = () => {
   useEffect(() => {
     // Ne pas envoyer automatiquement l'email au montage du composant
     // L'email est maintenant envoyé automatiquement lors de la création du compte
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {

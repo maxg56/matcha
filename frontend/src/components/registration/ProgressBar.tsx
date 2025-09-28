@@ -30,8 +30,13 @@ export function ProgressBar({ currentStep, totalSteps, steps }: ProgressBarProps
         {/* Progress Bar */}
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
           <div
-            className="bg-gradient-to-r from-purple-500 to-violet-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            className="bg-gradient-to-r from-purple-500 to-violet-500 h-2 rounded-full progress-width"
+            data-width={`${(currentStep / totalSteps) * 100}%`}
+            ref={(el) => {
+              if (el) {
+                el.style.width = `${(currentStep / totalSteps) * 100}%`;
+              }
+            }}
           />
         </div>
 

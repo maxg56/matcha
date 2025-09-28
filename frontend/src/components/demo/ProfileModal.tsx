@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Heart, ChevronLeft, ChevronRight, MapPin, Briefcase, Star, Crown, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useProfileAnalytics } from '@/hooks/api/useProfileAnalytics';
 
 interface ProfileModalProps {
   profile: {
@@ -26,6 +27,14 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
   const safeImages = profile.images && profile.images.length > 0 ? profile.images : [];
   const hasImages = safeImages.length > 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { trackProfileView } = useProfileAnalytics();
+
+  // Track profile view when modal opens
+  useEffect(() => {
+    if (isOpen && profile.id) {
+      trackProfileView(Number(profile.id));
+    }
+  }, [isOpen, profile.id, trackProfileView]);
 
   if (!isOpen) return null;
 
@@ -150,13 +159,11 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
             </h2>
             
             {profile.location && (
-              <div className="flex items-center gap-1 text-muted-foreground mb-2">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm">
+                              <span className="text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
                   {profile.location}
-                  {profile.distance && ` • ${profile.distance}km`}
+                  {profile.distance && ` • ${Math.round(profile.distance)}km`}
                 </span>
-              </div>
             )}
             
             {profile.occupation && (

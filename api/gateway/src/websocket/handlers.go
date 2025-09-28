@@ -17,6 +17,13 @@ type Message struct {
 	Data any    `json:"data"`
 	To   string `json:"to,omitempty"`   // Pour cibler un service spécifique
 	From string `json:"from,omitempty"` // Pour identifier l'expéditeur
+	// Reaction fields (sent directly by frontend, not nested in data)
+	MessageID uint   `json:"message_id,omitempty"`
+	Emoji     string `json:"emoji,omitempty"`
+	// Conversation ID for various message types
+	ConversationID string `json:"conversation_id,omitempty"`
+	Content        string `json:"content,omitempty"`
+	IsTyping       bool   `json:"is_typing,omitempty"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -78,6 +85,8 @@ func UnifiedWebSocketHandler() gin.HandlerFunc {
 			switch MessageType(msg.Type) {
 			case MessageTypeChat:
 				HandleChatMessage(msg, userID, token)
+			case MessageTypeSendMessage:
+				HandleChatMessage(msg, userID, token)
 			case MessageTypeNotification:
 				HandleNotificationMessage(msg, userID, token)
 			case MessageTypeSubscribe:
@@ -86,6 +95,14 @@ func UnifiedWebSocketHandler() gin.HandlerFunc {
 				HandleUnsubscription(msg, userID)
 			case MessageTypePing:
 				HandlePing(msg, userID)
+			case MessageTypeReactionAdd:
+				HandleReactionMessage(msg, userID, token, "add")
+			case MessageTypeReactionRemove:
+				HandleReactionMessage(msg, userID, token, "remove")
+			case MessageTypeJoinConversation:
+				HandleJoinConversation(msg, userID, token)
+			case MessageTypeTyping:
+				HandleTypingMessage(msg, userID, token)
 			default:
 				LogError(userID, "unknown_message_type", fmt.Errorf("unknown message type: %s", msg.Type))
 				SendErrorToUser(userID, "unknown_message_type", fmt.Sprintf("Unknown message type: %s", msg.Type))
@@ -141,13 +158,13 @@ func handleClientWrites(client *Client) {
 	}
 }
 
-// HandleChatMessage routes chat messages to chat service or broadcasts them
+// HandleChatMessage routes chat messages to chat service via WebSocket
 func HandleChatMessage(msg Message, userID, token string) {
 	startTime := time.Now()
 	defer func() {
 		LogPerformance("chat_message", time.Since(startTime), "user:", userID)
 	}()
-	
+
 	// Parse chat message data
 	chatData, err := parseChatMessageData(msg.Data)
 	if err != nil {
@@ -155,57 +172,45 @@ func HandleChatMessage(msg Message, userID, token string) {
 		SendErrorToUser(userID, "invalid_chat_data", err.Error())
 		return
 	}
-	
+
 	// Validate required fields
 	if chatData.ConversationID == "" {
 		LogError(userID, "chat_validation_error", fmt.Errorf("missing conversation_id"))
 		SendErrorToUser(userID, "missing_conversation_id", "Missing conversation_id in chat message")
 		return
 	}
-	
+
 	if chatData.Message == "" {
 		LogError(userID, "chat_validation_error", fmt.Errorf("empty message"))
 		SendErrorToUser(userID, "empty_message", "Message cannot be empty")
 		return
 	}
-	
+
 	LogMessage(userID, "chat_processing", "conversation:", chatData.ConversationID, "message_length:", len(chatData.Message))
-	
+
 	// Validate user access to conversation
 	if !validateUserInConversation(userID, chatData.ConversationID, token) {
 		LogError(userID, "chat_access_denied", fmt.Errorf("access denied to conversation %s", chatData.ConversationID))
 		SendErrorToUser(userID, "access_denied", "Access denied to conversation")
 		return
 	}
-	
-	// Enrich message data with sender info and timestamp
-	enrichedData := ChatMessageData{
-		ConversationID: chatData.ConversationID,
-		Message:        chatData.Message,
-		FromUser:       userID,
-		Timestamp:      time.Now().Unix(),
-		Type:           "chat_message",
+
+	// Check if chat service client is connected
+	if GlobalChatClient == nil || !GlobalChatClient.IsConnected() {
+		LogError(userID, "chat_service_unavailable", fmt.Errorf("chat service WebSocket not available"))
+		SendErrorToUser(userID, "service_unavailable", "Chat service is currently unavailable")
+		return
 	}
-	
-	// Persist message to chat service (async, don't block the broadcast)
-	go func() {
-		if err := sendMessageToChatService(userID, chatData.ConversationID, chatData.Message, token); err != nil {
-			LogError(userID, "chat_persistence_failed", err, "conversation:", chatData.ConversationID)
-		}
-	}()
-	
-	// Broadcast to conversation participants
-	channelName := fmt.Sprintf("chat_%s", chatData.ConversationID)
-	GlobalManager.SendToChannel(channelName, string(MessageTypeChatMessage), enrichedData, userID)
-	
-	// Send acknowledgment to sender
-	GlobalManager.SendToUser(userID, string(MessageTypeChatAck), map[string]any{
-		"status":          "sent",
-		"timestamp":       time.Now().Unix(),
-		"conversation_id": chatData.ConversationID,
-	})
-	
-	LogMessage(userID, "chat_sent", "conversation:", chatData.ConversationID)
+
+	// Send message through WebSocket to Chat Service
+	err = GlobalChatClient.SendMessage(userID, chatData.ConversationID, chatData.Message, token)
+	if err != nil {
+		LogError(userID, "chat_relay_failed", err, "conversation:", chatData.ConversationID)
+		SendErrorToUser(userID, "message_failed", "Failed to send message")
+		return
+	}
+
+	LogMessage(userID, "chat_relayed", "conversation:", chatData.ConversationID)
 }
 
 // HandleNotificationMessage handles notification-related messages
@@ -375,9 +380,9 @@ func parseNotificationActionData(data any) (*NotificationActionData, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid data format: expected map[string]any")
 	}
-	
+
 	notifData := &NotificationActionData{}
-	
+
 	if action, exists := dataMap["action"]; exists {
 		if actionStr, ok := action.(string); ok {
 			notifData.Action = actionStr
@@ -387,7 +392,7 @@ func parseNotificationActionData(data any) (*NotificationActionData, error) {
 	} else {
 		return nil, fmt.Errorf("missing required field: action")
 	}
-	
+
 	if notifID, exists := dataMap["notification_id"]; exists {
 		if notifIDStr, ok := notifID.(string); ok {
 			notifData.NotificationID = notifIDStr
@@ -395,6 +400,91 @@ func parseNotificationActionData(data any) (*NotificationActionData, error) {
 			return nil, fmt.Errorf("notification_id must be a string")
 		}
 	}
-	
+
 	return notifData, nil
+}
+
+// HandleReactionMessage handles reaction add/remove messages
+func HandleReactionMessage(msg Message, userID, token, action string) {
+	startTime := time.Now()
+	defer func() {
+		LogPerformance("reaction_"+action, time.Since(startTime), "user:", userID)
+	}()
+
+	// Validate required fields - now using direct fields from Message structure
+	if msg.MessageID == 0 {
+		LogError(userID, "reaction_validation_error", fmt.Errorf("missing message_id"))
+		SendErrorToUser(userID, "missing_message_id", "Missing message_id in reaction")
+		return
+	}
+
+	if msg.Emoji == "" {
+		LogError(userID, "reaction_validation_error", fmt.Errorf("missing emoji"))
+		SendErrorToUser(userID, "missing_emoji", "Missing emoji in reaction")
+		return
+	}
+
+	// Validate emoji (basic validation)
+	if len(msg.Emoji) > 10 {
+		LogError(userID, "reaction_validation_error", fmt.Errorf("invalid emoji length"))
+		SendErrorToUser(userID, "invalid_emoji", "Invalid emoji")
+		return
+	}
+
+	LogMessage(userID, "reaction_processing", "action:", action, "message_id:", msg.MessageID, "emoji:", msg.Emoji)
+
+	// Check if chat service client is connected
+	if GlobalChatClient == nil || !GlobalChatClient.IsConnected() {
+		LogError(userID, "chat_service_unavailable", fmt.Errorf("chat service WebSocket not available"))
+		SendErrorToUser(userID, "service_unavailable", "Chat service is currently unavailable")
+		return
+	}
+
+	// Send reaction through WebSocket to Chat Service
+	err := GlobalChatClient.SendReaction(userID, msg.MessageID, msg.Emoji, action, token)
+	if err != nil {
+		LogError(userID, "reaction_relay_failed", err, "message_id:", msg.MessageID)
+		SendErrorToUser(userID, "reaction_failed", "Failed to process reaction")
+		return
+	}
+
+	LogMessage(userID, "reaction_relayed", "action:", action, "message_id:", msg.MessageID)
+}
+
+
+// HandleJoinConversation handles joining a conversation
+func HandleJoinConversation(msg Message, userID, token string) {
+	LogMessage(userID, "join_conversation", "data:", msg.Data)
+	// This could be used for presence or room management
+	// For now, just acknowledge
+	GlobalManager.SendToUser(userID, string(MessageTypeConnectionAck), map[string]any{
+		"status": "joined",
+		"timestamp": time.Now().Unix(),
+	})
+}
+
+// HandleTypingMessage handles typing indicators
+func HandleTypingMessage(msg Message, userID, token string) {
+	LogMessage(userID, "typing_indicator", "data:", msg.Data)
+
+	// Parse typing data
+	dataMap, ok := msg.Data.(map[string]any)
+	if !ok {
+		SendErrorToUser(userID, "invalid_typing_data", "Invalid typing data format")
+		return
+	}
+
+	conversationID, exists := dataMap["conversation_id"]
+	if !exists {
+		SendErrorToUser(userID, "missing_conversation_id", "Missing conversation_id in typing message")
+		return
+	}
+
+	// Forward typing indicator to chat service
+	if GlobalChatClient != nil && GlobalChatClient.IsConnected() {
+		err := GlobalChatClient.SendTyping(userID, conversationID.(string), token)
+		if err != nil {
+			LogError(userID, "typing_relay_failed", err)
+		}
+	}
 }

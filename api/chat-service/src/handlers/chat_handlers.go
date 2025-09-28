@@ -3,11 +3,12 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	
+
 	"chat-service/src/middleware"
+	"chat-service/src/models"
 	"chat-service/src/types"
 	"chat-service/src/utils"
-	
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,13 +30,13 @@ func (h *ChatHandlers) GetUserConversations(c *gin.Context) {
 		return
 	}
 
-	conversations, err := h.chatService.GetUserConversations(userID)
+	conversationsResponse, err := h.chatService.GetUserConversations(userID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to retrieve conversations")
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, conversations)
+	utils.RespondSuccess(c, http.StatusOK, conversationsResponse)
 }
 
 // GetConversation retrieves a specific conversation
@@ -52,7 +53,7 @@ func (h *ChatHandlers) GetConversation(c *gin.Context) {
 		return
 	}
 
-	conversation, err := h.chatService.GetConversation(userID, conversationID)
+	conversationResponse, err := h.chatService.GetConversation(userID, conversationID)
 	if err != nil {
 		if err.Error() == "access denied" {
 			utils.RespondError(c, http.StatusForbidden, "Access denied")
@@ -62,7 +63,7 @@ func (h *ChatHandlers) GetConversation(c *gin.Context) {
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, conversation)
+	utils.RespondSuccess(c, http.StatusOK, conversationResponse)
 }
 
 // CreateConversation creates a new conversation
@@ -171,6 +172,135 @@ func (h *ChatHandlers) MarkMessagesAsRead(c *gin.Context) {
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Messages marked as read"})
+}
+
+// AddReaction adds a reaction to a message
+func (h *ChatHandlers) AddReaction(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	var req models.ReactionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+
+	reaction, err := h.chatService.AddReaction(userID, req.MessageID, req.Emoji)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to add reaction")
+		return
+	}
+
+	utils.RespondCreated(c, reaction)
+}
+
+// RemoveReaction removes a reaction from a message
+func (h *ChatHandlers) RemoveReaction(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	messageIDStr := c.Param("messageID")
+	messageID, err := strconv.ParseUint(messageIDStr, 10, 32)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid message ID")
+		return
+	}
+
+	emoji := c.Param("emoji")
+	if emoji == "" {
+		utils.RespondError(c, http.StatusBadRequest, "Emoji is required")
+		return
+	}
+
+	err = h.chatService.RemoveReaction(userID, uint(messageID), emoji)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to remove reaction")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Reaction removed"})
+}
+
+// GetMessageReactions gets all reactions for a message
+func (h *ChatHandlers) GetMessageReactions(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	messageIDStr := c.Param("messageID")
+	messageID, err := strconv.ParseUint(messageIDStr, 10, 32)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid message ID")
+		return
+	}
+
+	reactions, err := h.chatService.GetMessageReactions(userID, uint(messageID))
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to get reactions")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, reactions)
+}
+
+// SetUserOnline sets user online status
+func (h *ChatHandlers) SetUserOnline(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	err = h.chatService.SetUserOnline(userID)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to set user online")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "User set online"})
+}
+
+// SetUserOffline sets user offline status
+func (h *ChatHandlers) SetUserOffline(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	err = h.chatService.SetUserOffline(userID)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to set user offline")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "User set offline"})
+}
+
+// GetUserPresence gets user presence information
+func (h *ChatHandlers) GetUserPresence(c *gin.Context) {
+	userIDStr := c.Param("userID")
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	presence, err := h.chatService.GetUserPresence(uint(userID))
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to get user presence")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, presence)
 }
 
 // Helper methods

@@ -12,6 +12,16 @@ import (
 	"user-service/src/utils"
 )
 
+// contains checks if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
+
 // PreferenceRequest represents matching preference payload
 type PreferenceRequest struct {
 	AgeMin           int      `json:"age_min" binding:"min=18,max=99"`
@@ -21,6 +31,16 @@ type PreferenceRequest struct {
 	PreferredGenders []string `json:"preferred_genders" binding:"required"`
 	RequiredTags     []string `json:"required_tags"`
 	BlockedTags      []string `json:"blocked_tags"`
+
+	// Lifestyle preferences
+	SmokingPreference  *string `json:"smoking_preference,omitempty"`   // "any", "smoker", "non_smoker"
+	AlcoholPreference  *string `json:"alcohol_preference,omitempty"`   // "any", "drinker", "non_drinker"
+	DrugsPreference    *string `json:"drugs_preference,omitempty"`     // "any", "user", "non_user"
+	CannabisPreference *string `json:"cannabis_preference,omitempty"`  // "any", "user", "non_user"
+
+	// Religious preferences
+	ReligionPreference *string  `json:"religion_preference,omitempty"` // "any", "same", "different"
+	BlockedReligions   []string `json:"blocked_religions,omitempty"`   // Array of blocked religions
 }
 
 // GetPreferencesHandler gets user's matching preferences
@@ -41,7 +61,7 @@ func GetPreferencesHandler(c *gin.Context) {
 	}
 
 	// Users can only view their own preferences
-	if uint(id) != authenticatedUserID.(uint) {
+	if int(id) != authenticatedUserID.(int) {
 		utils.RespondError(c, http.StatusForbidden, "cannot view another user's preferences")
 		return
 	}
@@ -50,12 +70,12 @@ func GetPreferencesHandler(c *gin.Context) {
 	if err := conf.DB.Where("user_id = ?", id).First(&preference).Error; err != nil {
 		// Create default preferences if none exist
 		preference = models.UserPreference{
-			UserID:           uint(id),
+			UserID:           int(id),
 			AgeMin:           18,
 			AgeMax:           99,
-			MaxDistance:      50,
+			MaxDistance:      500, // Increased to 500km to fix discovery issue
 			MinFame:          0,
-			PreferredGenders: `["male","female","other"]`,
+			PreferredGenders: `["man","woman","other"]`,
 			RequiredTags:     `[]`,
 			BlockedTags:      `[]`,
 		}
@@ -71,6 +91,12 @@ func GetPreferencesHandler(c *gin.Context) {
 	json.Unmarshal([]byte(preference.RequiredTags), &requiredTags)
 	json.Unmarshal([]byte(preference.BlockedTags), &blockedTags)
 
+	// Parse blocked religions JSON
+	var blockedReligions []string
+	if preference.BlockedReligions != "" {
+		json.Unmarshal([]byte(preference.BlockedReligions), &blockedReligions)
+	}
+
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
 		"preferences": gin.H{
 			"id":                preference.ID,
@@ -82,6 +108,12 @@ func GetPreferencesHandler(c *gin.Context) {
 			"preferred_genders": preferredGenders,
 			"required_tags":     requiredTags,
 			"blocked_tags":      blockedTags,
+			"smoking_preference": preference.SmokingPreference,
+			"alcohol_preference": preference.AlcoholPreference,
+			"drugs_preference":   preference.DrugsPreference,
+			"cannabis_preference": preference.CannabisPreference,
+			"religion_preference": preference.ReligionPreference,
+			"blocked_religions":  blockedReligions,
 			"created_at":        preference.CreatedAt,
 			"updated_at":        preference.UpdatedAt,
 		},
@@ -106,7 +138,7 @@ func UpdatePreferencesHandler(c *gin.Context) {
 	}
 
 	// Users can only update their own preferences
-	if uint(id) != authenticatedUserID.(uint) {
+	if int(id) != authenticatedUserID.(int) {
 		utils.RespondError(c, http.StatusForbidden, "cannot update another user's preferences")
 		return
 	}
@@ -123,10 +155,48 @@ func UpdatePreferencesHandler(c *gin.Context) {
 		return
 	}
 
+	// Validate lifestyle preferences
+	if req.SmokingPreference != nil {
+		validValues := []string{"any", "smoker", "non_smoker"}
+		if !contains(validValues, *req.SmokingPreference) {
+			utils.RespondError(c, http.StatusBadRequest, "invalid smoking_preference value")
+			return
+		}
+	}
+	if req.AlcoholPreference != nil {
+		validValues := []string{"any", "drinker", "non_drinker"}
+		if !contains(validValues, *req.AlcoholPreference) {
+			utils.RespondError(c, http.StatusBadRequest, "invalid alcohol_preference value")
+			return
+		}
+	}
+	if req.DrugsPreference != nil {
+		validValues := []string{"any", "user", "non_user"}
+		if !contains(validValues, *req.DrugsPreference) {
+			utils.RespondError(c, http.StatusBadRequest, "invalid drugs_preference value")
+			return
+		}
+	}
+	if req.CannabisPreference != nil {
+		validValues := []string{"any", "user", "non_user"}
+		if !contains(validValues, *req.CannabisPreference) {
+			utils.RespondError(c, http.StatusBadRequest, "invalid cannabis_preference value")
+			return
+		}
+	}
+	if req.ReligionPreference != nil {
+		validValues := []string{"any", "same", "different"}
+		if !contains(validValues, *req.ReligionPreference) {
+			utils.RespondError(c, http.StatusBadRequest, "invalid religion_preference value")
+			return
+		}
+	}
+
 	// Convert arrays to JSON strings
 	preferredGendersJSON, _ := json.Marshal(req.PreferredGenders)
 	requiredTagsJSON, _ := json.Marshal(req.RequiredTags)
 	blockedTagsJSON, _ := json.Marshal(req.BlockedTags)
+	blockedReligionsJSON, _ := json.Marshal(req.BlockedReligions)
 
 	// Find or create preferences
 	var preference models.UserPreference
@@ -134,7 +204,7 @@ func UpdatePreferencesHandler(c *gin.Context) {
 	if result.Error != nil {
 		// Create new preferences
 		preference = models.UserPreference{
-			UserID:           uint(id),
+			UserID:           int(id),
 			AgeMin:           req.AgeMin,
 			AgeMax:           req.AgeMax,
 			MaxDistance:      req.MaxDistance,
@@ -142,6 +212,12 @@ func UpdatePreferencesHandler(c *gin.Context) {
 			PreferredGenders: string(preferredGendersJSON),
 			RequiredTags:     string(requiredTagsJSON),
 			BlockedTags:      string(blockedTagsJSON),
+			SmokingPreference:  req.SmokingPreference,
+			AlcoholPreference:  req.AlcoholPreference,
+			DrugsPreference:    req.DrugsPreference,
+			CannabisPreference: req.CannabisPreference,
+			ReligionPreference: req.ReligionPreference,
+			BlockedReligions:   string(blockedReligionsJSON),
 		}
 		if err := conf.DB.Create(&preference).Error; err != nil {
 			utils.RespondError(c, http.StatusInternalServerError, "failed to create preferences")
@@ -156,6 +232,12 @@ func UpdatePreferencesHandler(c *gin.Context) {
 		preference.PreferredGenders = string(preferredGendersJSON)
 		preference.RequiredTags = string(requiredTagsJSON)
 		preference.BlockedTags = string(blockedTagsJSON)
+		preference.SmokingPreference = req.SmokingPreference
+		preference.AlcoholPreference = req.AlcoholPreference
+		preference.DrugsPreference = req.DrugsPreference
+		preference.CannabisPreference = req.CannabisPreference
+		preference.ReligionPreference = req.ReligionPreference
+		preference.BlockedReligions = string(blockedReligionsJSON)
 
 		if err := conf.DB.Save(&preference).Error; err != nil {
 			utils.RespondError(c, http.StatusInternalServerError, "failed to update preferences")
@@ -175,6 +257,12 @@ func UpdatePreferencesHandler(c *gin.Context) {
 			"preferred_genders": req.PreferredGenders,
 			"required_tags":     req.RequiredTags,
 			"blocked_tags":      req.BlockedTags,
+			"smoking_preference": req.SmokingPreference,
+			"alcohol_preference": req.AlcoholPreference,
+			"drugs_preference":   req.DrugsPreference,
+			"cannabis_preference": req.CannabisPreference,
+			"religion_preference": req.ReligionPreference,
+			"blocked_religions":  req.BlockedReligions,
 			"updated_at":        preference.UpdatedAt,
 		},
 	})

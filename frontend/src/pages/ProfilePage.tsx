@@ -5,7 +5,6 @@ import { ProfileBasicInfo } from '@/components/profile/ProfileBasicInfo';
 import { ProfileBio } from '@/components/profile/ProfileBio';
 import { ProfileSections } from '@/components/profile/ProfileSections';
 import { ProfileInterests } from '@/components/profile/ProfileInterests';
-// import { ProfileStats } from '@/components/profile/ProfileStats';
 import { useUserStore } from '@/stores/userStore';
 import { useAuthStore } from '@/stores/authStore';
 import { PremiumBlur, PremiumUpsellModal } from '@/components/premium';
@@ -65,7 +64,7 @@ export default function ProfilePage() {
             {profile && <ProfileBasicInfo user={profile} />}
             <ProfileBio bio={profile?.bio || ''} user={profile} photos={profile?.images || []} />
             {profile && <ProfileSections user={profile} />}
-            <ProfileInterests interests={profile?.interests || []} />
+            <ProfileInterests interests={profile?.tags || []} />
 
             {/* Premium Profile Analytics */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
@@ -167,8 +166,6 @@ export default function ProfilePage() {
                 </div>
               </PremiumBlur>
             </div>
-
-            {/* <ProfileStats stats={profile?.stats || {}} /> */}
           </div>
         </div>
       </div>

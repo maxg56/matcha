@@ -17,7 +17,7 @@ type User struct {
 	BirthDate    time.Time        `gorm:"column:birth_date;not null" json:"birth_date"`
 	Age          int              `gorm:"column:age" json:"age"`
 	Height       sql.NullInt64    `gorm:"column:height" json:"height"`
-	Premium      sql.NullTime     `gorm:"column:premium" json:"premium"`
+	Premium      sql.NullTime     `gorm:"column:premium;default:CURRENT_TIMESTAMP" json:"premium"`
 
 	AlcoholConsumption sql.NullString `gorm:"column:alcohol_consumption" json:"alcohol_consumption"`
 	Smoking            sql.NullString `gorm:"column:smoking" json:"smoking"`
@@ -69,6 +69,7 @@ type PublicProfile struct {
 	ID                  uint      `json:"id"`
 	Username            string    `json:"username"`
 	FirstName           string    `json:"first_name"`
+	LastName            string    `json:"last_name"`
 	Age                 int       `json:"age"`
 	Height              *int      `json:"height,omitempty"`
 	AlcoholConsumption  *string   `json:"alcohol_consumption,omitempty"`
@@ -81,6 +82,7 @@ type PublicProfile struct {
 	EducationLevel      *string   `json:"education_level,omitempty"`
 	PersonalOpinion     *string   `json:"personal_opinion,omitempty"`
 	Bio                 string    `json:"bio"`
+	BirthCity           *string   `json:"birth_city,omitempty"`
 	CurrentCity         *string   `json:"current_city,omitempty"`
 	Job                 *string   `json:"job,omitempty"`
 	Religion            *string   `json:"religion,omitempty"`
@@ -92,6 +94,7 @@ type PublicProfile struct {
 	EyeColor            *string   `json:"eye_color,omitempty"`
 	Fame                int       `json:"fame"`
 	Gender              string    `json:"gender"`
+	SexPref             string    `json:"sex_pref"`
 	PoliticalView       *string   `json:"political_view,omitempty"`
 	Tags                []string  `json:"tags,omitempty"`
 	Images              []string  `json:"images,omitempty"`
@@ -104,11 +107,13 @@ func (u *User) ToPublicProfile() *PublicProfile {
 		ID:               u.ID,
 		Username:         u.Username,
 		FirstName:        u.FirstName,
+		LastName:         u.LastName,
 		Age:              u.Age,
 		Bio:              u.Bio,
 		RelationshipType: u.RelationshipType,
 		Fame:             u.Fame,
 		Gender:           u.Gender,
+		SexPref:          u.SexPref,
 		CreatedAt:        u.CreatedAt,
 	}
 
@@ -144,6 +149,9 @@ func (u *User) ToPublicProfile() *PublicProfile {
 	}
 	if u.PersonalOpinion.Valid {
 		profile.PersonalOpinion = &u.PersonalOpinion.String
+	}
+	if u.BirthCity.Valid {
+		profile.BirthCity = &u.BirthCity.String
 	}
 	if u.CurrentCity.Valid {
 		profile.CurrentCity = &u.CurrentCity.String
@@ -185,7 +193,19 @@ func (u *User) ToPublicProfile() *PublicProfile {
 		}
 	}
 	if len(profile.Images) == 0 {
-		profile.Images = append(profile.Images, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop")
+		// Set default image based on gender
+		var defaultImage string
+		switch profile.Gender {
+		case "man":
+			defaultImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop"
+		case "woman":
+			defaultImage = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop"
+		default:
+			defaultImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop"
+		}
+		profile.Images = append(profile.Images, defaultImage)
+		profile.Images = append(profile.Images, defaultImage)
+		profile.Images = append(profile.Images, defaultImage)  
 	}
 
 	return profile

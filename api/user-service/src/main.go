@@ -44,7 +44,7 @@ func main() {
 
 			// Location management
 			protected.PUT("/:id/location", handlers.UpdateLocationHandler)
-			protected.GET("/nearby", handlers.GetNearbyUsersHandler)
+			protected.GET("/nearby", handlers.GetMatchedUsersHandler)
 
 			// Search functionality
 			protected.GET("/search", handlers.SearchUsersHandler)
@@ -52,6 +52,10 @@ func main() {
 			// Matching preferences
 			protected.GET("/:id/preferences", handlers.GetPreferencesHandler)
 			protected.PUT("/:id/preferences", handlers.UpdatePreferencesHandler)
+
+			// User setup and initialization
+			protected.POST("/setup", handlers.SetupNewUserHandler)
+			protected.POST("/:id/initialize-preferences", handlers.InitializeUserPreferencesHandler)
 
 			// User reporting
 			protected.POST("/reports", handlers.CreateReportHandler)
@@ -68,6 +72,17 @@ func main() {
 			protected.DELETE("/:id/images/:image_id", handlers.DeleteImageHandler)
 			protected.PUT("/:id/images/:image_id", handlers.UpdateImageDetailsHandler)
 		}
+	}
+
+	// Location API routes (matching frontend expectations)
+	location := r.Group("/api/v1/location")
+	location.Use(middleware.AuthMiddleware())
+	{
+		location.GET("/nearby", handlers.GetMatchedUsersHandler) // Now returns only matched users
+		location.GET("/search", handlers.SearchUsersHandler)
+		location.PUT("/location", handlers.UpdateLocationHandler)
+		location.GET("/location", handlers.GetCurrentLocationHandler)
+		location.GET("/reverse-geocode", handlers.ReverseGeocodeHandler)
 	}
 
 	log.Println("User service starting on port 8002")

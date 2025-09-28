@@ -5,6 +5,8 @@ import { ErrorHandler } from '@/utils/errorHandler';
 import type { ImagePreview } from '../../components/registration/steps/image-upload/types';
 import { MAX_IMAGES } from '../../components/registration/steps/image-upload/types';
 import { useNavigate } from 'react-router-dom';
+import { imageService } from '@/services/imageService';
+import { authService } from '@/services/auth';
 
 export const useImageUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -96,26 +98,17 @@ export const useImageUpload = () => {
 
       // Fallback vers l'ancien comportement si pas de fonction onComplete
       const uploadPromises = files.map(async (file, index) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        
         dispatchUploadEvent('upload_progress', `Upload en cours: ${index + 1}/${files.length} photos`, {
           imageCount: index + 1,
           totalImages: files.length
         });
-        
-        const response = await fetch('/api/v1/media/upload', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to upload ${file.name}: ${errorText}`);
+
+        try {
+          const result = await imageService.uploadImage(file);
+          return result.data;
+        } catch (error) {
+          throw new Error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-        
-        return (await response.json()).data;
       });
       
       await Promise.all(uploadPromises);
@@ -153,8 +146,7 @@ export const useImageUpload = () => {
         }
         
         // Token refresh failed
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        authService.clearTokens();
         
         dispatchUploadEvent('upload_error', 'Session expirée. Redirection vers la connexion...', {
           error: 'token_expired',

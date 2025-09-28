@@ -21,7 +21,10 @@ CMD ["air", "-c", ".air.toml"]
 # Production stage
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/user-service .
+RUN addgroup -g 1001 -S userservice && \
+    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G userservice userservice
+WORKDIR /app
+COPY --from=builder --chown=userservice:userservice /app/user-service .
+USER userservice
 EXPOSE 8002
 CMD ["./user-service"]

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"user-service/src/conf"
 	"user-service/src/models"
@@ -22,7 +23,9 @@ func GetProfileHandler(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := conf.DB.Preload("Tags").Preload("Images", "is_active = ?", true).First(&user, id).Error; err != nil {
+	if err := conf.DB.Preload("Tags").Preload("Images", func(db *gorm.DB) *gorm.DB {
+		return db.Where("is_active = ?", true).Order("created_at ASC")
+	}).First(&user, id).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "user not found")
 		return
 	}

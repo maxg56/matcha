@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { matchService, type UserProfile, type MatchCandidate, type MatchingAlgorithmParams, type InteractionResponse } from '@/services/matchService';
+import { preferencesEventEmitter } from '@/utils/preferencesEvents';
+import { useToast } from '@/hooks/ui/useToast';
 
 interface UseMatchesState {
   candidates: MatchCandidate[];
@@ -13,6 +15,7 @@ interface UseMatchesState {
 }
 
 export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
+  const { toast } = useToast();
   const [state, setState] = useState<UseMatchesState>({
     candidates: [],
     profiles: new Map(),
@@ -25,17 +28,6 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
   });
 
   const fetchCandidates = useCallback(async (params: MatchingAlgorithmParams = {}, isLoadMore = false) => {
-    // Vérifier si un token est présent
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Vous devez être connecté pour voir des profils'
-      }));
-      return;
-    }
-
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
@@ -78,13 +70,27 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors du chargement des candidats';
       
-      // Si c'est une erreur d'authentification, suggérer une reconnexion
-      if (error instanceof Error && (error.message.includes('401') || error.message.includes('unauthorized'))) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Votre session a expiré. Veuillez vous reconnecter.'
-        }));
+      // Gestion spécifique des différents types d'erreurs
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Votre session a expiré. Veuillez vous reconnecter.'
+          }));
+        } else if (error.message.includes('user location not set') || error.message.includes('current user location not set')) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'location_required' // Code d'erreur spécial pour la géolocalisation
+          }));
+        } else {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: errorMessage
+          }));
+        }
       } else {
         setState(prev => ({
           ...prev,
@@ -94,6 +100,37 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
       }
     }
   }, [state.seenProfileIds]);
+
+  const clearCacheAndRefresh = useCallback(async () => {
+    console.log('Clearing cache and refreshing due to preferences change');
+    // Vider complètement le cache
+    setState(prev => ({
+      ...prev,
+      candidates: [],
+      profiles: new Map(),
+      seenProfileIds: new Set(),
+      currentIndex: 0,
+      loading: true,
+      error: null,
+      hasMore: true,
+      loadingProfiles: new Set(),
+    }));
+    
+    // Relancer une recherche avec les nouveaux critères
+    try {
+      await fetchCandidates();
+      // Notifier l'utilisateur que de nouveaux profils sont disponibles
+      toast({
+        variant: 'success',
+        message: 'Nouveaux profils trouvés avec vos critères mis à jour ! 🎯',
+      });
+    } catch (error) {
+      toast({
+        variant: 'error',
+        message: 'Erreur lors du rechargement des profils',
+      });
+    }
+  }, [fetchCandidates, toast]);
 
   const loadUserProfile = useCallback(async (userId: number) => {
     // Ne pas charger si déjà en cours ou déjà chargé
@@ -215,6 +252,16 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
     return () => clearTimeout(timer);
   }, []); // Retirer fetchCandidates de la dépendance pour éviter la boucle
 
+  // Écouter les changements de préférences
+  useEffect(() => {
+    const unsubscribe = preferencesEventEmitter.subscribe(() => {
+      console.log('Preferences changed, clearing cache and refreshing matches');
+      clearCacheAndRefresh();
+    });
+
+    return unsubscribe;
+  }, [clearCacheAndRefresh]);
+
   const currentCandidate = state.candidates[state.currentIndex] || null;
   const currentProfile = currentCandidate ? state.profiles.get(currentCandidate.id) || null : null;
   const remainingCount = Math.max(0, state.candidates.length - state.currentIndex);
@@ -241,6 +288,7 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
         }));
         fetchCandidates();
       },
+      clearCacheAndRefresh, // Nouvelle fonction pour vider le cache complet
       loadMore: loadMoreCandidates,
     }
   };

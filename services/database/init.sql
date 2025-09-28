@@ -182,20 +182,6 @@ CREATE TABLE images (
 -- MATCHING SYSTEM TABLES
 -- ====================
 
--- Table to store user preferences for matching
-CREATE TABLE IF NOT EXISTS user_preferences (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-    age_min INTEGER DEFAULT 18,
-    age_max INTEGER DEFAULT 99,
-    max_distance REAL DEFAULT 50,
-    min_fame INTEGER DEFAULT 0,
-    preferred_genders TEXT NOT NULL, -- JSON array of genders
-    required_tags TEXT, -- JSON array of tag names
-    blocked_tags TEXT, -- JSON array of tag names
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Table to track user interactions
 CREATE TABLE IF NOT EXISTS user_interactions (
@@ -216,19 +202,41 @@ CREATE TABLE IF NOT EXISTS matches (
     user2_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    
+
     -- Ensure consistent ordering and uniqueness
     CONSTRAINT user_order_check CHECK (user1_id < user2_id),
     CONSTRAINT unique_match UNIQUE (user1_id, user2_id)
 );
 
--- Legacy relations table (kept for backward compatibility)
-CREATE TABLE relations (
+-- ====================
+-- TABLE : user_matching_preferences
+-- ====================
+CREATE TABLE IF NOT EXISTS user_matching_preferences (
     id SERIAL PRIMARY KEY,
-    user1_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    user2_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    value_user1 relation_value_enum DEFAULT 'pass' NOT NULL,
-    value_user2 relation_value_enum DEFAULT 'pass' NOT NULL
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    age_min INTEGER DEFAULT 18,
+    age_max INTEGER DEFAULT 99,
+    max_distance NUMERIC(10,2) DEFAULT 50.0,
+    min_fame INTEGER DEFAULT 0,
+    preferred_genders TEXT NOT NULL DEFAULT '["man","woman","other"]',
+    required_tags TEXT DEFAULT '[]',
+    blocked_tags TEXT DEFAULT '[]',
+    
+    -- Lifestyle preferences
+    smoking_preference VARCHAR(20) DEFAULT 'any',      -- "any", "smoker", "non_smoker"
+    alcohol_preference VARCHAR(20) DEFAULT 'any',      -- "any", "drinker", "non_drinker"
+    drugs_preference VARCHAR(20) DEFAULT 'any',        -- "any", "user", "non_user"
+    cannabis_preference VARCHAR(20) DEFAULT 'any',     -- "any", "user", "non_user"
+    
+    -- Religious preferences
+    religion_preference VARCHAR(20) DEFAULT 'any',     -- "any", "same", "different"
+    blocked_religions TEXT DEFAULT '[]',               -- JSON array of blocked religions
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Ensure unique preferences per user
+    CONSTRAINT unique_user_preferences UNIQUE (user_id)
 );
 
 -- ====================
@@ -277,6 +285,39 @@ CREATE TABLE notifications (
     time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+DROP TABLE IF EXISTS message_reactions CASCADE;
+
+CREATE TABLE message_reactions (
+    id BIGSERIAL PRIMARY KEY,
+    message_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    emoji VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_message
+        FOREIGN KEY (message_id)
+        REFERENCES messages(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_reactions_message_id ON message_reactions (message_id);
+CREATE INDEX IF NOT EXISTS idx_message_reactions_user_id ON message_reactions (user_id);
+
+
+CREATE TABLE IF NOT EXISTS message_reactions (
+    id BIGSERIAL PRIMARY KEY,
+    message_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    emoji VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_message
+        FOREIGN KEY (message_id)
+        REFERENCES messages(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_reactions_message_id ON message_reactions (message_id);
+CREATE INDEX IF NOT EXISTS idx_message_reactions_user_id ON message_reactions (user_id);
 
 -- ====================
 -- TRIGGERS
@@ -339,9 +380,9 @@ FOR EACH ROW
 WHEN (NEW.birth_date IS NOT NULL)
 EXECUTE FUNCTION set_user_age();
 
--- Trigger for user preferences updated_at
-CREATE TRIGGER trg_update_user_preferences_updated_at
-BEFORE UPDATE ON user_preferences
+-- Trigger for user_matching_preferences updated_at
+CREATE TRIGGER trg_update_user_matching_preferences_updated_at
+BEFORE UPDATE ON user_matching_preferences
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
@@ -373,9 +414,9 @@ INSERT INTO tags (name) VALUES
 -- INDEXES FOR MATCHING PERFORMANCE
 -- ====================
 
--- User preferences indexes
-CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_preferences_last_updated ON user_preferences(last_updated);
+-- User matching preferences indexes
+CREATE INDEX IF NOT EXISTS idx_user_matching_preferences_user_id ON user_matching_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_matching_preferences_updated_at ON user_matching_preferences(updated_at);
 
 -- User interactions indexes
 CREATE INDEX IF NOT EXISTS idx_user_interactions_user_id ON user_interactions(user_id);
@@ -447,7 +488,6 @@ JOIN users u2 ON m.user2_id = u2.id
 WHERE m.is_active = TRUE
 ORDER BY m.matched_at DESC;
 
--- ====================
 -- PAYMENT SYSTEM TABLES
 -- ====================
 
@@ -494,6 +534,19 @@ CREATE TABLE IF NOT EXISTS stripe_events (
 );
 
 -- ====================
+-- TABLE : user_seen_profiles
+-- ====================
+-- Table to track which profiles a user has already seen to prevent duplicates
+CREATE TABLE IF NOT EXISTS user_seen_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    seen_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    algorithm_type VARCHAR(50) DEFAULT 'unknown',
+    seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, seen_user_id)
+);
+
+-- ====================
 -- PAYMENT SYSTEM INDEXES
 -- ====================
 
@@ -514,6 +567,11 @@ CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at);
 CREATE INDEX IF NOT EXISTS idx_stripe_events_event_type ON stripe_events(event_type);
 CREATE INDEX IF NOT EXISTS idx_stripe_events_processed ON stripe_events(processed);
 CREATE INDEX IF NOT EXISTS idx_stripe_events_created_at ON stripe_events(created_at);
+
+-- Indexes for user_seen_profiles
+CREATE INDEX IF NOT EXISTS idx_user_seen_profiles_user_id ON user_seen_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_seen_profiles_seen_user_id ON user_seen_profiles(seen_user_id);
+CREATE INDEX IF NOT EXISTS idx_user_seen_profiles_user_seen ON user_seen_profiles(user_id, seen_user_id);
 
 -- ====================
 -- PAYMENT SYSTEM TRIGGERS
@@ -537,13 +595,19 @@ BEFORE UPDATE ON stripe_events
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+-- Trigger for user_seen_profiles
+CREATE TRIGGER trg_update_user_seen_profiles_seen_at
+BEFORE UPDATE ON user_seen_profiles
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 -- ====================
 -- PAYMENT SYSTEM VIEWS
 -- ====================
 
 -- View for active subscriptions with user details
 CREATE OR REPLACE VIEW active_subscriptions AS
-SELECT 
+SELECT
     s.id,
     s.user_id,
     u.username,
@@ -560,10 +624,10 @@ SELECT
     s.created_at,
     s.updated_at,
     -- Check if subscription is currently active
-    CASE 
-        WHEN s.status = 'active' AND s.current_period_end > NOW() 
-        THEN TRUE 
-        ELSE FALSE 
+    CASE
+        WHEN s.status = 'active' AND s.current_period_end > NOW()
+        THEN TRUE
+        ELSE FALSE
     END as is_currently_active,
     -- Days until expiration
     EXTRACT(DAY FROM s.current_period_end - NOW()) as days_until_expiration
@@ -574,7 +638,7 @@ ORDER BY s.current_period_end DESC;
 
 -- View for payment history with user and subscription details
 CREATE OR REPLACE VIEW payment_history AS
-SELECT 
+SELECT
     p.id,
     p.user_id,
     u.username,

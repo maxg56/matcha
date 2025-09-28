@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,15 +11,11 @@ import (
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Debug: log all headers
-		fmt.Printf("[AUTH] Incoming headers: %+v\n", c.Request.Header)
-		
 		// Get user ID from header (set by gateway)
 		userIDStr := c.GetHeader("X-User-ID")
-		fmt.Printf("[AUTH] X-User-ID header: '%s'\n", userIDStr)
 		
 		if userIDStr == "" {
-			utils.RespondError(c, http.StatusUnauthorized, "User ID header missing")
+			utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")
 			c.Abort()
 			return
 		}
@@ -28,13 +23,13 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Validate user ID
 		userID, err := strconv.Atoi(userIDStr)
 		if err != nil || userID <= 0 {
-			utils.RespondError(c, http.StatusBadRequest, "Invalid user ID")
+			utils.RespondError(c, http.StatusUnauthorized, "user not authenticated")
 			c.Abort()
 			return
 		}
 
 		// Store user ID in context
-		c.Set("userID", userID)
+		c.Set("user_id", userID)
 		c.Next()
 	}
 }
