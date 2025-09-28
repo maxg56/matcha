@@ -191,7 +191,7 @@ func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int
 		}
 		return nil, errors.New("access denied")
 	}
-	
+
 	// Set default pagination
 	if limit <= 0 || limit > 100 {
 		limit = 50
@@ -199,8 +199,23 @@ func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int
 	if offset < 0 {
 		offset = 0
 	}
-	
-	return s.repo.GetMessages(conversationID, limit, offset)
+
+	messages, err := s.repo.GetMessages(conversationID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enrich messages with reactions
+	for i := range messages {
+		reactions, err := s.repo.GetMessageReactions(messages[i].ID)
+		if err != nil {
+			// Don't fail the whole request if reactions fail
+			reactions = []models.MessageReaction{}
+		}
+		messages[i].Reactions = reactions
+	}
+
+	return messages, nil
 }
 
 func (s *chatService) GetMessage(messageID uint) (*models.Message, error) {
