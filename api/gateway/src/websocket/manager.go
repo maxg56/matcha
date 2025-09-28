@@ -211,7 +211,8 @@ func (m *Manager) unregisterClientUnsafe(client *Client) {
 	}
 }
 
-// broadcastMessage sends a message to the appropriate clients
+// broadcastMessage sends a message to the appropriate clients and may remove clients from the internal maps if sending fails.
+// This function acquires a write lock because it can modify the clients and channels maps.
 func (m *Manager) broadcastMessage(message BroadcastMessage) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
