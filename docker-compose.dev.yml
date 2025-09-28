@@ -307,6 +307,7 @@ services:
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
       VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
+      VITE_STRIPE_PUBLIC_KEY: ${VITE_STRIPE_PUBLIC_KEY}
     volumes:
       - ./frontend:/app
       - /app/node_modules
