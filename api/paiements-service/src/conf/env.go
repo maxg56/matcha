@@ -50,7 +50,7 @@ func InitEnv() {
 		DBHost:     getEnvWithDefault("DB_HOST", "localhost"),
 		DBPort:     getEnvWithDefault("DB_PORT", "5432"),
 		DBUser:     getEnvWithDefault("DB_USER", "postgres"),
-		DBPassword: getEnvWithDefault("DB_PASSWORD", "password"),
+		DBPassword: getEnvWithDefault("DB_PASSWORD", ""),
 		DBName:     getEnvWithDefault("DB_NAME", "matcha_dev"),
 
 		// Stripe Configuration
