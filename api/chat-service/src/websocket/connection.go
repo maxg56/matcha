@@ -1,8 +1,8 @@
 package websocket
 
 import (
+	"chat-service/src/logger"
 	"chat-service/src/types"
-	"log"
 	"sync"
 	"time"
 
@@ -17,7 +17,7 @@ type Connection struct {
 	hub          *Hub
 	mutex        sync.Mutex
 	lastPing     time.Time
-	
+
 	// Rate limiting
 	messageTimes []time.Time
 	rateMutex    sync.Mutex
@@ -39,7 +39,7 @@ func NewConnection(conn *websocket.Conn, userID uint, hub *Hub) *Connection {
 func (c *Connection) WriteMessage(messageType int, data []byte) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	
+
 	c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	return c.conn.WriteMessage(messageType, data)
 }
@@ -53,7 +53,7 @@ func (c *Connection) ReadMessage() (int, []byte, error) {
 func (c *Connection) Close() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	
+
 	close(c.send)
 	return c.conn.Close()
 }
@@ -64,7 +64,7 @@ func (c *Connection) SetReadDeadline(deadline any) error {
 		return c.conn.SetReadDeadline(t)
 	}
 	// If the type assertion fails, log warning and return error
-	log.Printf("Warning: Invalid deadline type for SetReadDeadline: %T", deadline)
+	logger.WarnWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "Invalid deadline type for SetReadDeadline: %T", deadline)
 	return ErrInvalidMessage
 }
 
@@ -74,7 +74,7 @@ func (c *Connection) SetWriteDeadline(deadline any) error {
 		return c.conn.SetWriteDeadline(t)
 	}
 	// If the type assertion fails, log warning and return error
-	log.Printf("Warning: Invalid deadline type for SetWriteDeadline: %T", deadline)
+	logger.WarnWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "Invalid deadline type for SetWriteDeadline: %T", deadline)
 	return ErrInvalidMessage
 }
 
@@ -105,7 +105,7 @@ func (c *Connection) readPump(chatService types.ChatService) {
 		err := c.conn.ReadJSON(&msg)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket error for user %d: %v", c.userID, err)
+				logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "WebSocket error: %v", err)
 			}
 			break
 		}
@@ -131,7 +131,7 @@ func (c *Connection) writePump() {
 			}
 
 			if err := c.conn.WriteJSON(message); err != nil {
-				log.Printf("Write error for user %d: %v", c.userID, err)
+				logger.ErrorWithContext(logger.WithComponent("websocket_conn").WithUser(c.userID), "Write error: %v", err)
 				return
 			}
 
@@ -142,91 +142,6 @@ func (c *Connection) writePump() {
 			}
 		}
 	}
-}
-
-// handleMessage processes incoming messages
-func (c *Connection) handleMessage(msg IncomingMessage, chatService types.ChatService) error {
-	// Check rate limiting for send messages
-	if msg.Type == MessageTypeSend {
-		if !c.checkRateLimit() {
-			return ErrRateLimited
-		}
-	}
-	
-	switch msg.Type {
-		case MessageTypeSend:
-			return c.handleSendMessage(msg, chatService)
-		case MessageTypeJoin:
-			return c.handleJoinConversation(msg, chatService)
-		case MessageTypeTyping:
-			return c.handleTyping(msg)
-	default:
-		return ErrUnknownMessageType
-	}
-}
-
-// handleSendMessage processes send message requests
-func (c *Connection) handleSendMessage(msg IncomingMessage, chatService types.ChatService) error {
-	if msg.ConversationID == 0 || msg.Content == "" {
-		return ErrInvalidMessage
-	}
-
-	message, err := chatService.SendMessage(c.userID, msg.ConversationID, msg.Content)
-	if err != nil {
-		return err
-	}
-
-	// Send confirmation to sender
-	c.sendMessage(OutgoingMessage{
-		Type:           MessageTypeNewMessage,
-		ConversationID: msg.ConversationID,
-		Data: MessageData{
-			ID:        message.ID,
-			SenderID:  message.SenderID,
-			Message:   message.Msg,
-			Timestamp: message.Time,
-			ReadAt:    message.ReadAt,
-		},
-		Timestamp: time.Now(),
-	})
-
-	// Update monitoring stats (would normally be done via callback or interface)
-	log.Printf("Message sent by user %d in conversation %d", c.userID, msg.ConversationID)
-
-	return nil
-}
-
-// handleJoinConversation processes join conversation requests
-func (c *Connection) handleJoinConversation(msg IncomingMessage, chatService types.ChatService) error {
-	if msg.ConversationID == 0 {
-		return ErrInvalidConversation
-	}
-
-	err := chatService.MarkMessagesAsRead(c.userID, msg.ConversationID)
-	if err != nil {
-		log.Printf("Failed to mark messages as read: %v", err)
-	}
-
-	return nil
-}
-
-// handleTyping processes typing notifications
-func (c *Connection) handleTyping(msg IncomingMessage) error {
-	if msg.ConversationID == 0 {
-		return ErrInvalidConversation
-	}
-
-	c.hub.BroadcastToConversation(msg.ConversationID, OutgoingMessage{
-		Type:           MessageTypeTyping,
-		ConversationID: msg.ConversationID,
-		Data: TypingData{
-			UserID:   c.userID,
-			IsTyping: msg.IsTyping,
-		},
-		Timestamp: time.Now(),
-	}, c.userID) // Exclude sender
-
-	return nil
 }
 
 // sendMessage sends a message to this connection
@@ -248,36 +163,6 @@ func (c *Connection) sendError(code, message string) {
 		},
 		Timestamp: time.Now(),
 	})
-}
-
-// checkRateLimit checks if the user is sending messages too quickly
-func (c *Connection) checkRateLimit() bool {
-	c.rateMutex.Lock()
-	defer c.rateMutex.Unlock()
-	
-	now := time.Now()
-	maxMessages := 10                    // Max 10 messages
-	windowDuration := 1 * time.Minute    // Per minute
-	
-	// Remove old messages outside the time window
-	cutoff := now.Add(-windowDuration)
-	newTimes := make([]time.Time, 0)
-	for _, msgTime := range c.messageTimes {
-		if msgTime.After(cutoff) {
-			newTimes = append(newTimes, msgTime)
-		}
-	}
-	c.messageTimes = newTimes
-	
-	// Check if we're over the limit
-	if len(c.messageTimes) >= maxMessages {
-		log.Printf("Rate limit exceeded for user %d: %d messages in last minute", c.userID, len(c.messageTimes))
-		return false
-	}
-	
-	// Add current message time
-	c.messageTimes = append(c.messageTimes, now)
-	return true
 }
 
 // cleanup handles connection cleanup

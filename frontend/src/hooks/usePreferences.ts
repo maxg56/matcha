@@ -83,11 +83,9 @@ export function usePreferences(): UsePreferencesResult {
 
   // Fonction pour réinitialiser aux préférences par défaut
   const resetPreferences = useCallback(() => {
-    if (!user?.id) return;
-
-    const defaultPrefs = preferencesService.getDefaultPreferences(user.id);
+    const defaultPrefs = preferencesService.getDefaultPreferences();
     updatePreferences(defaultPrefs);
-  }, [user?.id, updatePreferences]);
+  }, [updatePreferences]);
 
   // Fonction pour refetch manuellement
   const refetchPreferences = useCallback(async () => {

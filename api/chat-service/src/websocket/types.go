@@ -8,13 +8,17 @@ import (
 type MessageType string
 
 const (
-	MessageTypeSend         MessageType = "send_message"
-	MessageTypeJoin         MessageType = "join_conversation"
-	MessageTypeTyping       MessageType = "typing"
-	MessageTypeNewMessage   MessageType = "new_message"
-	MessageTypeError        MessageType = "error"
-	MessageTypeConnected    MessageType = "connected"
-	MessageTypeDisconnected MessageType = "disconnected"
+	MessageTypeSend           MessageType = "send_message"
+	MessageTypeJoin           MessageType = "join_conversation"
+	MessageTypeTyping         MessageType = "typing"
+	MessageTypeNewMessage     MessageType = "new_message"
+	MessageTypeError          MessageType = "error"
+	MessageTypeConnected      MessageType = "connected"
+	MessageTypeDisconnected   MessageType = "disconnected"
+	MessageTypeReactionAdd    MessageType = "reaction_add"
+	MessageTypeReactionRemove MessageType = "reaction_remove"
+	MessageTypeReactionUpdate MessageType = "reaction_update"
+	MessageTypePresenceUpdate MessageType = "presence_update"
 )
 
 // WSMessage represents a WebSocket message
@@ -31,6 +35,8 @@ type IncomingMessage struct {
 	ConversationID uint        `json:"conversation_id,omitempty"`
 	Content        string      `json:"content,omitempty"`
 	IsTyping       bool        `json:"is_typing,omitempty"`
+	MessageID      uint        `json:"message_id,omitempty"`
+	Emoji          string      `json:"emoji,omitempty"`
 }
 
 // OutgoingMessage represents messages sent to clients
@@ -67,4 +73,19 @@ type ConnectionData struct {
 	UserID    uint   `json:"user_id"`
 	Status    string `json:"status"`
 	Timestamp time.Time `json:"timestamp"`
+}
+
+// ReactionData represents reaction event data
+type ReactionData struct {
+	MessageID uint   `json:"message_id"`
+	UserID    uint   `json:"user_id"`
+	Emoji     string `json:"emoji"`
+	Action    string `json:"action"` // "add" or "remove"
+}
+
+// PresenceData represents user presence data
+type PresenceData struct {
+	UserID   uint  `json:"user_id"`
+	IsOnline bool  `json:"is_online"`
+	LastSeen *time.Time `json:"last_seen,omitempty"`
 }

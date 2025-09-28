@@ -16,11 +16,28 @@ type ChatRepository interface {
 	GetConversationParticipants(conversationID uint) ([]uint, error)
 	UpdateLastMessage(conversationID uint, content string) error
 
+	// User operations (for enriching conversations)
+	GetUserInfo(userID uint) (*UserInfo, error)
+	GetUsersInfo(userIDs []uint) (map[uint]*UserInfo, error)
+
 	// Message operations
 	GetMessages(conversationID uint, limit, offset int) ([]models.Message, error)
+	GetMessage(messageID uint) (*models.Message, error)
 	SaveMessage(senderID, conversationID uint, content string) (*models.Message, error)
 	MarkMessagesAsRead(conversationID, userID uint) error
 	GetUnreadCount(conversationID, userID uint) (int64, error)
+
+	// Reaction operations
+	AddReaction(messageID, userID uint, emoji string) (*models.MessageReaction, error)
+	RemoveReaction(messageID, userID uint, emoji string) error
+	GetMessageReactions(messageID uint) ([]models.MessageReaction, error)
+	GetReactionsSummary(messageIDs []uint, currentUserID uint) (map[uint]models.ReactionSummary, error)
+
+	// User presence operations
+	UpdateUserPresence(userID uint, isOnline bool) error
+	GetUserPresence(userID uint) (*models.UserPresence, error)
+	GetUsersPresence(userIDs []uint) ([]models.UserPresence, error)
+	SetUserOffline(userID uint) error
 }
 
 // MessagePublisher handles message broadcasting
@@ -62,15 +79,26 @@ type NotificationService interface {
 // ChatService combines all chat operations
 type ChatService interface {
 	// Conversation methods
-	GetUserConversations(userID uint) ([]models.Discussion, error)
-	GetConversation(userID, conversationID uint) (*models.Discussion, error)
+	GetUserConversations(userID uint) (*ConversationListResponse, error)
+	GetConversation(userID, conversationID uint) (*ConversationResponse, error)
 	CreateConversation(user1ID, user2ID uint) (*models.Discussion, error)
 	
 	// Message methods
 	GetMessages(userID, conversationID uint, limit, offset int) ([]models.Message, error)
+	GetMessage(messageID uint) (*models.Message, error)
 	SendMessage(senderID, conversationID uint, content string) (*models.Message, error)
 	MarkMessagesAsRead(userID, conversationID uint) error
-	
+
+	// Reaction methods
+	AddReaction(userID, messageID uint, emoji string) (*models.MessageReaction, error)
+	RemoveReaction(userID, messageID uint, emoji string) error
+	GetMessageReactions(userID, messageID uint) ([]models.MessageReaction, error)
+
+	// User presence methods
+	SetUserOnline(userID uint) error
+	SetUserOffline(userID uint) error
+	GetUserPresence(userID uint) (*models.UserPresence, error)
+
 	// Real-time methods
 	HandleConnection(userID uint, conn WebSocketConnection) error
 	BroadcastMessage(message models.Message) error
@@ -90,9 +118,13 @@ type WebSocketMessage struct {
 
 // MessageType constants
 const (
-	MessageTypeChat   = "chat"
-	MessageTypeTyping = "typing"
-	MessageTypeRead   = "read"
-	MessageTypeError  = "error"
-	MessageTypeOnline = "online"
+	MessageTypeChat         = "chat"
+	MessageTypeTyping       = "typing"
+	MessageTypeRead         = "read"
+	MessageTypeError        = "error"
+	MessageTypeOnline       = "online"
+	MessageTypeOffline      = "offline"
+	MessageTypeReaction     = "reaction"
+	MessageTypeReactionAdd  = "reaction_add"
+	MessageTypeReactionRemove = "reaction_remove"
 )

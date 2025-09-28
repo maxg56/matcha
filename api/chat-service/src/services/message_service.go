@@ -2,10 +2,8 @@ package services
 
 import (
 	"chat-service/src/conf"
+	"chat-service/src/logger"
 	"chat-service/src/models"
-	"encoding/json"
-	"fmt"
-	"log"
 	"time"
 )
 
@@ -15,47 +13,23 @@ func NewMessageService() *MessageService {
 	return &MessageService{}
 }
 
-type MessageEvent struct {
-	Type           string                 `json:"type"`
-	ConversationID uint                   `json:"conversation_id"`
-	Message        models.Message         `json:"message"`
-	Participants   []uint                 `json:"participants"`
-	Timestamp      time.Time              `json:"timestamp"`
-	Data           map[string]interface{} `json:"data,omitempty"`
+// Helper function for min
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
-func (ms *MessageService) PublishMessage(message models.Message, participants []uint) error {
-	event := MessageEvent{
-		Type:           "new_message",
-		ConversationID: message.ConvID,
-		Message:        message,
-		Participants:   participants,
-		Timestamp:      time.Now(),
-	}
-
-	eventJSON, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal message event: %w", err)
-	}
-
-	channel := fmt.Sprintf("conversation:%d", message.ConvID)
-	err = conf.RedisClient.Publish(conf.Ctx, channel, eventJSON).Err()
-	if err != nil {
-		return fmt.Errorf("failed to publish message: %w", err)
-	}
-
-	for _, userID := range participants {
-		userChannel := fmt.Sprintf("user:%d", userID)
-		err = conf.RedisClient.Publish(conf.Ctx, userChannel, eventJSON).Err()
-		if err != nil {
-			log.Printf("Failed to publish to user channel %s: %v", userChannel, err)
-		}
-	}
-
-	return nil
-}
-
+// SaveMessage saves a new message to the database
 func (ms *MessageService) SaveMessage(senderID, conversationID uint, content string) (*models.Message, error) {
+	ctx := logger.WithComponent("message_service").
+		WithUser(senderID).
+		WithConversation(conversationID).
+		WithAction("save_message")
+
+	logger.DebugWithContext(ctx, "Saving message: %s", content[:min(50, len(content))])
+
 	message := models.Message{
 		ConvID:   conversationID,
 		SenderID: senderID,
@@ -65,17 +39,21 @@ func (ms *MessageService) SaveMessage(senderID, conversationID uint, content str
 
 	result := conf.DB.Create(&message)
 	if result.Error != nil {
+		logger.ErrorWithContext(ctx, "Failed to save message to database: %v", result.Error)
 		return nil, result.Error
 	}
 
+	logger.InfoWithContext(ctx.WithMessage(message.ID), "Message saved successfully")
+
 	err := ms.UpdateConversationLastMessage(conversationID, content)
 	if err != nil {
-		log.Printf("Failed to update conversation last message: %v", err)
+		logger.WarnWithContext(ctx, "Failed to update conversation last message: %v", err)
 	}
 
 	return &message, nil
 }
 
+// UpdateConversationLastMessage updates the conversation's last message info
 func (ms *MessageService) UpdateConversationLastMessage(conversationID uint, content string) error {
 	now := time.Now()
 	result := conf.DB.Model(&models.Discussion{}).
@@ -88,6 +66,7 @@ func (ms *MessageService) UpdateConversationLastMessage(conversationID uint, con
 	return result.Error
 }
 
+// GetMessages retrieves messages from a conversation with pagination
 func (ms *MessageService) GetMessages(conversationID uint, limit int, offset int) ([]models.Message, error) {
 	var messages []models.Message
 
@@ -107,6 +86,7 @@ func (ms *MessageService) GetMessages(conversationID uint, limit int, offset int
 		return nil, result.Error
 	}
 
+	// Reverse the order to get chronological order
 	for i := 0; i < len(messages)/2; i++ {
 		j := len(messages) - 1 - i
 		messages[i], messages[j] = messages[j], messages[i]
@@ -115,6 +95,7 @@ func (ms *MessageService) GetMessages(conversationID uint, limit int, offset int
 	return messages, nil
 }
 
+// MarkMessagesAsRead marks messages as read for a specific user in a conversation
 func (ms *MessageService) MarkMessagesAsRead(conversationID, userID uint) error {
 	now := time.Now()
 	result := conf.DB.Model(&models.Message{}).

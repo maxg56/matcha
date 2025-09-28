@@ -17,6 +17,9 @@ class WebSocketService {
   private subscriptionService: SubscriptionService;
   public chat: ChatService;
   public notifications: NotificationService;
+  private messageQueue: Array<{ message: WebSocketMessage; timestamp: number; retries: number }> = [];
+  private maxQueueSize = 100;
+  private maxRetries = 3;
 
   constructor(config?: WebSocketConfig) {
     this.connection = new WebSocketConnection(config);
@@ -28,7 +31,10 @@ class WebSocketService {
 
   async connect(): Promise<void> {
     await this.connection.connect(
-      () => this.subscriptionService.resubscribeAll(),
+      () => {
+        this.subscriptionService.resubscribeAll();
+        this.flushMessageQueue();
+      },
       (event) => this.handleMessage(event),
       (event) => this.handleClose(event),
       (error) => this.handleError(error)
@@ -39,6 +45,13 @@ class WebSocketService {
     try {
       const message: WebSocketResponse = JSON.parse(event.data);
       console.log('WebSocket: Message received', message);
+
+      // Handle pong messages specifically for connection health
+      if (message.type === 'pong') {
+        this.connection.onPong();
+        return;
+      }
+
       this.messageHandler.distributeMessage(message);
     } catch (error) {
       console.error('WebSocket: Failed to parse message', error);
@@ -56,9 +69,20 @@ class WebSocketService {
 
 
   sendMessage(message: WebSocketMessage): boolean {
+    if (!this.connection.isConnected()) {
+      // Queue message for later sending when reconnected
+      this.queueMessage(message);
+      console.log('WebSocket: Message queued (not connected)', message.type);
+      return false;
+    }
+
     const sent = this.connection.send(JSON.stringify(message));
     if (sent) {
       console.log('WebSocket: Message sent', message);
+    } else {
+      // Connection might have dropped, queue the message
+      this.queueMessage(message);
+      console.log('WebSocket: Message queued (send failed)', message.type);
     }
     return sent;
   }
@@ -69,6 +93,10 @@ class WebSocketService {
 
   removeMessageHandler(type: string, handler: MessageHandler): void {
     this.messageHandler.removeMessageHandler(type, handler);
+  }
+
+  clearHandlers(): void {
+    this.messageHandler.clear();
   }
 
   sendChatMessage(conversationId: string, message: string): boolean {
@@ -120,8 +148,70 @@ class WebSocketService {
     return this.chat.subscribeToChatConversation(conversationId);
   }
 
+  addReaction(messageId: number, emoji: string): boolean {
+    return this.chat.addReaction(messageId, emoji);
+  }
+
+  removeReaction(messageId: number, emoji: string): boolean {
+    return this.chat.removeReaction(messageId, emoji);
+  }
+
   subscribeToUserUpdates(): boolean {
     return this.subscriptionService.subscribeToUserUpdates();
+  }
+
+  private queueMessage(message: WebSocketMessage): void {
+    if (this.messageQueue.length >= this.maxQueueSize) {
+      // Remove oldest message
+      this.messageQueue.shift();
+      console.warn('WebSocket: Message queue full, removed oldest message');
+    }
+
+    this.messageQueue.push({
+      message,
+      timestamp: Date.now(),
+      retries: 0
+    });
+  }
+
+  private flushMessageQueue(): void {
+    if (this.messageQueue.length === 0) {
+      return;
+    }
+
+    console.log(`WebSocket: Flushing ${this.messageQueue.length} queued messages`);
+
+    const messagesToSend = [...this.messageQueue];
+    this.messageQueue = [];
+
+    messagesToSend.forEach(({ message, retries }) => {
+      if (retries < this.maxRetries) {
+        const sent = this.connection.send(JSON.stringify(message));
+        if (sent) {
+          console.log('WebSocket: Queued message sent', message.type);
+        } else {
+          // Re-queue with increased retry count
+          this.messageQueue.push({
+            message,
+            timestamp: Date.now(),
+            retries: retries + 1
+          });
+        }
+      } else {
+        console.warn('WebSocket: Dropped message after max retries', message.type);
+      }
+    });
+  }
+
+  getConnectionHealth(): any {
+    return this.connection.getConnectionHealth();
+  }
+
+  getQueueStatus(): { size: number; maxSize: number } {
+    return {
+      size: this.messageQueue.length,
+      maxSize: this.maxQueueSize
+    };
   }
 }
 
