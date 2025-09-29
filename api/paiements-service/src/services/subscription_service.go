@@ -245,6 +245,33 @@ func (s *SubscriptionService) GetUserPremiumInfo(userID uint) (*models.UserPremi
 	return &info, nil
 }
 
+// IsUserPremium vérifie si un utilisateur a un statut premium actif
+func (s *SubscriptionService) IsUserPremium(userID uint) (bool, error) {
+	var user models.User
+	if err := conf.DB.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, errors.New("user not found")
+		}
+		return false, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Vérifier si l'utilisateur a un abonnement actif
+	var subscription models.Subscription
+	err := conf.DB.Where("user_id = ? AND status = ?", userID, models.StatusActive).First(&subscription).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// Pas d'abonnement actif
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check subscription: %w", err)
+	}
+
+	// Vérifier si l'abonnement est valide (pas expiré)
+	return subscription.IsPremiumValid(), nil
+}
+
 // CreateBillingPortalSession crée une session du portail de facturation
 func (s *SubscriptionService) CreateBillingPortalSession(userID uint, returnURL string) (string, error) {
 	// Récupérer l'abonnement de l'utilisateur

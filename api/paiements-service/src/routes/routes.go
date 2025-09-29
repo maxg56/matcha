@@ -50,6 +50,7 @@ func SetupRoutes(r *gin.Engine) {
 			subscription.DELETE("", subscriptionHandler.CancelSubscription)
 			subscription.DELETE("/", subscriptionHandler.CancelSubscription)
 			subscription.GET("/billing-portal", subscriptionHandler.GetBillingPortal)
+			subscription.GET("/premium-status", subscriptionHandler.CheckPremiumStatus)
 		}
 
 		// Gestion des paiements

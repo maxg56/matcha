@@ -62,24 +62,33 @@ export default function PremiumPage() {
   const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  const [isCheckingPremium, setIsCheckingPremium] = useState(true);
 
   // Vérifier les paramètres de retour de Stripe
   const paymentSuccess = searchParams.get('success') === 'true';
   const paymentCanceled = searchParams.get('canceled') === 'true';
 
   useEffect(() => {
-    const loadCurrentSubscription = async () => {
+    const loadUserData = async () => {
       try {
-        const subscription = await subscriptionService.getCurrentSubscription();
+        // Charger le statut premium et l'abonnement en parallèle
+        const [premium, subscription] = await Promise.all([
+          subscriptionService.isPremiumUser(),
+          subscriptionService.getCurrentSubscription()
+        ]);
+
+        setIsPremium(premium);
         setCurrentSubscription(subscription);
       } catch (error) {
-        console.error('Erreur lors du chargement de l\'abonnement:', error);
+        console.error('Erreur lors du chargement des données utilisateur:', error);
       } finally {
         setIsLoadingSubscription(false);
+        setIsCheckingPremium(false);
       }
     };
 
-    loadCurrentSubscription();
+    loadUserData();
   }, []);
 
   const handlePlanSelect = async (planId: string) => {
@@ -110,6 +119,132 @@ export default function PremiumPage() {
   };
 
   const currentPlanId = currentSubscription?.planType || 'gratuit';
+
+  // Si l'utilisateur est premium, afficher un écran spécial
+  if (isCheckingPremium) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  if (isPremium) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-violet-900 to-indigo-900 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-yellow-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-128 h-128 bg-gradient-to-r from-violet-400/10 to-indigo-400/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+        </div>
+
+        {/* Floating Particles */}
+        <div className="absolute inset-0">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${2 + Math.random() * 2}s`
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 py-8 text-white">
+          {/* Premium Header with Crown */}
+          <div className="text-center mb-12">
+            <div className="relative inline-block mb-6">
+              <div className="text-8xl animate-bounce">👑</div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-ping"></div>
+            </div>
+
+            <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-6 animate-pulse">
+              VIP PREMIUM
+            </h1>
+
+            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-yellow-500/20 to-purple-500/20 backdrop-blur-sm border border-yellow-400/30 rounded-full px-8 py-4 mb-8">
+              <Star className="h-6 w-6 text-yellow-400 animate-spin" />
+              <span className="text-xl font-semibold text-yellow-100">Statut Premium Actif</span>
+              <Zap className="h-6 w-6 text-purple-400 animate-pulse" />
+            </div>
+
+            <p className="text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
+              ✨ Félicitations ! Vous avez accès à toutes les fonctionnalités premium ✨
+            </p>
+          </div>
+
+          {/* Premium Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {premiumFeatures.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:scale-105 transition-all duration-300 hover:bg-white/20"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="bg-gradient-to-r from-yellow-400 to-pink-400 text-black p-3 rounded-full w-fit mx-auto mb-4 animate-pulse">
+                  {feature.icon}
+                </div>
+                <h3 className="font-bold text-white mb-2 text-center">
+                  {feature.title}
+                </h3>
+                <p className="text-purple-100 text-sm text-center">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Premium Stats */}
+          <div className="bg-gradient-to-r from-purple-800/40 to-indigo-800/40 backdrop-blur-sm border border-purple-400/30 rounded-3xl p-8 mb-12">
+            <h2 className="text-3xl font-bold text-center text-white mb-8">
+              🎉 Vos Avantages Premium 🎉
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="text-5xl font-bold bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent mb-2">
+                  ∞
+                </div>
+                <p className="text-purple-100">Likes illimités</p>
+              </div>
+              <div className="text-center">
+                <div className="text-5xl font-bold bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent mb-2">
+                  👁️
+                </div>
+                <p className="text-purple-100">Voir qui vous aime</p>
+              </div>
+              <div className="text-center">
+                <div className="text-5xl font-bold bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent mb-2">
+                  ⚡
+                </div>
+                <p className="text-purple-100">Fonctionnalités VIP</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Subscription Management */}
+          <div className="text-center">
+            <div className="bg-gradient-to-r from-purple-600/30 to-indigo-600/30 backdrop-blur-sm border border-purple-400/30 rounded-2xl p-8 max-w-md mx-auto">
+              <h3 className="text-xl font-bold text-white mb-4">Gérer votre abonnement</h3>
+              <p className="text-purple-100 mb-6">
+                Plan actuel: <span className="font-bold text-yellow-400">{currentSubscription?.planType || 'Premium'}</span>
+              </p>
+              <Button
+                onClick={() => window.open('/settings', '_self')}
+                className="bg-gradient-to-r from-yellow-400 to-pink-400 hover:from-yellow-500 hover:to-pink-500 text-black font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105"
+              >
+                Paramètres d'abonnement
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">

@@ -70,9 +70,22 @@ class SubscriptionService {
   }
 
   /**
-   * Vérifie si l'utilisateur a un abonnement actif
+   * Vérifie si l'utilisateur a un abonnement actif via l'endpoint dédié
    */
   async isPremiumUser(): Promise<boolean> {
+    try {
+      const response = await apiService.get<{ is_premium: boolean }>('/api/stripe/subscription/premium-status');
+      return response.is_premium;
+    } catch (error) {
+      console.error('Erreur lors de la vérification du statut premium:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Vérifie si l'utilisateur a un abonnement actif (méthode legacy)
+   */
+  async isPremiumUserLegacy(): Promise<boolean> {
     try {
       const subscription = await this.getCurrentSubscription();
       return subscription?.status === 'active' || false;

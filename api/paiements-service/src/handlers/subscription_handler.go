@@ -197,6 +197,45 @@ func (h *SubscriptionHandler) CancelSubscription(c *gin.Context) {
 	})
 }
 
+// CheckPremiumStatus vérifie si l'utilisateur a un statut premium actif
+func (h *SubscriptionHandler) CheckPremiumStatus(c *gin.Context) {
+	// Récupérer l'ID utilisateur depuis le header JWT
+	userIDStr := c.GetHeader("X-User-ID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"error":   "User ID required",
+		})
+		return
+	}
+
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid user ID",
+		})
+		return
+	}
+
+	// Vérifier le statut premium
+	isPremium, err := h.subscriptionService.IsUserPremium(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"is_premium": isPremium,
+		},
+	})
+}
+
 // GetBillingPortal crée une session du portail de facturation
 func (h *SubscriptionHandler) GetBillingPortal(c *gin.Context) {
 	// Récupérer l'ID utilisateur depuis le header JWT

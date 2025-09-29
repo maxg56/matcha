@@ -42,6 +42,7 @@ func SetupPaiementsRoutes(r *gin.Engine) {
 			subscription.POST("/", proxy.ProxyRequest("paiements", "/api/stripe/subscription"))
 			subscription.DELETE("/", proxy.ProxyRequest("paiements", "/api/stripe/subscription"))
 			subscription.GET("/billing-portal", proxy.ProxyRequest("paiements", "/api/stripe/subscription/billing-portal"))
+			subscription.GET("/premium-status", proxy.ProxyRequest("paiements", "/api/stripe/subscription/premium-status"))
 		}
 
 		// Gestion des paiements
