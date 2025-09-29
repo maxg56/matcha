@@ -1,21 +1,25 @@
 :80 {
-  redir https://{host}{uri} permanent
+  handle /api/* {
+    reverse_proxy gateway:8080
+  }
 }
 
 localhost:443, {$VITE_HOSTNAME}:443 {
   tls internal
   log foo
-  
+
+ 
+
   # API routes (must come before frontend routes)
   handle /api/* {
     reverse_proxy gateway:8080
   }
-  
+
   # WebSocket notifications (reverse proxy direct vers la gateway)
   handle /ws* {
     reverse_proxy gateway:8080
   }
-  
+
   handle /adminer/* {
     reverse_proxy adminer:8080
   }

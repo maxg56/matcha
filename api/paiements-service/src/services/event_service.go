@@ -18,6 +18,7 @@ type EventService struct {
 	subscriptionService *SubscriptionService
 	paymentService      *PaymentService
 	websocketService    *WebSocketService
+	checkoutService     *CheckoutService
 }
 
 // NewEventService crée une nouvelle instance du service d'événements
@@ -26,6 +27,7 @@ func NewEventService() *EventService {
 		subscriptionService: NewSubscriptionService(),
 		paymentService:      NewPaymentService(),
 		websocketService:    NewWebSocketService(),
+		checkoutService:     NewCheckoutService(),
 	}
 }
 
@@ -80,6 +82,8 @@ func (s *EventService) ProcessWebhookEvent(event *stripe.Event) error {
 // handleEventByType traite un événement selon son type
 func (s *EventService) handleEventByType(event *stripe.Event, webhookEvent *models.WebhookEvent) error {
 	switch event.Type {
+	case "checkout.session.completed":
+		return s.handleCheckoutSessionCompleted(event)
 	case "customer.subscription.created":
 		return s.handleSubscriptionCreated(event)
 	case "customer.subscription.updated":
@@ -98,6 +102,52 @@ func (s *EventService) handleEventByType(event *stripe.Event, webhookEvent *mode
 		log.Printf("Unhandled event type: %s", event.Type)
 		return nil // Ne pas considérer comme une erreur
 	}
+}
+
+// handleCheckoutSessionCompleted traite la completion d'une session de checkout
+func (s *EventService) handleCheckoutSessionCompleted(event *stripe.Event) error {
+	var session stripe.CheckoutSession
+	if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
+		return fmt.Errorf("failed to parse checkout session data: %w", err)
+	}
+
+	log.Printf("🛒 Processing checkout session completed: %s", session.ID)
+
+	// Récupérer notre session stockée
+	checkoutSession, err := s.checkoutService.GetSessionByStripeID(session.ID)
+	if err != nil {
+		log.Printf("⚠️  Checkout session not found in our database: %s", session.ID)
+		// Pour les paiements externes ou tests, on peut continuer sans erreur
+		return nil
+	}
+
+	// Vérifier que la session est bien en attente
+	if checkoutSession.Status != models.SessionPending {
+		log.Printf("⚠️  Session %s is not pending (status: %s)", session.ID, checkoutSession.Status)
+		return nil
+	}
+
+	// Si c'est un abonnement (subscription mode), récupérer l'ID de l'abonnement
+	if session.Mode == stripe.CheckoutSessionModeSubscription && session.Subscription != nil {
+		subscriptionID := session.Subscription.ID
+
+		// Marquer la session comme complétée
+		if err := s.checkoutService.CompleteSession(session.ID, subscriptionID); err != nil {
+			return fmt.Errorf("failed to complete checkout session: %w", err)
+		}
+
+		// Envoyer une notification WebSocket
+		s.websocketService.SendSubscriptionEvent(checkoutSession.UserID, "checkout_completed", map[string]interface{}{
+			"session_id":      session.ID,
+			"subscription_id": subscriptionID,
+			"plan_type":       checkoutSession.PlanType,
+		})
+
+		log.Printf("✅ Checkout session %s completed for user %d with subscription %s",
+			session.ID, checkoutSession.UserID, subscriptionID)
+	}
+
+	return nil
 }
 
 // handleSubscriptionCreated traite la création d'un abonnement

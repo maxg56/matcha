@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,12 +13,14 @@ import (
 // SubscriptionHandler gère les endpoints d'abonnement
 type SubscriptionHandler struct {
 	subscriptionService *services.SubscriptionService
+	checkoutService     *services.CheckoutService
 }
 
 // NewSubscriptionHandler crée un nouveau handler d'abonnement
 func NewSubscriptionHandler() *SubscriptionHandler {
 	return &SubscriptionHandler{
 		subscriptionService: services.NewSubscriptionService(),
+		checkoutService:     services.NewCheckoutService(),
 	}
 }
 
@@ -75,8 +78,8 @@ func (h *SubscriptionHandler) CreateSubscription(c *gin.Context) {
 	// TODO: Récupérer l'email de l'utilisateur depuis la base de données
 	userEmail := "user@example.com" // Placeholder
 
-	// Créer la session de checkout
-	checkoutSession, err := h.subscriptionService.CreateCheckoutSession(uint(userID), userEmail, planType)
+	// Créer la session de checkout avec le nouveau service
+	checkoutSession, err := h.checkoutService.CreateCheckoutSession(uint(userID), planType, userEmail)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -96,8 +99,8 @@ func (h *SubscriptionHandler) CreateSubscription(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"id":  checkoutSession.ID,
-			"url": checkoutSession.URL,
+			"id":  checkoutSession.StripeSessionID,  // Le frontend attend 'id', pas 'session_id'
+			"url": fmt.Sprintf("https://checkout.stripe.com/pay/%s", checkoutSession.StripeSessionID),
 		},
 		"message": "Checkout session created successfully",
 	})

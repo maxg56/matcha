@@ -21,6 +21,16 @@ func SetupPaiementsRoutes(r *gin.Engine) {
 		public.POST("/test-webhook", proxy.ProxyRequest("paiements", "/api/stripe/test-webhook"))
 	}
 
+	// Routes publiques Stripe avec préfixe v1 (pour compatibilité Stripe)
+	publicV1 := r.Group("/api/v1/stripe")
+	{
+		// Webhooks Stripe - Route alternative avec préfixe v1
+		publicV1.POST("/webhook", proxy.ProxyRequest("paiements", "/api/stripe/webhook"))
+
+		// Autres routes v1 si nécessaire
+		publicV1.POST("/create-checkout-session", proxy.ProxyRequest("paiements", "/api/stripe/create-checkout-session"))
+	}
+
 	// Routes protégées par JWT
 	protected := r.Group("/api/stripe")
 	protected.Use(middleware.JWTMiddleware())

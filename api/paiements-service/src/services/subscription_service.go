@@ -234,7 +234,7 @@ func (s *SubscriptionService) GetUserSubscription(userID uint) (*models.Subscrip
 // GetUserPremiumInfo récupère les informations premium d'un utilisateur
 func (s *SubscriptionService) GetUserPremiumInfo(userID uint) (*models.UserPremiumInfo, error) {
 	var user models.User
-	if err := conf.DB.Preload("Subscription").First(&user, userID).Error; err != nil {
+	if err := conf.DB.First(&user, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
 		}

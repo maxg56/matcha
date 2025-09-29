@@ -117,6 +117,7 @@ func runMigrations() error {
 		&models.Subscription{},
 		&models.Payment{},
 		&models.WebhookEvent{},
+		&models.CheckoutSession{},
 	)
 }
 
@@ -126,6 +127,7 @@ func createEnumTypes() error {
 		"CREATE TYPE IF NOT EXISTS subscription_status_enum AS ENUM ('active', 'inactive', 'canceled', 'past_due', 'unpaid')",
 		"CREATE TYPE IF NOT EXISTS plan_type_enum AS ENUM ('mensuel', 'annuel')",
 		"CREATE TYPE IF NOT EXISTS payment_status_enum AS ENUM ('pending', 'succeeded', 'failed', 'canceled')",
+		"CREATE TYPE IF NOT EXISTS checkout_session_status_enum AS ENUM ('pending', 'completed', 'expired', 'canceled')",
 	}
 
 	for _, query := range enumQueries {
