@@ -105,6 +105,19 @@ export interface InteractionResponse {
   message?: string;
 }
 
+export interface LikeReceived {
+  id: number;
+  user_id: number;
+  target_user_id: number;
+  created_at: string;
+  user: UserProfile;
+}
+
+export interface ReceivedLikesResponse {
+  likes: LikeReceived[];
+  count: number;
+}
+
 export interface UserPreferences {
   user_id: number;
   preferences: {
@@ -258,6 +271,13 @@ class MatchService {
         target_user_id: targetUserId
       });
     });
+  }
+
+  /**
+   * Récupère les likes reçus par l'utilisateur
+   */
+  async getReceivedLikes(): Promise<ReceivedLikesResponse> {
+    return apiService.get<ReceivedLikesResponse>(`${this.baseEndpoint}/received-likes`);
   }
 
   /**
