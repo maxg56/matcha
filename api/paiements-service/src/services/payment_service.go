@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/matcha/api/paiements-service/src/models"
 	"github.com/matcha/api/paiements-service/src/conf"
-	"github.com/stripe/stripe-go/v76"
-	"github.com/stripe/stripe-go/v76/paymentintent"
+	"github.com/matcha/api/paiements-service/src/models"
+	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/paymentintent"
 	"gorm.io/gorm"
 )
 
@@ -23,62 +23,128 @@ func NewPaymentService() *PaymentService {
 
 // CreatePaymentFromInvoice crée un enregistrement de paiement à partir d'une facture Stripe
 func (s *PaymentService) CreatePaymentFromInvoice(invoice *stripe.Invoice) error {
-	// Récupérer l'abonnement associé
+	// Vérifications de sécurité pour éviter les nil pointer dereference
+	if invoice == nil {
+		return fmt.Errorf("invoice is nil")
+	}
+
 	var subscription models.Subscription
-	if invoice.Subscription == nil {
-		return errors.New("invoice has no associated subscription")
-	}
+	var customerID string
 
-	if err := conf.DB.Where("stripe_subscription_id = ?", invoice.Subscription.ID).First(&subscription).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("subscription not found for ID %s", invoice.Subscription.ID)
+	// Dans Stripe Go v82, chercher l'abonnement via les line items de l'invoice ou le Customer
+	var foundSubscription bool
+
+	// Priorité 1: Chercher dans les line items s'il y a un abonnement
+	if invoice.Lines != nil && len(invoice.Lines.Data) > 0 {
+		for _, line := range invoice.Lines.Data {
+			if line.Subscription != nil && line.Subscription.ID != "" {
+				// Trouver l'abonnement par Stripe Subscription ID
+				if err := conf.DB.Where("stripe_subscription_id = ?", line.Subscription.ID).First(&subscription).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						continue // Essayer le line item suivant
+					}
+					return fmt.Errorf("failed to find subscription by stripe_subscription_id %s: %w", line.Subscription.ID, err)
+				}
+				foundSubscription = true
+				break
+			}
 		}
-		return fmt.Errorf("failed to find subscription: %w", err)
 	}
 
-	// Vérifier si le paiement existe déjà
-	var existingPayment models.Payment
-	if invoice.PaymentIntent != nil {
-		err := conf.DB.Where("stripe_payment_intent_id = ?", invoice.PaymentIntent.ID).First(&existingPayment).Error
-		if err == nil {
-			// Le paiement existe déjà, le mettre à jour
-			return s.updatePaymentFromInvoice(&existingPayment, invoice)
-		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("failed to check existing payment: %w", err)
+	// Fallback: Utiliser Customer ID pour retrouver l'abonnement
+	if !foundSubscription && invoice.Customer != nil && invoice.Customer.ID != "" {
+		// Fallback: Utiliser Customer ID pour retrouver l'abonnement
+		customerID = invoice.Customer.ID
+		if err := conf.DB.Where("stripe_customer_id = ?", customerID).First(&subscription).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("subscription not found for customer ID %s (invoice %s)", customerID, invoice.ID)
+			}
+			return fmt.Errorf("failed to find subscription by customer ID %s: %w", customerID, err)
 		}
+		foundSubscription = true
 	}
 
-	// Créer un nouveau paiement
-	payment := &models.Payment{
-		UserID:         subscription.UserID,
-		SubscriptionID: &subscription.ID,
-		Amount:         invoice.AmountPaid,
-		Currency:       string(invoice.Currency),
-		Status:         models.PaymentSucceeded,
+	if !foundSubscription {
+		return fmt.Errorf("invoice %s: no subscription found via line items or customer", invoice.ID)
 	}
 
-	// Ajouter l'ID de la facture
-	if invoice.ID != "" {
-		payment.StripeInvoiceID = &invoice.ID
+	// Vérifier si l'invoice a des paiements associés
+	if invoice.Payments == nil || len(invoice.Payments.Data) == 0 {
+		// Pas de paiements associés, créer un paiement basé sur la facture
+		payment := &models.Payment{
+			UserID:                subscription.UserID,
+			SubscriptionID:        &subscription.ID,
+			Amount:                invoice.AmountPaid,
+			Currency:              string(invoice.Currency),
+			Status:                models.PaymentSucceeded,
+			StripePaymentIntentID: fmt.Sprintf("invoice_%s", invoice.ID),
+		}
+
+		if invoice.ID != "" {
+			payment.StripeInvoiceID = &invoice.ID
+		}
+
+		return conf.DB.Create(payment).Error
 	}
 
-	// Ajouter l'ID du PaymentIntent si disponible
-	if invoice.PaymentIntent != nil {
-		payment.StripePaymentIntentID = invoice.PaymentIntent.ID
-	} else {
-		// Générer un ID unique basé sur la facture
-		payment.StripePaymentIntentID = fmt.Sprintf("invoice_%s", invoice.ID)
-	}
+	// Traiter chaque paiement associé à la facture avec vérifications de sécurité
+	for _, invoicePayment := range invoice.Payments.Data {
+		if invoicePayment == nil || invoicePayment.Payment == nil {
+			continue
+		}
 
-	// Déterminer le type de méthode de paiement
-	if invoice.PaymentIntent != nil && len(invoice.PaymentIntent.PaymentMethodTypes) > 0 {
-		paymentMethodType := invoice.PaymentIntent.PaymentMethodTypes[0]
-		payment.PaymentMethodType = &paymentMethodType
-	}
+		// Vérifier si c'est un PaymentIntent
+		if invoicePayment.Payment.PaymentIntent != nil {
+			pi := invoicePayment.Payment.PaymentIntent
+			if pi == nil || pi.ID == "" {
+				continue
+			}
 
-	// Sauvegarder le paiement
-	if err := conf.DB.Create(payment).Error; err != nil {
-		return fmt.Errorf("failed to create payment: %w", err)
+			// Vérifier si le paiement existe déjà
+			var existingPayment models.Payment
+			err := conf.DB.Where("stripe_payment_intent_id = ?", pi.ID).First(&existingPayment).Error
+			if err == nil {
+				// Le paiement existe déjà, le mettre à jour si nécessaire
+				if existingPayment.Amount != pi.Amount {
+					existingPayment.Amount = pi.Amount
+					existingPayment.Status = ConvertPaymentIntentStatus(pi.Status)
+					if err := conf.DB.Save(&existingPayment).Error; err != nil {
+						return fmt.Errorf("failed to update existing payment: %w", err)
+					}
+				}
+				continue
+			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("failed to check existing payment: %w", err)
+			}
+
+			// Créer un nouveau paiement
+			payment := &models.Payment{
+				UserID:                subscription.UserID,
+				SubscriptionID:        &subscription.ID,
+				StripePaymentIntentID: pi.ID,
+				Amount:                pi.Amount,
+				Currency:              string(pi.Currency),
+				Status:                ConvertPaymentIntentStatus(pi.Status),
+			}
+
+			if invoice.ID != "" {
+				payment.StripeInvoiceID = &invoice.ID
+			}
+
+			if len(pi.PaymentMethodTypes) > 0 {
+				paymentMethodType := pi.PaymentMethodTypes[0]
+				payment.PaymentMethodType = &paymentMethodType
+			}
+
+			if pi.LastPaymentError != nil {
+				message := string(pi.LastPaymentError.Code)
+				payment.FailureReason = &message
+			}
+
+			if err := conf.DB.Create(payment).Error; err != nil {
+				return fmt.Errorf("failed to create payment: %w", err)
+			}
+		}
 	}
 
 	return nil
@@ -210,18 +276,6 @@ func (s *PaymentService) GetPaymentStats(userID uint) (*PaymentStats, error) {
 	return stats, nil
 }
 
-// updatePaymentFromInvoice met à jour un paiement existant à partir d'une facture
-func (s *PaymentService) updatePaymentFromInvoice(payment *models.Payment, invoice *stripe.Invoice) error {
-	payment.Amount = invoice.AmountPaid
-	payment.Status = models.PaymentSucceeded
-
-	if invoice.ID != "" {
-		payment.StripeInvoiceID = &invoice.ID
-	}
-
-	return conf.DB.Save(payment).Error
-}
-
 // updatePaymentFromPaymentIntent met à jour un paiement existant à partir d'un PaymentIntent
 func (s *PaymentService) updatePaymentFromPaymentIntent(payment *models.Payment, paymentIntent *stripe.PaymentIntent) error {
 	payment.Status = ConvertPaymentIntentStatus(paymentIntent.Status)
@@ -250,9 +304,9 @@ func ConvertPaymentIntentStatus(status stripe.PaymentIntentStatus) models.Paymen
 	case stripe.PaymentIntentStatusCanceled:
 		return models.PaymentCanceled
 	case stripe.PaymentIntentStatusRequiresPaymentMethod,
-		 stripe.PaymentIntentStatusRequiresConfirmation,
-		 stripe.PaymentIntentStatusRequiresAction,
-		 stripe.PaymentIntentStatusProcessing:
+		stripe.PaymentIntentStatusRequiresConfirmation,
+		stripe.PaymentIntentStatusRequiresAction,
+		stripe.PaymentIntentStatusProcessing:
 		return models.PaymentPending
 	default:
 		return models.PaymentFailed
@@ -261,11 +315,11 @@ func ConvertPaymentIntentStatus(status stripe.PaymentIntentStatus) models.Paymen
 
 // CreateTestPaymentRequest représente une demande de création de paiement de test
 type CreateTestPaymentRequest struct {
-	Amount            int64                `json:"amount" binding:"required,min=1"`                // Montant en centimes
-	Currency          string               `json:"currency"`                                       // Devise (par défaut: eur)
-	Status            models.PaymentStatus `json:"status"`                                         // Statut (par défaut: succeeded)
-	PaymentMethodType string               `json:"payment_method_type"`                            // Type de méthode de paiement (par défaut: card)
-	FailureReason     *string              `json:"failure_reason,omitempty"`                       // Raison de l'échec (si status = failed)
+	Amount            int64                `json:"amount" binding:"required,min=1"` // Montant en centimes
+	Currency          string               `json:"currency"`                        // Devise (par défaut: eur)
+	Status            models.PaymentStatus `json:"status"`                          // Statut (par défaut: succeeded)
+	PaymentMethodType string               `json:"payment_method_type"`             // Type de méthode de paiement (par défaut: card)
+	FailureReason     *string              `json:"failure_reason,omitempty"`        // Raison de l'échec (si status = failed)
 }
 
 // CreateTestPayment crée un paiement de test pour un utilisateur
@@ -325,7 +379,7 @@ func (s *PaymentService) SyncPaymentsFromStripe() (*SyncResult, error) {
 		ProcessedPayments: 0,
 		CreatedPayments:   0,
 		UpdatedPayments:   0,
-		Errors:           []string{},
+		Errors:            []string{},
 	}
 
 	// Récupérer tous les PaymentIntents depuis Stripe (limité aux 100 derniers)
@@ -375,7 +429,7 @@ func (s *PaymentService) SyncUserPaymentsFromStripe(userID uint) (*SyncResult, e
 		ProcessedPayments: 0,
 		CreatedPayments:   0,
 		UpdatedPayments:   0,
-		Errors:           []string{},
+		Errors:            []string{},
 	}
 
 	// Paramètres pour rechercher les PaymentIntents avec les métadonnées user_id
@@ -438,5 +492,5 @@ type SyncResult struct {
 	ProcessedPayments int      `json:"processed_payments"`
 	CreatedPayments   int      `json:"created_payments"`
 	UpdatedPayments   int      `json:"updated_payments"`
-	Errors           []string `json:"errors,omitempty"`
+	Errors            []string `json:"errors,omitempty"`
 }
