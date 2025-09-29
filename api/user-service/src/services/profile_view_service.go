@@ -1,19 +1,25 @@
 package services
 
 import (
+	"log"
 	"time"
 
 	"user-service/src/conf"
 	"user-service/src/models"
 	"user-service/src/utils"
+	"user-service/src/services/notifications"
 )
 
 // ProfileViewService handles profile view operations
-type ProfileViewService struct{}
+type ProfileViewService struct{
+	notificationService *notifications.NotificationService
+}
 
 // NewProfileViewService creates a new profile view service
 func NewProfileViewService() *ProfileViewService {
-	return &ProfileViewService{}
+	return &ProfileViewService{
+		notificationService: notifications.NewNotificationService(),
+	}
 }
 
 // TrackProfileView records a profile view between two users
@@ -45,6 +51,15 @@ func (s *ProfileViewService) TrackProfileView(viewerID, viewedID uint) (bool, er
 		if err := conf.DB.Create(&profileView).Error; err != nil {
 			return false, utils.NewAppError("failed to track profile view", 500)
 		}
+
+		// Send profile view notification to the viewed user
+		if err := s.notificationService.SendProfileViewNotification(int(viewedID), int(viewerID)); err != nil {
+			// Log but don't fail the profile view tracking if notification fails
+			// Using a simple log.Printf since we don't have a logger package here
+			// In a production environment, you'd want proper logging
+			log.Printf("⚠️ [WARNING] Failed to send profile view notification: %v", err)
+		}
+
 		return true, nil // New record created
 	}
 
