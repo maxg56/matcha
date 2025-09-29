@@ -105,12 +105,26 @@ export interface InteractionResponse {
   message?: string;
 }
 
+// Interface pour les likes basiques (retournés par l'endpoint)
+export interface BasicLike {
+  id: number;
+  user_id: number;
+  target_user_id: number;
+  created_at: string;
+}
+
+// Interface pour les likes avec profil complet (pour le frontend)
 export interface LikeReceived {
   id: number;
   user_id: number;
   target_user_id: number;
   created_at: string;
   user: UserProfile;
+}
+
+export interface BasicLikesResponse {
+  likes: BasicLike[];
+  count: number;
 }
 
 export interface ReceivedLikesResponse {
@@ -274,10 +288,59 @@ class MatchService {
   }
 
   /**
-   * Récupère les likes reçus par l'utilisateur
+   * Récupère les likes reçus par l'utilisateur avec les profils complets
    */
   async getReceivedLikes(): Promise<ReceivedLikesResponse> {
-    return apiService.get<ReceivedLikesResponse>(`${this.baseEndpoint}/received-likes`);
+    return this.withRetry(async () => {
+      // 1. Récupérer les likes basiques (IDs seulement)
+      const basicResponse = await apiService.get<BasicLikesResponse>(`${this.baseEndpoint}/received-likes`);
+      const basicLikes = basicResponse.likes;
+
+      // 2. Pour chaque like, récupérer le profil complet
+      const likesWithProfiles = await Promise.all(
+        basicLikes.map(async (basicLike): Promise<LikeReceived> => {
+          try {
+            const userProfile = await this.getUserProfile(basicLike.user_id);
+            return {
+              ...basicLike,
+              user: userProfile
+            };
+          } catch (profileError) {
+            console.error(`Error fetching profile for user ${basicLike.user_id}:`, profileError);
+            // En cas d'erreur, retourner un profil minimal
+            const fallbackProfile: UserProfile = {
+              id: basicLike.user_id,
+              username: `user_${basicLike.user_id}`,
+              first_name: 'Utilisateur',
+              age: 0,
+              bio: 'Profil non disponible',
+              images: [],
+              tags: [],
+              current_city: '',
+              job: '',
+              fame: 0,
+              gender: '',
+              created_at: '',
+              relationship_type: '',
+              // Alias pour compatibilité
+              profile_photos: [],
+              interests: [],
+              location: '',
+              occupation: '',
+            };
+            return {
+              ...basicLike,
+              user: fallbackProfile
+            };
+          }
+        })
+      );
+
+      return {
+        likes: likesWithProfiles,
+        count: likesWithProfiles.length
+      };
+    });
   }
 
   /**

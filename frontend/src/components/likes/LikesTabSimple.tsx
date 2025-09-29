@@ -1,50 +1,39 @@
-import { useState } from 'react';
-import { Heart, Clock, MapPin, Briefcase } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, Clock, MapPin, Briefcase, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProfileModal } from '@/components/demo/ProfileModal';
+import { matchService, type LikeReceived, type ReceivedLikesResponse } from '@/services/matchService';
 
 export function LikesTab() {
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [likes, setLikes] = useState<LikeReceived[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Données simulées de likes reçus
-  const mockLikes = [
-    {
-      id: 1,
-      user: {
-        id: 101,
-        first_name: "Emma",
-        age: 25,
-        current_city: "Paris",
-        job: "Designer",
-        bio: "Passionnée d'art et de voyages ✈️ J'adore découvrir de nouveaux endroits et créer des designs qui inspirent. Mon métier me permet d'exprimer ma créativité tout en voyageant autour du monde.",
-        tags: ["Art", "Voyage", "Design"],
-        images: [
-          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400",
-          "https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=400"
-        ]
-      },
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 2,
-      user: {
-        id: 102,
-        first_name: "Sophie",
-        age: 28,
-        current_city: "Lyon",
-        job: "Développeuse",
-        bio: "Geek assumée 💻 Amoureuse du code et des nouvelles technologies. Quand je ne programme pas, je joue aux jeux vidéo ou regarde des films de science-fiction.",
-        tags: ["Tech", "Gaming", "Cinéma"],
-        images: [
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-          "https://images.unsplash.com/photo-1494790108755-2616b332c42c?w=400"
-        ]
-      },
-      created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
+  // Récupérer les likes reçus au chargement du composant
+  useEffect(() => {
+    fetchLikes();
+  }, []);
+
+  const fetchLikes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response: ReceivedLikesResponse = await matchService.getReceivedLikes();
+      console.log('Likes reçus:', response.likes); // Debug
+      setLikes(response.likes);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur lors du chargement des likes';
+      setError(message);
+      console.error('Erreur lors du fetch des likes:', error);
+      setLikes([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const handleViewProfile = (like: any) => {
     setSelectedProfile({
@@ -92,12 +81,46 @@ export function LikesTab() {
           </p>
         </div>
         <Badge className="bg-pink-100 text-pink-600">
-          {mockLikes.length} likes
+          {likes.length} likes
         </Badge>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {mockLikes.map((like) => (
+      {/* Gestion du loading */}
+      {loading && (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Chargement des likes...</span>
+        </div>
+      )}
+
+      {/* Gestion des erreurs */}
+      {error && !loading && (
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <Heart className="mx-auto h-12 w-12 mb-2" />
+            <p className="font-semibold">Erreur de chargement</p>
+            <p className="text-sm">{error}</p>
+          </div>
+          <Button onClick={fetchLikes} variant="outline">
+            Réessayer
+          </Button>
+        </div>
+      )}
+
+      {/* Affichage des likes ou état vide */}
+      {!loading && !error && (
+        <>
+          {likes.length === 0 ? (
+            <div className="text-center py-12">
+              <Heart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">Aucun like pour le moment</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Les profils qui vous likeront apparaîtront ici !
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {likes.map((like) => (
           <div key={like.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border overflow-hidden hover:shadow-xl transition-shadow">
             <div className="flex items-center p-4 space-x-3">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
@@ -138,7 +161,7 @@ export function LikesTab() {
               <p className="text-gray-700 text-sm">{like.user.bio}</p>
 
               <div className="flex flex-wrap gap-1 mb-3">
-                {like.user.tags.slice(0, 3).map((tag, index) => (
+                {like.user.tags?.slice(0, 3).map((tag: string, index: number) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {tag}
                   </Badge>
@@ -165,8 +188,11 @@ export function LikesTab() {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Modal du profil */}
       {selectedProfile && (
