@@ -61,3 +61,27 @@ type User struct {
 func (User) TableName() string {
 	return "users"
 }
+
+// UserPremiumInfo contient les informations premium d'un utilisateur
+type UserPremiumInfo struct {
+	IsPremium   bool      `json:"is_premium"`
+	PremiumUntil *time.Time `json:"premium_until"`
+}
+
+// GetPremiumInfo retourne les informations premium de l'utilisateur
+func (u *User) GetPremiumInfo() UserPremiumInfo {
+	if !u.Premium.Valid {
+		return UserPremiumInfo{
+			IsPremium:    false,
+			PremiumUntil: nil,
+		}
+	}
+
+	premiumTime := u.Premium.Time
+	isPremium := premiumTime.After(time.Now())
+
+	return UserPremiumInfo{
+		IsPremium:    isPremium,
+		PremiumUntil: &premiumTime,
+	}
+}

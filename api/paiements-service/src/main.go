@@ -42,8 +42,7 @@ func main() {
     // Configurer toutes les routes
     routes.SetupRoutes(r)
 
-    // Note: Les routes legacy Stripe sont maintenant intégrées dans routes.SetupRoutes()
-    // stripe.RegisterRoutes(r) // Commenté pour éviter les doublons
+    // Routes configurées via routes.SetupRoutes() avec le système complet
 
     // Configuration du port
     port := os.Getenv("PAIEMENTS_SERVICE_PORT")
