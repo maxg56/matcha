@@ -67,8 +67,14 @@ export function ProfileModal({ profile, isOpen, onClose, onLike, onPass }: Profi
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-lg mx-auto bg-card rounded-3xl overflow-hidden shadow-2xl">
+    <div 
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-lg mx-auto bg-card rounded-3xl overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close button */}
         <Button
           variant="ghost"

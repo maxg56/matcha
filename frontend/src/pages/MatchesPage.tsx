@@ -4,6 +4,7 @@ import { matchService, type Match, type MatchesResponse } from '@/services/match
 import { useToast } from '@/hooks/ui/useToast';
 import { ProfileViewers } from '@/components/profile/ProfileViewers';
 import { ViewedProfilesList } from '@/components/profile/ViewedProfilesList';
+import { LikesTab } from '@/components/likes';
 import { MatchCard } from '@/components/matches/MatchCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -11,7 +12,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { TabNavigation , type Tab} from '@/components/ui/TabNavigation';
 
 
-type TabType = 'matches' | 'viewers' | 'viewed';
+type TabType = 'matches' | 'likes' | 'viewers' | 'viewed';
 
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -104,6 +105,7 @@ export default function MatchesPage() {
 
   const tabs : Tab[] = [
     { id: 'matches', label: 'Mes Matches', count: matches?.length || 0 },
+    { id: 'likes', label: 'Likes reçus', count: null },
     { id: 'viewers', label: 'Qui a vu mon profil', count: null },
     { id: 'viewed', label: 'Profils vus', count: null },
   ] as const;
@@ -158,6 +160,9 @@ export default function MatchesPage() {
             )}
           </div>
         );
+
+      case 'likes':
+        return <LikesTab />;
 
       case 'viewers':
         return <ProfileViewers />;
