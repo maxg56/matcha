@@ -15,7 +15,7 @@ import (
 
 func main() {
     // Charger le .env
-    if err := godotenv.Load("../../../.env.dev"); err != nil {
+    if err := godotenv.Load("../../../.env"); err != nil {
         log.Println("No .env file found, relying on environment variables")
     }
 
@@ -31,6 +31,9 @@ func main() {
     }
 
     r := gin.Default()
+
+    // Configuration des proxies de confiance
+    r.SetTrustedProxies([]string{"127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"})
 
     // Middlewares globaux
     r.Use(middleware.CORSMiddleware())

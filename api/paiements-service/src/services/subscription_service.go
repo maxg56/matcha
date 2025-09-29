@@ -43,6 +43,7 @@ func (s *SubscriptionService) CreateCheckoutSession(userID uint, userEmail strin
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("failed to check existing subscription: %w", err)
 	}
+	// Si err == gorm.ErrRecordNotFound, c'est normal - l'utilisateur n'a pas d'abonnement actif
 
 	// Créer une session de checkout Stripe
 	session, err := s.stripeService.CreateCheckoutSession(userID, planType, userEmail)

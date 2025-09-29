@@ -43,8 +43,11 @@ func SetupRoutes(r *gin.Engine) {
 		// Gestion des abonnements
 		subscription := protected.Group("/subscription")
 		{
+			subscription.GET("", subscriptionHandler.GetSubscription)
 			subscription.GET("/", subscriptionHandler.GetSubscription)
+			subscription.POST("", subscriptionHandler.CreateSubscription)
 			subscription.POST("/", subscriptionHandler.CreateSubscription)
+			subscription.DELETE("", subscriptionHandler.CancelSubscription)
 			subscription.DELETE("/", subscriptionHandler.CancelSubscription)
 			subscription.GET("/billing-portal", subscriptionHandler.GetBillingPortal)
 		}
@@ -54,6 +57,7 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			payment.GET("/history", paymentHandler.GetPaymentHistory)
 			payment.GET("/stats", paymentHandler.GetPaymentStats)
+			payment.POST("/test", paymentHandler.CreateTestPayment) // Endpoint pour créer des paiements de test
 		}
 	}
 
@@ -66,6 +70,13 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			webhook.GET("/events", webhookHandler.GetWebhookEvents)
 			webhook.POST("/retry", webhookHandler.RetryFailedEvents)
+		}
+
+		// Gestion des paiements
+		payment := admin.Group("/payment")
+		{
+			payment.POST("/sync", paymentHandler.SyncPayments)                     // Synchroniser tous les paiements
+			payment.POST("/sync/:user_id", paymentHandler.SyncUserPayments)       // Synchroniser les paiements d'un utilisateur
 		}
 	}
 }

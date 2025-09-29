@@ -13,6 +13,7 @@ import (
 	"github.com/stripe/stripe-go/v76/checkout/session"
 	"github.com/stripe/stripe-go/v76/customer"
 	"github.com/stripe/stripe-go/v76/subscription"
+	"gorm.io/gorm"
 	portalsession "github.com/stripe/stripe-go/v76/billingportal/session"
 )
 
@@ -159,6 +160,9 @@ func (s *StripeService) getOrCreateCustomer(userID uint, userEmail string) (stri
 		if subscription.StripeCustomerID != "" {
 			return subscription.StripeCustomerID, nil
 		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Seules les vraies erreurs sont loggées, pas "record not found"
+		log.Printf("Error checking existing subscription: %v", err)
 	}
 
 	// Créer un nouveau customer Stripe

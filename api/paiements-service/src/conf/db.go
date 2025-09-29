@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -14,6 +16,22 @@ import (
 
 // DB instance globale de la base de données
 var DB *gorm.DB
+
+// CustomLogger implémente une interface de logger GORM qui filtre "record not found"
+type CustomLogger struct {
+	logger.Interface
+}
+
+// Error surcharge la méthode Error pour filtrer "record not found"
+func (l CustomLogger) Error(ctx context.Context, msg string, data ...interface{}) {
+	// Ne pas logger "record not found" car c'est un comportement normal
+	if len(data) > 0 {
+		if err, ok := data[0].(error); ok && errors.Is(err, gorm.ErrRecordNotFound) {
+			return
+		}
+	}
+	l.Interface.Error(ctx, msg, data...)
+}
 
 // InitDatabase initialise la connexion à la base de données
 func InitDatabase() error {
@@ -33,11 +51,14 @@ func InitDatabase() error {
 		dbConfig.Host, dbConfig.User, dbConfig.Password, dbConfig.DBName,
 		dbConfig.Port, dbConfig.SSLMode, dbConfig.TimeZone)
 
-	// Configuration du logger GORM
-	gormLogger := logger.Default
+	// Configuration du logger GORM avec filtre pour "record not found"
+	// En mode production, ne logger que les erreurs graves
+	baseLogger := logger.Default.LogMode(logger.Error)
 	if getEnv("LOG_LEVEL", "info") == "debug" {
-		gormLogger = logger.Default.LogMode(logger.Info)
+		baseLogger = logger.Default.LogMode(logger.Info)
 	}
+
+	gormLogger := CustomLogger{Interface: baseLogger}
 
 	// Connexion à la base de données
 	var err error

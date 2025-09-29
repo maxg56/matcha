@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/matcha/api/paiements-service/src/models"
 	"github.com/matcha/api/paiements-service/src/conf"
 	"github.com/stripe/stripe-go/v76"
+	"github.com/stripe/stripe-go/v76/paymentintent"
 	"gorm.io/gorm"
 )
 
@@ -255,4 +257,186 @@ func ConvertPaymentIntentStatus(status stripe.PaymentIntentStatus) models.Paymen
 	default:
 		return models.PaymentFailed
 	}
+}
+
+// CreateTestPaymentRequest représente une demande de création de paiement de test
+type CreateTestPaymentRequest struct {
+	Amount            int64                `json:"amount" binding:"required,min=1"`                // Montant en centimes
+	Currency          string               `json:"currency"`                                       // Devise (par défaut: eur)
+	Status            models.PaymentStatus `json:"status"`                                         // Statut (par défaut: succeeded)
+	PaymentMethodType string               `json:"payment_method_type"`                            // Type de méthode de paiement (par défaut: card)
+	FailureReason     *string              `json:"failure_reason,omitempty"`                       // Raison de l'échec (si status = failed)
+}
+
+// CreateTestPayment crée un paiement de test pour un utilisateur
+func (s *PaymentService) CreateTestPayment(userID uint, req CreateTestPaymentRequest) (*models.Payment, error) {
+	// Valeurs par défaut
+	if req.Currency == "" {
+		req.Currency = "eur"
+	}
+	if req.Status == "" {
+		req.Status = models.PaymentSucceeded
+	}
+	if req.PaymentMethodType == "" {
+		req.PaymentMethodType = "card"
+	}
+
+	// Vérifier que l'utilisateur existe
+	var user models.User
+	if err := conf.DB.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Générer un ID unique pour le PaymentIntent de test
+	testPaymentIntentID := fmt.Sprintf("pi_test_%d_%d", userID, time.Now().Unix())
+
+	// Créer le paiement de test
+	payment := &models.Payment{
+		UserID:                userID,
+		StripePaymentIntentID: testPaymentIntentID,
+		Amount:                req.Amount,
+		Currency:              req.Currency,
+		Status:                req.Status,
+		PaymentMethodType:     &req.PaymentMethodType,
+		FailureReason:         req.FailureReason,
+		CreatedAt:             time.Now(),
+	}
+
+	// Valider que si le statut est "failed", une raison d'échec est fournie
+	if req.Status == models.PaymentFailed && req.FailureReason == nil {
+		defaultReason := "Test payment failure"
+		payment.FailureReason = &defaultReason
+	}
+
+	// Sauvegarder le paiement
+	if err := conf.DB.Create(payment).Error; err != nil {
+		return nil, fmt.Errorf("failed to create test payment: %w", err)
+	}
+
+	return payment, nil
+}
+
+// SyncPaymentsFromStripe synchronise les paiements depuis Stripe pour tous les utilisateurs
+func (s *PaymentService) SyncPaymentsFromStripe() (*SyncResult, error) {
+	result := &SyncResult{
+		ProcessedPayments: 0,
+		CreatedPayments:   0,
+		UpdatedPayments:   0,
+		Errors:           []string{},
+	}
+
+	// Récupérer tous les PaymentIntents depuis Stripe (limité aux 100 derniers)
+	params := &stripe.PaymentIntentListParams{}
+	params.Limit = stripe.Int64(100)
+
+	iter := paymentintent.List(params)
+	for iter.Next() {
+		pi := iter.PaymentIntent()
+		result.ProcessedPayments++
+
+		// Vérifier si le paiement existe déjà
+		var existingPayment models.Payment
+		err := conf.DB.Where("stripe_payment_intent_id = ?", pi.ID).First(&existingPayment).Error
+
+		if err == nil {
+			// Le paiement existe, le mettre à jour si nécessaire
+			if s.shouldUpdatePayment(&existingPayment, pi) {
+				if err := s.updatePaymentFromPaymentIntent(&existingPayment, pi); err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("Failed to update payment %s: %v", pi.ID, err))
+					continue
+				}
+				result.UpdatedPayments++
+			}
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Le paiement n'existe pas, le créer
+			if err := s.CreatePaymentFromPaymentIntent(pi); err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Failed to create payment %s: %v", pi.ID, err))
+				continue
+			}
+			result.CreatedPayments++
+		} else {
+			result.Errors = append(result.Errors, fmt.Sprintf("Database error for payment %s: %v", pi.ID, err))
+		}
+	}
+
+	if err := iter.Err(); err != nil {
+		result.Errors = append(result.Errors, fmt.Sprintf("Stripe API error: %v", err))
+	}
+
+	return result, nil
+}
+
+// SyncUserPaymentsFromStripe synchronise les paiements d'un utilisateur spécifique
+func (s *PaymentService) SyncUserPaymentsFromStripe(userID uint) (*SyncResult, error) {
+	result := &SyncResult{
+		ProcessedPayments: 0,
+		CreatedPayments:   0,
+		UpdatedPayments:   0,
+		Errors:           []string{},
+	}
+
+	// Paramètres pour rechercher les PaymentIntents avec les métadonnées user_id
+	params := &stripe.PaymentIntentListParams{}
+	params.Limit = stripe.Int64(100)
+	// Note: Stripe ne permet pas de filtrer directement par métadonnées via l'API,
+	// nous devons donc récupérer tous les paiements et filtrer côté application
+
+	iter := paymentintent.List(params)
+	for iter.Next() {
+		pi := iter.PaymentIntent()
+
+		// Vérifier si ce PaymentIntent correspond à notre utilisateur
+		if userIDStr, exists := pi.Metadata["user_id"]; !exists || userIDStr != fmt.Sprintf("%d", userID) {
+			continue
+		}
+
+		result.ProcessedPayments++
+
+		// Vérifier si le paiement existe déjà
+		var existingPayment models.Payment
+		err := conf.DB.Where("stripe_payment_intent_id = ?", pi.ID).First(&existingPayment).Error
+
+		if err == nil {
+			// Le paiement existe, le mettre à jour si nécessaire
+			if s.shouldUpdatePayment(&existingPayment, pi) {
+				if err := s.updatePaymentFromPaymentIntent(&existingPayment, pi); err != nil {
+					result.Errors = append(result.Errors, fmt.Sprintf("Failed to update payment %s: %v", pi.ID, err))
+					continue
+				}
+				result.UpdatedPayments++
+			}
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Le paiement n'existe pas, le créer
+			if err := s.CreatePaymentFromPaymentIntent(pi); err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Failed to create payment %s: %v", pi.ID, err))
+				continue
+			}
+			result.CreatedPayments++
+		} else {
+			result.Errors = append(result.Errors, fmt.Sprintf("Database error for payment %s: %v", pi.ID, err))
+		}
+	}
+
+	if err := iter.Err(); err != nil {
+		result.Errors = append(result.Errors, fmt.Sprintf("Stripe API error: %v", err))
+	}
+
+	return result, nil
+}
+
+// shouldUpdatePayment détermine si un paiement existant doit être mis à jour
+func (s *PaymentService) shouldUpdatePayment(existingPayment *models.Payment, pi *stripe.PaymentIntent) bool {
+	currentStatus := ConvertPaymentIntentStatus(pi.Status)
+	return existingPayment.Status != currentStatus || existingPayment.Amount != pi.Amount
+}
+
+// SyncResult représente le résultat d'une synchronisation
+type SyncResult struct {
+	ProcessedPayments int      `json:"processed_payments"`
+	CreatedPayments   int      `json:"created_payments"`
+	UpdatedPayments   int      `json:"updated_payments"`
+	Errors           []string `json:"errors,omitempty"`
 }

@@ -73,7 +73,7 @@ func (s *EventService) ProcessWebhookEvent(event *stripe.Event) error {
 		log.Printf("Failed to mark event as processed: %v", err)
 	}
 
-	log.Printf("Successfully processed event %s of type %s", event.ID, event.Type)
+	log.Printf("✅ Successfully processed event %s of type %s", event.ID, event.Type)
 	return nil
 }
 
@@ -196,6 +196,7 @@ func (s *EventService) handleInvoicePaymentSucceeded(event *stripe.Event) error 
 	if err := s.paymentService.CreatePaymentFromInvoice(&invoice); err != nil {
 		return fmt.Errorf("failed to create payment record: %w", err)
 	}
+	log.Printf("💰 Payment record created from invoice %s (amount: %.2f %s)", invoice.ID, float64(invoice.AmountPaid)/100.0, invoice.Currency)
 
 	// Récupérer l'abonnement associé si disponible
 	if invoice.Subscription != nil {
@@ -248,6 +249,7 @@ func (s *EventService) handlePaymentIntentSucceeded(event *stripe.Event) error {
 	if err := s.paymentService.CreatePaymentFromPaymentIntent(&paymentIntent); err != nil {
 		return fmt.Errorf("failed to create payment record: %w", err)
 	}
+	log.Printf("💳 Payment record created from PaymentIntent %s (amount: %.2f %s)", paymentIntent.ID, float64(paymentIntent.Amount)/100.0, paymentIntent.Currency)
 
 	return nil
 }
