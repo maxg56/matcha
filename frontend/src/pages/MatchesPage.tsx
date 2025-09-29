@@ -28,10 +28,8 @@ export default function MatchesPage() {
       setError(null);
 
       const response: MatchesResponse = await matchService.getMatches();
-      console.log('Matches response:', response);
       setMatches(response.matches);
     } catch (error) {
-      console.error('Erreur lors du chargement des matches:', error);
       const message = error instanceof Error ? error.message : 'Erreur lors du chargement des matches';
       setError(message);
       toast({
@@ -182,7 +180,7 @@ export default function MatchesPage() {
         );
 
       case 'likes':
-        return <LikesTab />;
+        return <LikesTab onMatchCreated={fetchMatches} />;
 
       case 'viewers':
         return <ProfileViewers />;
