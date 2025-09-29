@@ -1,6 +1,5 @@
 import { apiService } from './api';
-import secureStorage from './secureStorage';
-import cookieManager from './cookieManager';
+
 
 export interface LoginRequest {
   login: string; // username or email
@@ -160,30 +159,27 @@ class AuthService {
   // Token management helpers
   setTokens(accessToken: string, refreshToken: string): void {
     // Use secure storage instead of localStorage
-    secureStorage.setTokens(accessToken, refreshToken);
-
-    // Also set access_token as secure cookie for EventSource authentication
-    cookieManager.setAuthTokenCookie('access_token', accessToken, 3600);
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
   }
 
   getAccessToken(): string | null {
-    return secureStorage.getAccessToken();
+    return localStorage.getItem('accessToken');
   }
 
   getRefreshToken(): string | null {
-    return secureStorage.getRefreshToken();
+    return localStorage.getItem('refreshToken');
   }
 
   async clearTokens(): Promise<void> {
     // Use secure storage clearance
-    await secureStorage.clearTokens();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
 
-    // Also clear the cookie securely
-    cookieManager.clearAuthCookies();
   }
 
   isAuthenticated(): boolean {
-    return secureStorage.isAuthenticated();
+    return localStorage.getItem('accessToken') !== null;
   }
 }
 

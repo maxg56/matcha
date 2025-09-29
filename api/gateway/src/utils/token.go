@@ -6,12 +6,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ExtractToken extracts JWT token from Authorization header or cookie
+// ExtractToken extracts JWT token from Authorization header, query parameter, or cookie
 func ExtractToken(c *gin.Context) string {
 	// Prefer Authorization header
 	auth := c.GetHeader("Authorization")
 	if strings.HasPrefix(strings.ToLower(auth), "bearer ") {
 		return strings.TrimSpace(auth[7:])
+	}
+
+	// Check query parameter (for WebSocket connections)
+	if token := c.Query("token"); token != "" {
+		return token
 	}
 
 	// Fallback to cookie commonly named access_token
