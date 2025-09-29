@@ -167,6 +167,7 @@ func (ws *WebSocketService) sendMessage(message WebSocketMessage) {
 		return
 	}
 
+	
 	req.Header.Set("Content-Type", "application/json")
 
 	// Ajouter un header d'authentification interne si configuré

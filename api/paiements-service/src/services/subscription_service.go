@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/matcha/api/paiements-service/src/models"
 	"github.com/matcha/api/paiements-service/src/conf"
-	"github.com/stripe/stripe-go/v76"
+	"github.com/matcha/api/paiements-service/src/models"
+	"github.com/stripe/stripe-go/v82"
 	"gorm.io/gorm"
 )
 
@@ -114,9 +114,11 @@ func (s *SubscriptionService) CreateSubscriptionFromStripe(stripeSubscription *s
 		StripeCustomerID:     stripeSubscription.Customer.ID,
 		PlanType:             planType,
 		Status:               ConvertStripeStatus(stripeSubscription.Status),
-		CurrentPeriodStart:   timeFromTimestamp(stripeSubscription.CurrentPeriodStart),
-		CurrentPeriodEnd:     timeFromTimestamp(stripeSubscription.CurrentPeriodEnd),
-		CancelAtPeriodEnd:    stripeSubscription.CancelAtPeriodEnd,
+		// Dans v82, CurrentPeriodStart/End sont sur SubscriptionItem, pas Subscription
+		// On les récupère du premier item s'il existe
+		CurrentPeriodStart: s.getCurrentPeriodStart(stripeSubscription),
+		CurrentPeriodEnd:   s.getCurrentPeriodEnd(stripeSubscription),
+		CancelAtPeriodEnd:  stripeSubscription.CancelAtPeriodEnd,
 	}
 
 	// Gérer les essais gratuits
@@ -154,8 +156,8 @@ func (s *SubscriptionService) UpdateSubscriptionFromStripe(stripeSubscription *s
 
 	// Mettre à jour les champs
 	subscription.Status = ConvertStripeStatus(stripeSubscription.Status)
-	subscription.CurrentPeriodStart = timeFromTimestamp(stripeSubscription.CurrentPeriodStart)
-	subscription.CurrentPeriodEnd = timeFromTimestamp(stripeSubscription.CurrentPeriodEnd)
+	subscription.CurrentPeriodStart = s.getCurrentPeriodStart(stripeSubscription)
+	subscription.CurrentPeriodEnd = s.getCurrentPeriodEnd(stripeSubscription)
 	subscription.CancelAtPeriodEnd = stripeSubscription.CancelAtPeriodEnd
 
 	// Gérer l'annulation
@@ -305,6 +307,28 @@ func (s *SubscriptionService) updateUserPremiumStatus(userID uint, isPremium boo
 	}
 
 	return conf.DB.Model(&models.User{}).Where("id = ?", userID).Update("premium", premiumTime).Error
+}
+
+// getCurrentPeriodStart récupère CurrentPeriodStart depuis le premier SubscriptionItem (v82)
+func (s *SubscriptionService) getCurrentPeriodStart(stripeSubscription *stripe.Subscription) *time.Time {
+	if stripeSubscription.Items != nil && len(stripeSubscription.Items.Data) > 0 {
+		item := stripeSubscription.Items.Data[0]
+		if item.CurrentPeriodStart != 0 {
+			return timeFromTimestamp(item.CurrentPeriodStart)
+		}
+	}
+	return nil
+}
+
+// getCurrentPeriodEnd récupère CurrentPeriodEnd depuis le premier SubscriptionItem (v82)
+func (s *SubscriptionService) getCurrentPeriodEnd(stripeSubscription *stripe.Subscription) *time.Time {
+	if stripeSubscription.Items != nil && len(stripeSubscription.Items.Data) > 0 {
+		item := stripeSubscription.Items.Data[0]
+		if item.CurrentPeriodEnd != 0 {
+			return timeFromTimestamp(item.CurrentPeriodEnd)
+		}
+	}
+	return nil
 }
 
 // timeFromTimestamp convertit un timestamp Unix en pointeur vers time.Time

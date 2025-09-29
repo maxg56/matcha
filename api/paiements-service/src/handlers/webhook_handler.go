@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/matcha/api/paiements-service/src/services"
-	"github.com/stripe/stripe-go/v76"
-	"github.com/stripe/stripe-go/v76/webhook"
+	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/webhook"
 )
 
 // WebhookHandler gère les webhooks Stripe
@@ -196,10 +196,10 @@ func (h *WebhookHandler) RetryFailedEvents(c *gin.Context) {
 
 // TestWebhookRequest représente une demande de test webhook
 type TestWebhookRequest struct {
-	EventType string      `json:"event_type" binding:"required"`
-	UserID    uint        `json:"user_id,omitempty"`
-	Amount    int64       `json:"amount,omitempty"`
-	Currency  string      `json:"currency,omitempty"`
+	EventType string `json:"event_type" binding:"required"`
+	UserID    uint   `json:"user_id,omitempty"`
+	Amount    int64  `json:"amount,omitempty"`
+	Currency  string `json:"currency,omitempty"`
 }
 
 // TestWebhook endpoint de test pour vérifier la connectivité webhook
@@ -260,8 +260,8 @@ func (h *WebhookHandler) TestWebhook(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": fmt.Sprintf("Test webhook %s processed successfully", req.EventType),
+		"success":  true,
+		"message":  fmt.Sprintf("Test webhook %s processed successfully", req.EventType),
 		"event_id": testEvent.ID,
 	})
 }

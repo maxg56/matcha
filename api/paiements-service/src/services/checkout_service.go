@@ -25,6 +25,9 @@ func NewCheckoutService() *CheckoutService {
 
 // CreateCheckoutSession crée une session de checkout et la stocke en base
 func (s *CheckoutService) CreateCheckoutSession(userID uint, planType models.PlanType, userEmail string) (*models.CheckoutSession, error) {
+	// Nettoyer les sessions expirées pour cet utilisateur
+	s.cleanupExpiredSessions(userID)
+
 	// Vérifier si l'utilisateur n'a pas déjà une session active
 	var existingSession models.CheckoutSession
 	err := conf.DB.Where("user_id = ? AND status = ?", userID, models.SessionPending).First(&existingSession).Error
@@ -158,4 +161,16 @@ func timeFromTimestampCheckout(timestamp int64) *time.Time {
 	}
 	t := time.Unix(timestamp, 0)
 	return &t
+}
+
+// cleanupExpiredSessions nettoie les sessions expirées pour un utilisateur
+func (s *CheckoutService) cleanupExpiredSessions(userID uint) {
+	// Marquer comme expirées toutes les sessions qui ont dépassé leur date d'expiration
+	result := conf.DB.Model(&models.CheckoutSession{}).
+		Where("user_id = ? AND status = ? AND expires_at < ?", userID, models.SessionPending, time.Now()).
+		Update("status", models.SessionExpired)
+
+	if result.RowsAffected > 0 {
+		log.Printf("Cleaned up %d expired sessions for user %d", result.RowsAffected, userID)
+	}
 }

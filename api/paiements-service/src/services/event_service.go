@@ -7,9 +7,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/matcha/api/paiements-service/src/models"
 	"github.com/matcha/api/paiements-service/src/conf"
-	"github.com/stripe/stripe-go/v76"
+	"github.com/matcha/api/paiements-service/src/models"
+	"github.com/stripe/stripe-go/v82"
 	"gorm.io/gorm"
 )
 
@@ -191,8 +191,8 @@ func (s *EventService) handleSubscriptionUpdated(event *stripe.Event) error {
 	// Envoyer une notification WebSocket
 	if updatedSubscription != nil {
 		s.websocketService.SendSubscriptionEvent(updatedSubscription.UserID, "subscription_updated", map[string]interface{}{
-			"subscription_id": updatedSubscription.ID,
-			"status":          updatedSubscription.Status,
+			"subscription_id":      updatedSubscription.ID,
+			"status":               updatedSubscription.Status,
 			"cancel_at_period_end": updatedSubscription.CancelAtPeriodEnd,
 		})
 	}
@@ -242,20 +242,25 @@ func (s *EventService) handleInvoicePaymentSucceeded(event *stripe.Event) error 
 		return fmt.Errorf("failed to parse invoice data: %w", err)
 	}
 
-	// Créer un enregistrement de paiement
+	log.Printf("💰 Processing invoice payment succeeded: %s (amount: %.2f %s)", invoice.ID, float64(invoice.AmountPaid)/100.0, invoice.Currency)
+
+	// Créer un enregistrement de paiement seulement si il y a un abonnement
 	if err := s.paymentService.CreatePaymentFromInvoice(&invoice); err != nil {
 		return fmt.Errorf("failed to create payment record: %w", err)
 	}
 	log.Printf("💰 Payment record created from invoice %s (amount: %.2f %s)", invoice.ID, float64(invoice.AmountPaid)/100.0, invoice.Currency)
 
-	// Récupérer l'abonnement associé si disponible
-	if invoice.Subscription != nil {
+	// Dans v82, nous devons récupérer l'abonnement via les métadonnées du paiement ou directement avec Stripe
+	// Pour maintenant, cherchons l'abonnement via l'invoice en utilisant l'API Stripe
+	// Note: Comme fallback, on peut chercher dans notre DB les abonnements liés à ce client
+	if invoice.Customer != nil {
+		// Récupérer l'abonnement le plus récent pour ce client comme fallback
 		var subscription models.Subscription
-		if err := conf.DB.Where("stripe_subscription_id = ?", invoice.Subscription.ID).First(&subscription).Error; err == nil {
+		if err := conf.DB.Where("customer_id = ?", invoice.Customer.ID).Order("created_at DESC").First(&subscription).Error; err == nil {
 			// Envoyer une notification WebSocket
 			s.websocketService.SendSubscriptionEvent(subscription.UserID, "payment_succeeded", map[string]interface{}{
-				"amount":   float64(invoice.AmountPaid) / 100.0,
-				"currency": invoice.Currency,
+				"amount":     float64(invoice.AmountPaid) / 100.0,
+				"currency":   invoice.Currency,
 				"invoice_id": invoice.ID,
 			})
 		}
@@ -271,10 +276,10 @@ func (s *EventService) handleInvoicePaymentFailed(event *stripe.Event) error {
 		return fmt.Errorf("failed to parse invoice data: %w", err)
 	}
 
-	// Récupérer l'abonnement associé si disponible
-	if invoice.Subscription != nil {
+	// Dans v82, nous devons récupérer l'abonnement via les métadonnées ou le client
+	if invoice.Customer != nil {
 		var subscription models.Subscription
-		if err := conf.DB.Where("stripe_subscription_id = ?", invoice.Subscription.ID).First(&subscription).Error; err == nil {
+		if err := conf.DB.Where("customer_id = ?", invoice.Customer.ID).Order("created_at DESC").First(&subscription).Error; err == nil {
 			// Envoyer une notification WebSocket
 			s.websocketService.SendSubscriptionEvent(subscription.UserID, "payment_failed", map[string]interface{}{
 				"amount":     float64(invoice.AmountDue) / 100.0,

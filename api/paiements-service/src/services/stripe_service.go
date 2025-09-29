@@ -7,24 +7,24 @@ import (
 	"os"
 	"time"
 
-	"github.com/matcha/api/paiements-service/src/models"
 	"github.com/matcha/api/paiements-service/src/conf"
-	"github.com/stripe/stripe-go/v76"
-	"github.com/stripe/stripe-go/v76/checkout/session"
-	"github.com/stripe/stripe-go/v76/customer"
-	"github.com/stripe/stripe-go/v76/subscription"
+	"github.com/matcha/api/paiements-service/src/models"
+	"github.com/stripe/stripe-go/v82"
+	portalsession "github.com/stripe/stripe-go/v82/billingportal/session"
+	"github.com/stripe/stripe-go/v82/checkout/session"
+	"github.com/stripe/stripe-go/v82/customer"
+	"github.com/stripe/stripe-go/v82/subscription"
 	"gorm.io/gorm"
-	portalsession "github.com/stripe/stripe-go/v76/billingportal/session"
 )
 
 // StripeService gère les interactions avec l'API Stripe
 type StripeService struct {
-	secretKey         string
-	webhookSecret     string
-	monthlyPriceID    string
-	yearlyPriceID     string
-	successURL        string
-	cancelURL         string
+	secretKey      string
+	webhookSecret  string
+	monthlyPriceID string
+	yearlyPriceID  string
+	successURL     string
+	cancelURL      string
 }
 
 // NewStripeService crée une nouvelle instance du service Stripe
@@ -37,12 +37,12 @@ func NewStripeService() *StripeService {
 	stripe.Key = secretKey
 
 	return &StripeService{
-		secretKey:         secretKey,
-		webhookSecret:     os.Getenv("STRIPE_WEBHOOK_SECRET"),
-		monthlyPriceID:    os.Getenv("STRIPE_PRICE_MENSUEL"),
-		yearlyPriceID:     os.Getenv("STRIPE_PRICE_ANNUEL"),
-		successURL:        os.Getenv("STRIPE_SUCCESS_URL"),
-		cancelURL:         os.Getenv("STRIPE_CANCEL_URL"),
+		secretKey:      secretKey,
+		webhookSecret:  os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		monthlyPriceID: os.Getenv("STRIPE_PRICE_MENSUEL"),
+		yearlyPriceID:  os.Getenv("STRIPE_PRICE_ANNUEL"),
+		successURL:     os.Getenv("STRIPE_SUCCESS_URL"),
+		cancelURL:      os.Getenv("STRIPE_CANCEL_URL"),
 	}
 }
 
@@ -85,6 +85,13 @@ func (s *StripeService) CreateCheckoutSession(userID uint, planType models.PlanT
 		Metadata: map[string]string{
 			"user_id":   fmt.Sprintf("%d", userID),
 			"plan_type": string(planType),
+		},
+		// ✅ CRUCIAL: Ajouter les métadonnées au niveau de la souscription
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			Metadata: map[string]string{
+				"user_id":   fmt.Sprintf("%d", userID),
+				"plan_type": string(planType),
+			},
 		},
 	}
 
