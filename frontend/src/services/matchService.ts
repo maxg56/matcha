@@ -182,7 +182,43 @@ class MatchService {
    * Récupère les matches existants de l'utilisateur
    */
   async getMatches(): Promise<MatchesResponse> {
-    return apiService.get<MatchesResponse>(this.baseEndpoint);
+    return this.withRetry(async () => {
+      // L'API retourne une structure différente : { count, matches: UserProfile[], user_id }
+      const apiResponse = await apiService.get<{
+        count: number;
+        matches: (UserProfile & { algorithm_type?: string })[] | null;
+        user_id: number;
+      }>(this.baseEndpoint);
+      
+      // Transformer la réponse de l'API en format attendu par le frontend
+      const transformedMatches: Match[] = (apiResponse.matches || []).map((userProfile) => {
+        // Créer un objet Match à partir du profil utilisateur
+        const match: Match = {
+          id: userProfile.id, // Utiliser l'ID de l'utilisateur comme ID du match temporaire
+          user_id: apiResponse.user_id,
+          target_user_id: userProfile.id,
+          status: 'active',
+          created_at: userProfile.created_at,
+          updated_at: userProfile.created_at,
+          // Le profil utilisateur devient target_user
+          target_user: {
+            ...userProfile,
+            // Ajouter les alias pour compatibilité
+            profile_photos: userProfile.images || [],
+            interests: userProfile.tags || [],
+            location: userProfile.current_city || '',
+            occupation: userProfile.job || '',
+          }
+        };
+        return match;
+      });
+
+      return {
+        matches: transformedMatches,
+        count: apiResponse.count,
+        user_id: apiResponse.user_id
+      };
+    });
   }
 
   /**

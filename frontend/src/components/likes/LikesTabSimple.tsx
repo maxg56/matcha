@@ -1,16 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Heart, Clock, MapPin, Briefcase, Loader2 } from 'lucide-react';
+import { Heart, Clock, MapPin, Briefcase, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProfileModal } from '@/components/demo/ProfileModal';
 import { matchService, type LikeReceived, type ReceivedLikesResponse } from '@/services/matchService';
 
-export function LikesTab() {
+interface LikesTabProps {
+  onMatchCreated?: () => void;
+}
+
+export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [likes, setLikes] = useState<LikeReceived[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Utiliser localStorage pour persister les likes traités
+  const [processedLikeIds, setProcessedLikeIds] = useState<Set<number>>(() => {
+    const saved = localStorage.getItem('processedLikeIds');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  // Fonction pour mettre à jour les IDs traités et les sauvegarder
+  const markAsProcessed = (userId: number) => {
+    setProcessedLikeIds(prev => {
+      const newSet = new Set(prev).add(userId);
+      const arrayToSave = Array.from(newSet);
+      localStorage.setItem('processedLikeIds', JSON.stringify(arrayToSave));
+      return newSet;
+    });
+  };
 
   // Récupérer les likes reçus au chargement du composant
   useEffect(() => {
@@ -23,12 +42,13 @@ export function LikesTab() {
       setError(null);
       
       const response: ReceivedLikesResponse = await matchService.getReceivedLikes();
-      console.log('Likes reçus:', response.likes); // Debug
-      setLikes(response.likes);
+      
+      // Filtrer les likes auxquels on a déjà répondu
+      const filteredLikes = response.likes.filter(like => !processedLikeIds.has(like.user.id));
+      setLikes(filteredLikes);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erreur lors du chargement des likes';
       setError(message);
-      console.error('Erreur lors du fetch des likes:', error);
       setLikes([]);
     } finally {
       setLoading(false);
@@ -54,9 +74,39 @@ export function LikesTab() {
     setSelectedProfile(null);
   };
 
-  const handleLike = (profileId: string) => {
-    console.log('Liked profile:', profileId);
-    // Ici vous pouvez ajouter la logique pour liker en retour
+  const handleLike = async (profileId: string) => {
+    try {
+      const response = await matchService.likeUser(parseInt(profileId));
+      
+      if (response.is_mutual) {
+        // Actualiser les matches si un match est créé
+        if (onMatchCreated) {
+          setTimeout(() => {
+            onMatchCreated();
+          }, 500); // Petit délai pour laisser le temps à l'API de se synchroniser
+        }
+      }
+      
+      // Marquer ce like comme traité et le retirer de la liste
+      const userIdNumber = parseInt(profileId);
+      markAsProcessed(userIdNumber);
+      setLikes(currentLikes => currentLikes.filter(like => like.user.id.toString() !== profileId));
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+    }
+  };
+
+  const handlePass = async (profileId: string) => {
+    try {
+      await matchService.passUser(parseInt(profileId));
+      
+      // Marquer ce like comme traité et le retirer de la liste
+      const userIdNumber = parseInt(profileId);
+      markAsProcessed(userIdNumber);
+      setLikes(currentLikes => currentLikes.filter(like => like.user.id.toString() !== profileId));
+    } catch (error) {
+      console.error('Erreur lors du pass:', error);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -168,23 +218,34 @@ export function LikesTab() {
                 ))}
               </div>
 
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1"
+                  className="w-full"
                   onClick={() => handleViewProfile(like)}
                 >
                   Voir profil
                 </Button>
-                <Button 
-                  size="sm" 
-                  className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white"
-                  onClick={() => handleLike(like.user.id.toString())}
-                >
-                  <Heart className="h-4 w-4 mr-1" />
-                  Liker
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                    onClick={() => handlePass(like.user.id.toString())}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Passer
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white"
+                    onClick={() => handleLike(like.user.id.toString())}
+                  >
+                    <Heart className="h-4 w-4 mr-1" />
+                    Liker
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

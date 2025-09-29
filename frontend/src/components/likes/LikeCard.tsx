@@ -1,5 +1,4 @@
-import { Heart, Clock, MapPin, Briefcase } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Heart, Clock, MapPin, Briefcase, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { LikeReceived } from '@/services/matchService';
 
@@ -7,9 +6,10 @@ interface LikeCardProps {
   like: LikeReceived;
   onViewProfile: (like: LikeReceived) => void;
   onLikeBack: (userId: number) => void;
+  onPass: (userId: number) => void;
 }
 
-export function LikeCard({ like, onViewProfile, onLikeBack }: LikeCardProps) {
+export function LikeCard({ like, onViewProfile, onLikeBack, onPass }: LikeCardProps) {
   const user = like.user;
   
   const formatDate = (dateString: string) => {
@@ -87,7 +87,11 @@ export function LikeCard({ like, onViewProfile, onLikeBack }: LikeCardProps) {
 
         {/* Bio (extrait) */}
         {user.bio && (
-          <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-2">
+          <p className="text-gray-700 dark:text-gray-300 text-sm overflow-hidden" style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical'
+          }}>
             {user.bio}
           </p>
         )}
@@ -109,23 +113,32 @@ export function LikeCard({ like, onViewProfile, onLikeBack }: LikeCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
+        <div className="space-y-2 pt-2">
+          {/* Bouton voir le profil */}
+          <button
             onClick={() => onViewProfile(like)}
-            className="flex-1"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
           >
             Voir le profil
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => onLikeBack(user.id)}
-            className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
-          >
-            <Heart className="h-4 w-4 mr-1" />
-            Liker en retour
-          </Button>
+          </button>
+          
+          {/* Actions principales */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onPass(user.id)}
+              className="px-3 py-2 border-2 border-red-300 rounded-lg text-sm font-medium text-red-600 bg-white hover:bg-red-50 transition-colors flex items-center justify-center min-h-[40px]"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Passer
+            </button>
+            <button
+              onClick={() => onLikeBack(user.id)}
+              className="px-3 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 transition-colors flex items-center justify-center min-h-[40px]"
+            >
+              <Heart className="h-4 w-4 mr-1" />
+              Liker
+            </button>
+          </div>
         </div>
       </div>
     </div>
