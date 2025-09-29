@@ -28,8 +28,10 @@ export default function MatchesPage() {
       setError(null);
 
       const response: MatchesResponse = await matchService.getMatches();
+      console.log('Matches response:', response);
       setMatches(response.matches);
     } catch (error) {
+      console.error('Erreur lors du chargement des matches:', error);
       const message = error instanceof Error ? error.message : 'Erreur lors du chargement des matches';
       setError(message);
       toast({
@@ -115,8 +117,27 @@ export default function MatchesPage() {
     switch (activeTab) {
       case 'matches':
         return (
-          <div>
-            { !matches || matches.length  === 0 ? (
+          <div className="space-y-6">
+            {/* En-tête */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Vos Matches
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  Les profils avec qui vous avez matché
+                </p>
+              </div>
+              
+              {matches.length > 0 && (
+                <div className="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full text-sm font-medium">
+                  {matches.length} match{matches.length > 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+
+            {/* Contenu */}
+            { !matches || matches.length === 0 ? (
               <EmptyState
                 icon={
                   <svg
@@ -137,13 +158,12 @@ export default function MatchesPage() {
                 description="Continuez à découvrir de nouveaux profils pour trouver vos matches !"
                 action={{
                   label: "Découvrir des profils",
-                  onClick: () => window.location.href = '/discover'
+                  onClick: () => window.location.href = '/app/discover'
                 }}
               />
             ) : (
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold">Vos Matches</h2>
-                {matches?.map((match) => (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {matches.map((match) => (
                   <MatchCard
                     key={match.id}
                     match={match}
