@@ -57,6 +57,7 @@ func main() {
 			matches.POST("/unmatch", handlers.UnmatchHandler)
 			matches.GET("/algorithm", handlers.MatchingAlgorithmHandler)
 			matches.GET("/preferences", handlers.GetUserPreferencesHandler)
+			matches.GET("/received-likes", handlers.GetReceivedLikesHandler)
 			matches.DELETE("/seen", handlers.ResetSeenProfilesHandler)
 		}
 

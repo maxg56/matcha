@@ -119,3 +119,17 @@ func DeactivateMatch(userID, targetUserID int) error {
 
 	return nil
 }
+
+// IsMatched checks if two users have an active match
+func IsMatched(userID, targetUserID int) bool {
+	// Determine correct ordering
+	user1ID, user2ID := userID, targetUserID
+	if userID > targetUserID {
+		user1ID, user2ID = targetUserID, userID
+	}
+
+	var match models.Match
+	result := conf.DB.Where("user1_id = ? AND user2_id = ? AND is_active = ?", user1ID, user2ID, true).First(&match)
+
+	return result.Error == nil
+}

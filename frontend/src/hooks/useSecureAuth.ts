@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import secureStorage from '../services/secureStorage';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -28,9 +27,14 @@ export const useSecureAuth = () => {
 
   // Update auth state from secure storage
   const updateAuthState = useCallback(() => {
-    const accessToken = secureStorage.getAccessToken();
-    const isAuthenticated = secureStorage.isAuthenticated();
-    const tokenStatus = secureStorage.getTokenStatus();
+    const accessToken = localStorage.getItem('accessToken');
+    const isAuthenticated = localStorage.getItem('accessToken') !== null;
+    const tokenStatus = {
+      isValid: false,
+      expiresAt: 0,
+      expiresIn: 0
+    };
+
 
     setAuthState({
       isAuthenticated,
@@ -44,33 +48,12 @@ export const useSecureAuth = () => {
     updateAuthState();
   }, [updateAuthState]);
 
-  // Set up token expiration monitoring
-  useEffect(() => {
-    if (!authState.isAuthenticated) return;
-
-    const checkInterval = setInterval(() => {
-      const tokenStatus = secureStorage.getTokenStatus();
-
-      // If token expires in less than 5 minutes, trigger refresh
-      if (tokenStatus.expiresIn < 300 && tokenStatus.expiresIn > 0) {
-        console.info('Token expiring soon, should refresh');
-        // Trigger refresh logic here
-      }
-
-      // If token is expired, clear auth state
-      if (!tokenStatus.isValid) {
-        updateAuthState();
-      }
-    }, 30000); // Check every 30 seconds
-
-    return () => clearInterval(checkInterval);
-  }, [authState.isAuthenticated, updateAuthState]);
-
   /**
    * Login with secure token storage
    */
   const login = useCallback((accessToken: string, refreshToken: string) => {
-    secureStorage.setTokens(accessToken, refreshToken);
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
     updateAuthState();
   }, [updateAuthState]);
 
@@ -78,7 +61,8 @@ export const useSecureAuth = () => {
    * Logout and clear all tokens
    */
   const logout = useCallback(() => {
-    secureStorage.clearTokens();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     updateAuthState();
   }, [updateAuthState]);
 
@@ -86,7 +70,7 @@ export const useSecureAuth = () => {
    * Update access token (for refresh scenarios)
    */
   const updateAccessToken = useCallback((newAccessToken: string) => {
-    secureStorage.updateAccessToken(newAccessToken);
+    localStorage.setItem('accessToken', newAccessToken);
     updateAuthState();
   }, [updateAuthState]);
 
@@ -94,14 +78,14 @@ export const useSecureAuth = () => {
    * Get current access token (for API calls)
    */
   const getAccessToken = useCallback((): string | null => {
-    return secureStorage.getAccessToken();
+    return localStorage.getItem('accessToken');
   }, []);
 
   /**
    * Get authorization header for API calls
    */
   const getAuthHeaders = useCallback((): HeadersInit => {
-    const token = secureStorage.getAccessToken();
+    const token = localStorage.getItem('accessToken');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }, []);
 
@@ -109,7 +93,7 @@ export const useSecureAuth = () => {
    * Check if user needs to re-authenticate
    */
   const needsReauth = useCallback((): boolean => {
-    return !secureStorage.isAuthenticated();
+    return !localStorage.getItem('accessToken');
   }, []);
 
   return {

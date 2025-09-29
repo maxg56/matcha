@@ -21,19 +21,32 @@ export class WebSocketConnection {
   }
 
   private getWebSocketURL(): string {
+    const token = localStorage.getItem('accessToken');
+
     // Utiliser VITE_WS_URL si défini, sinon construire l'URL
     const wsUrl = import.meta.env.VITE_WS_URL;
+    let baseUrl: string;
+
     if (wsUrl) {
       console.log('WebSocket: Using configured URL:', wsUrl);
-      return wsUrl;
+      baseUrl = wsUrl;
+    } else {
+      // Fallback vers l'ancien système
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = import.meta.env.VITE_WS_HOST || window.location.host;
+      baseUrl = `${protocol}//${host}/ws`;
+      console.log('WebSocket: Using fallback URL:', baseUrl);
     }
-    
-    // Fallback vers l'ancien système
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = import.meta.env.VITE_WS_HOST || window.location.host;
-    const url = `${protocol}//${host}/ws`;
-    console.log('WebSocket: Using fallback URL:', url);
-    return url;
+
+    // Ajouter le token comme paramètre de requête si disponible
+    if (token) {
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      const finalUrl = `${baseUrl}${separator}token=${encodeURIComponent(token)}`;
+      console.log('WebSocket: URL with token parameter');
+      return finalUrl;
+    }
+
+    return baseUrl;
   }
 
   async connect(
@@ -47,8 +60,7 @@ export class WebSocketConnection {
     }
 
     const { user } = useAuthStore.getState();
-    const { default: secureStorage } = await import('../secureStorage');
-    const token = secureStorage.getAccessToken();
+    const token = localStorage.getItem('accessToken');
 
     if (!user?.id || !token) {
       console.warn('WebSocket: Cannot connect without authentication');

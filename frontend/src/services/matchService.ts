@@ -105,6 +105,33 @@ export interface InteractionResponse {
   message?: string;
 }
 
+// Interface pour les likes basiques (retournés par l'endpoint)
+export interface BasicLike {
+  id: number;
+  user_id: number;
+  target_user_id: number;
+  created_at: string;
+}
+
+// Interface pour les likes avec profil complet (pour le frontend)
+export interface LikeReceived {
+  id: number;
+  user_id: number;
+  target_user_id: number;
+  created_at: string;
+  user: UserProfile;
+}
+
+export interface BasicLikesResponse {
+  likes: BasicLike[];
+  count: number;
+}
+
+export interface ReceivedLikesResponse {
+  likes: LikeReceived[];
+  count: number;
+}
+
 export interface UserPreferences {
   user_id: number;
   preferences: {
@@ -155,7 +182,43 @@ class MatchService {
    * Récupère les matches existants de l'utilisateur
    */
   async getMatches(): Promise<MatchesResponse> {
-    return apiService.get<MatchesResponse>(this.baseEndpoint);
+    return this.withRetry(async () => {
+      // L'API retourne une structure différente : { count, matches: UserProfile[], user_id }
+      const apiResponse = await apiService.get<{
+        count: number;
+        matches: (UserProfile & { algorithm_type?: string })[] | null;
+        user_id: number;
+      }>(this.baseEndpoint);
+      
+      // Transformer la réponse de l'API en format attendu par le frontend
+      const transformedMatches: Match[] = (apiResponse.matches || []).map((userProfile) => {
+        // Créer un objet Match à partir du profil utilisateur
+        const match: Match = {
+          id: userProfile.id, // Utiliser l'ID de l'utilisateur comme ID du match temporaire
+          user_id: apiResponse.user_id,
+          target_user_id: userProfile.id,
+          status: 'active',
+          created_at: userProfile.created_at,
+          updated_at: userProfile.created_at,
+          // Le profil utilisateur devient target_user
+          target_user: {
+            ...userProfile,
+            // Ajouter les alias pour compatibilité
+            profile_photos: userProfile.images || [],
+            interests: userProfile.tags || [],
+            location: userProfile.current_city || '',
+            occupation: userProfile.job || '',
+          }
+        };
+        return match;
+      });
+
+      return {
+        matches: transformedMatches,
+        count: apiResponse.count,
+        user_id: apiResponse.user_id
+      };
+    });
   }
 
   /**
@@ -257,6 +320,62 @@ class MatchService {
       return apiService.post<InteractionResponse>(`${this.baseEndpoint}/unmatch`, {
         target_user_id: targetUserId
       });
+    });
+  }
+
+  /**
+   * Récupère les likes reçus par l'utilisateur avec les profils complets
+   */
+  async getReceivedLikes(): Promise<ReceivedLikesResponse> {
+    return this.withRetry(async () => {
+      // 1. Récupérer les likes basiques (IDs seulement)
+      const basicResponse = await apiService.get<BasicLikesResponse>(`${this.baseEndpoint}/received-likes`);
+      const basicLikes = basicResponse.likes;
+
+      // 2. Pour chaque like, récupérer le profil complet
+      const likesWithProfiles = await Promise.all(
+        basicLikes.map(async (basicLike): Promise<LikeReceived> => {
+          try {
+            const userProfile = await this.getUserProfile(basicLike.user_id);
+            return {
+              ...basicLike,
+              user: userProfile
+            };
+          } catch (profileError) {
+            console.error(`Error fetching profile for user ${basicLike.user_id}:`, profileError);
+            // En cas d'erreur, retourner un profil minimal
+            const fallbackProfile: UserProfile = {
+              id: basicLike.user_id,
+              username: `user_${basicLike.user_id}`,
+              first_name: 'Utilisateur',
+              age: 0,
+              bio: 'Profil non disponible',
+              images: [],
+              tags: [],
+              current_city: '',
+              job: '',
+              fame: 0,
+              gender: '',
+              created_at: '',
+              relationship_type: '',
+              // Alias pour compatibilité
+              profile_photos: [],
+              interests: [],
+              location: '',
+              occupation: '',
+            };
+            return {
+              ...basicLike,
+              user: fallbackProfile
+            };
+          }
+        })
+      );
+
+      return {
+        likes: likesWithProfiles,
+        count: likesWithProfiles.length
+      };
     });
   }
 

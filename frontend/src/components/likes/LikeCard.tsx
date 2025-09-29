@@ -1,24 +1,17 @@
-import { Heart, MessageCircle, UserMinus, MapPin, Briefcase } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Heart, Clock, MapPin, Briefcase, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { type Match } from '@/services/matchService';
+import type { LikeReceived } from '@/services/matchService';
 
-interface MatchCardProps {
-  match: Match;
-  onUnmatch?: (matchId: number) => void;
-  onMessage?: (userId: number) => void;
+interface LikeCardProps {
+  like: LikeReceived;
+  onViewProfile: (like: LikeReceived) => void;
+  onLikeBack: (userId: number) => void;
+  onPass: (userId: number) => void;
 }
 
-export function MatchCard({ match, onUnmatch, onMessage }: MatchCardProps) {
-  const user = match.target_user || match.user;
-
-  if (!user) return null;
-
-  const getInitials = () => {
-    const firstName = user.first_name && user.first_name.length > 0 ? user.first_name : 'U';
-    return firstName.charAt(0).toUpperCase();
-  };
-
+export function LikeCard({ like, onViewProfile, onLikeBack, onPass }: LikeCardProps) {
+  const user = like.user;
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -27,6 +20,10 @@ export function MatchCard({ match, onUnmatch, onMessage }: MatchCardProps) {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getInitials = () => {
+    return user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U';
   };
 
   return (
@@ -39,10 +36,10 @@ export function MatchCard({ match, onUnmatch, onMessage }: MatchCardProps) {
             <img
               src={user.images[0]}
               alt={user.first_name}
-              className="w-16 h-16 rounded-full object-cover border-2 border-green-200"
+              className="w-16 h-16 rounded-full object-cover border-2 border-pink-200"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center border-2 border-green-200">
+            <div className="w-16 h-16 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center border-2 border-pink-200">
               <span className="text-xl font-semibold text-gray-600 dark:text-gray-300">
                 {getInitials()}
               </span>
@@ -55,17 +52,17 @@ export function MatchCard({ match, onUnmatch, onMessage }: MatchCardProps) {
               {user.first_name}, {user.age}
             </h3>
             
-            {/* Date du match */}
+            {/* Date du like */}
             <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-sm">
-              <Heart className="h-4 w-4" />
-              <span>Match depuis le {formatDate(match.created_at)}</span>
+              <Clock className="h-4 w-4" />
+              <span>{formatDate(like.created_at)}</span>
             </div>
           </div>
           
-          {/* Badge du match */}
-          <div className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+          {/* Badge du like */}
+          <div className="bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
             <Heart className="h-4 w-4 fill-current" />
-            Match
+            Like
           </div>
         </div>
       </div>
@@ -90,7 +87,11 @@ export function MatchCard({ match, onUnmatch, onMessage }: MatchCardProps) {
 
         {/* Bio (extrait) */}
         {user.bio && (
-          <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-2">
+          <p className="text-gray-700 dark:text-gray-300 text-sm overflow-hidden" style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical'
+          }}>
             {user.bio}
           </p>
         )}
@@ -112,28 +113,32 @@ export function MatchCard({ match, onUnmatch, onMessage }: MatchCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          {onMessage && (
-            <Button
-              size="sm"
-              onClick={() => onMessage(user.id)}
-              className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white"
+        <div className="space-y-2 pt-2">
+          {/* Bouton voir le profil */}
+          <button
+            onClick={() => onViewProfile(like)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          >
+            Voir le profil
+          </button>
+          
+          {/* Actions principales */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onPass(user.id)}
+              className="px-3 py-2 border-2 border-red-300 rounded-lg text-sm font-medium text-red-600 bg-white hover:bg-red-50 transition-colors flex items-center justify-center min-h-[40px]"
             >
-              <MessageCircle className="h-4 w-4 mr-1" />
-              Message
-            </Button>
-          )}
-          {onUnmatch && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onUnmatch(match.id)}
-              className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+              <X className="h-4 w-4 mr-1" />
+              Passer
+            </button>
+            <button
+              onClick={() => onLikeBack(user.id)}
+              className="px-3 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 transition-colors flex items-center justify-center min-h-[40px]"
             >
-              <UserMinus className="h-4 w-4 mr-1" />
-              Unmatch
-            </Button>
-          )}
+              <Heart className="h-4 w-4 mr-1" />
+              Liker
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,9 +1,5 @@
-import secureStorage from './secureStorage';
-import cookieManager from './cookieManager';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || (
-  import.meta.env.DEV ? 'http://localhost:8080' : 'https://localhost:8443'
-);
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:8443';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -33,7 +29,7 @@ class ApiService {
     }
     
     const url = `${this.baseURL}${endpoint}`;
-    const token = secureStorage.getAccessToken();
+    const token = localStorage.getItem('accessToken');
 
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
@@ -93,28 +89,28 @@ class ApiService {
       }
 
       if (!response.ok) {
-        console.error('API error response:', data);
+        console.error('API error response:', { status: response.status, data });
         let errorMessage = data.error || `HTTP ${response.status}: ${response.statusText}`;
         
         // Gérer le rafraîchissement du token en cas d'erreur 401
-        if (response.status === 401 && !isRetry && endpoint !== '/api/v1/auth/refresh') {
+        if (response.status === 401 && endpoint !== '/api/v1/auth/refresh') {
           if (this.retryCount >= this.maxRetries) {
             // Réinitialiser le compteur et déconnecter l'utilisateur
+            console.warn('Max token refresh attempts reached. Logging out user.');
             this.retryCount = 0;
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
-            cookieManager.clearCookie('access_token');
             errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
             throw new Error(errorMessage);
           }
-
+          console.log('Attempting to refresh token...');
           try {
             this.retryCount++;
             
             // Attendre un délai avant de réessayer
-            await new Promise(resolve => setTimeout(resolve, this.retryDelay * this.retryCount));
+            // await new Promise(resolve => setTimeout(resolve, this.retryDelay * this.retryCount));
             
-            const refreshToken = secureStorage.getRefreshToken();
+            const refreshToken = localStorage.getItem('refreshToken');
             if (refreshToken) {
               // Faire l'appel de refresh directement sans passer par this.post pour éviter la récursion
               const refreshResponse = await fetch(`${this.baseURL}/api/v1/auth/refresh`, {
@@ -131,9 +127,9 @@ class ApiService {
                 const tokenData = refreshData.data;
 
                 // Mettre à jour les tokens de manière sécurisée
-                secureStorage.setTokens(tokenData.access_token, tokenData.refresh_token);
-                cookieManager.setAuthTokenCookie('access_token', tokenData.access_token, 3600);
-                
+                localStorage.setItem('accessToken', tokenData.access_token);
+                localStorage.setItem('refreshToken', tokenData.refresh_token);
+
                 // Réessayer la requête originale avec le flag isRetry
                 return this.makeRequest<T>(endpoint, options, true);
               } else {
@@ -145,7 +141,6 @@ class ApiService {
             this.retryCount = 0;
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
-            cookieManager.clearCookie('access_token');
             errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
           }
         } else if (response.status === 429) {

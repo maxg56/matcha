@@ -4,6 +4,7 @@ import { matchService, type Match, type MatchesResponse } from '@/services/match
 import { useToast } from '@/hooks/ui/useToast';
 import { ProfileViewers } from '@/components/profile/ProfileViewers';
 import { ViewedProfilesList } from '@/components/profile/ViewedProfilesList';
+import { LikesTab } from '@/components/likes';
 import { MatchCard } from '@/components/matches/MatchCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -11,7 +12,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { TabNavigation , type Tab} from '@/components/ui/TabNavigation';
 
 
-type TabType = 'matches' | 'viewers' | 'viewed';
+type TabType = 'matches' | 'likes' | 'viewers' | 'viewed';
 
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -104,6 +105,7 @@ export default function MatchesPage() {
 
   const tabs : Tab[] = [
     { id: 'matches', label: 'Mes Matches', count: matches?.length || 0 },
+    { id: 'likes', label: 'Likes reçus', count: null },
     { id: 'viewers', label: 'Qui a vu mon profil', count: null },
     { id: 'viewed', label: 'Profils vus', count: null },
   ] as const;
@@ -113,8 +115,27 @@ export default function MatchesPage() {
     switch (activeTab) {
       case 'matches':
         return (
-          <div>
-            { !matches || matches.length  === 0 ? (
+          <div className="space-y-6">
+            {/* En-tête */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Vos Matches
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  Les profils avec qui vous avez matché
+                </p>
+              </div>
+              
+              {matches.length > 0 && (
+                <div className="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full text-sm font-medium">
+                  {matches.length} match{matches.length > 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+
+            {/* Contenu */}
+            { !matches || matches.length === 0 ? (
               <EmptyState
                 icon={
                   <svg
@@ -135,13 +156,12 @@ export default function MatchesPage() {
                 description="Continuez à découvrir de nouveaux profils pour trouver vos matches !"
                 action={{
                   label: "Découvrir des profils",
-                  onClick: () => window.location.href = '/discover'
+                  onClick: () => window.location.href = '/app/discover'
                 }}
               />
             ) : (
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold">Vos Matches</h2>
-                {matches?.map((match) => (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {matches.map((match) => (
                   <MatchCard
                     key={match.id}
                     match={match}
@@ -158,6 +178,9 @@ export default function MatchesPage() {
             )}
           </div>
         );
+
+      case 'likes':
+        return <LikesTab onMatchCreated={fetchMatches} />;
 
       case 'viewers':
         return <ProfileViewers />;

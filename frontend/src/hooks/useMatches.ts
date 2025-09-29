@@ -1,295 +1,192 @@
 import { useState, useEffect, useCallback } from 'react';
 import { matchService, type UserProfile, type MatchCandidate, type MatchingAlgorithmParams, type InteractionResponse } from '@/services/matchService';
-import { preferencesEventEmitter } from '@/utils/preferencesEvents';
-import { useToast } from '@/hooks/ui/useToast';
 
 interface UseMatchesState {
   candidates: MatchCandidate[];
   profiles: Map<number, UserProfile>;
-  seenProfileIds: Set<number>; // Profils déjà vus
   currentIndex: number;
   loading: boolean;
   error: string | null;
-  hasMore: boolean;
-  loadingProfiles: Set<number>;
 }
 
 export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
-  const { toast } = useToast();
   const [state, setState] = useState<UseMatchesState>({
     candidates: [],
     profiles: new Map(),
-    seenProfileIds: new Set(),
     currentIndex: 0,
     loading: true,
     error: null,
-    hasMore: true,
-    loadingProfiles: new Set(),
   });
 
-  const fetchCandidates = useCallback(async (params: MatchingAlgorithmParams = {}, isLoadMore = false) => {
+  const fetchCandidates = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      
+
       const response = await matchService.getMatchingCandidates({
         limit: 20,
         algorithm_type: 'vector_based',
-        ...initialParams,
-        ...params
+        ...initialParams
       });
 
-      // Filtrer les candidats déjà vus
-      const newCandidates = response.candidates.filter(candidate => 
-        !state.seenProfileIds.has(candidate.id)
-      );
+      setState(prev => ({
+        ...prev,
+        candidates: response.candidates,
+        loading: false,
+        currentIndex: 0
+      }));
 
-      setState(prev => {
-        const updatedCandidates = isLoadMore 
-          ? [...prev.candidates, ...newCandidates] 
-          : newCandidates;
-
-        // Ajouter les nouveaux IDs aux profils vus
-        const updatedSeenIds = new Set(prev.seenProfileIds);
-        newCandidates.forEach(candidate => updatedSeenIds.add(candidate.id));
-
-        return {
-          ...prev,
-          candidates: updatedCandidates,
-          seenProfileIds: updatedSeenIds,
-          loading: false,
-          hasMore: newCandidates.length > 0,
-          currentIndex: isLoadMore ? prev.currentIndex : 0
-        };
-      });
-
-      // Pre-load les premiers profils
-      const firstBatch = newCandidates.slice(0, 5);
-      firstBatch.forEach(candidate => {
-        loadUserProfile(candidate.id);
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erreur lors du chargement des candidats';
-      
-      // Gestion spécifique des différents types d'erreurs
-      if (error instanceof Error) {
-        if (error.message.includes('401') || error.message.includes('unauthorized')) {
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Votre session a expiré. Veuillez vous reconnecter.'
-          }));
-        } else if (error.message.includes('user location not set') || error.message.includes('current user location not set')) {
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            error: 'location_required' // Code d'erreur spécial pour la géolocalisation
-          }));
-        } else {
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            error: errorMessage
-          }));
-        }
-      } else {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: errorMessage
-        }));
+      if (response.candidates.length > 0) {
+        loadUserProfile(response.candidates[0].id);
       }
-    }
-  }, [state.seenProfileIds]);
-
-  const clearCacheAndRefresh = useCallback(async () => {
-    console.log('Clearing cache and refreshing due to preferences change');
-    // Vider complètement le cache
-    setState(prev => ({
-      ...prev,
-      candidates: [],
-      profiles: new Map(),
-      seenProfileIds: new Set(),
-      currentIndex: 0,
-      loading: true,
-      error: null,
-      hasMore: true,
-      loadingProfiles: new Set(),
-    }));
-    
-    // Relancer une recherche avec les nouveaux critères
-    try {
-      await fetchCandidates();
-      // Notifier l'utilisateur que de nouveaux profils sont disponibles
-      toast({
-        variant: 'success',
-        message: 'Nouveaux profils trouvés avec vos critères mis à jour ! 🎯',
-      });
     } catch (error) {
-      toast({
-        variant: 'error',
-        message: 'Erreur lors du rechargement des profils',
-      });
+      let errorMessage = 'Erreur lors du chargement des candidats';
+
+      if (error instanceof Error) {
+        if (error.message.includes('location')) {
+          errorMessage = 'location_required';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage
+      }));
     }
-  }, [fetchCandidates, toast]);
+  }, [initialParams]);
 
   const loadUserProfile = useCallback(async (userId: number) => {
-    // Ne pas charger si déjà en cours ou déjà chargé
     setState(prev => {
-      if (prev.loadingProfiles.has(userId) || prev.profiles.has(userId)) {
-        return prev;
-      }
-      
-      return {
-        ...prev,
-        loadingProfiles: new Set([...prev.loadingProfiles, userId])
-      };
-    });
+      if (prev.profiles.has(userId)) return prev;
 
-    try {
-      const profile = await matchService.getUserProfile(userId);
-      
-      setState(prev => ({
-        ...prev,
-        profiles: new Map(prev.profiles.set(userId, profile)),
-        loadingProfiles: new Set([...prev.loadingProfiles].filter(id => id !== userId))
-      }));
-    } catch (error) {
-      console.error(`Erreur lors du chargement du profil ${userId}:`, error);
-      
-      setState(prev => ({
-        ...prev,
-        loadingProfiles: new Set([...prev.loadingProfiles].filter(id => id !== userId))
-      }));
-    }
+      // Démarrer le chargement du profil de façon asynchrone
+      matchService.getUserProfile(userId)
+        .then(profile => {
+          setState(prevState => ({
+            ...prevState,
+            profiles: new Map(prevState.profiles.set(userId, profile))
+          }));
+        })
+        .catch(error => {
+          console.error(`Erreur lors du chargement du profil ${userId}:`, error);
+        });
+
+      return prev;
+    });
   }, []);
+
+  const nextProfile = useCallback(() => {
+    setState(prev => {
+      const nextIndex = prev.currentIndex + 1;
+
+      if (nextIndex < prev.candidates.length) {
+        const nextCandidate = prev.candidates[nextIndex];
+        if (!prev.profiles.has(nextCandidate.id)) {
+          loadUserProfile(nextCandidate.id);
+        }
+      }
+
+      return { ...prev, currentIndex: nextIndex };
+    });
+  }, [loadUserProfile]);
 
   const likeUser = useCallback(async (userId: number): Promise<InteractionResponse> => {
     try {
       const response = await matchService.likeUser(userId);
-      
-      // Passer au profil suivant
-      setState(prev => ({
-        ...prev,
-        currentIndex: prev.currentIndex + 1
-      }));
-
+      nextProfile();
       return response;
     } catch (error) {
       throw error instanceof Error ? error : new Error('Erreur lors du like');
     }
-  }, []);
+  }, [nextProfile]);
 
   const passUser = useCallback(async (userId: number): Promise<InteractionResponse> => {
     try {
       const response = await matchService.passUser(userId);
-      
-      // Passer au profil suivant
-      setState(prev => ({
-        ...prev,
-        currentIndex: prev.currentIndex + 1
-      }));
-
+      nextProfile();
       return response;
     } catch (error) {
       throw error instanceof Error ? error : new Error('Erreur lors du pass');
     }
-  }, []);
+  }, [nextProfile]);
 
   const blockUser = useCallback(async (userId: number): Promise<InteractionResponse> => {
     try {
       const response = await matchService.blockUser(userId);
-      
-      // Passer au profil suivant
-      setState(prev => ({
-        ...prev,
-        currentIndex: prev.currentIndex + 1
-      }));
-
+      nextProfile();
       return response;
     } catch (error) {
       throw error instanceof Error ? error : new Error('Erreur lors du blocage');
     }
-  }, []);
+  }, [nextProfile]);
 
-  const loadMoreCandidates = useCallback(async () => {
-    if (state.currentIndex >= state.candidates.length - 3 && state.hasMore && !state.loading) {
-      console.log('Loading more candidates...', {
-        currentIndex: state.currentIndex,
-        candidatesLength: state.candidates.length,
-        hasMore: state.hasMore
+  const refresh = useCallback(async () => {
+    setState(prev => ({
+      ...prev,
+      candidates: [],
+      profiles: new Map(),
+      currentIndex: 0,
+      loading: true,
+      error: null
+    }));
+
+    try {
+      const response = await matchService.getMatchingCandidates({
+        limit: 20,
+        algorithm_type: 'vector_based',
+        ...initialParams
       });
-      
-      // Ajouter un délai pour éviter le rate limiting
-      setTimeout(() => {
-        fetchCandidates({}, true); // isLoadMore = true
-      }, 1000);
-    }
-  }, [state.currentIndex, state.candidates.length, state.hasMore, state.loading, fetchCandidates]);
 
-  // Pre-load des profils suivants quand on s'approche de la fin
-  useEffect(() => {
-    const nextBatch = state.candidates.slice(state.currentIndex + 1, state.currentIndex + 6);
-    nextBatch.forEach(candidate => {
-      if (!state.profiles.has(candidate.id) && !state.loadingProfiles.has(candidate.id)) {
-        loadUserProfile(candidate.id);
+      setState(prev => ({
+        ...prev,
+        candidates: response.candidates,
+        loading: false,
+        currentIndex: 0
+      }));
+
+      if (response.candidates.length > 0) {
+        loadUserProfile(response.candidates[0].id);
       }
-    });
-  }, [state.currentIndex, state.candidates, state.profiles, state.loadingProfiles, loadUserProfile]);
+    } catch (error) {
+      let errorMessage = 'Erreur lors du chargement des candidats';
 
-  // Auto-trigger loadMore quand on s'approche de la fin
-  useEffect(() => {
-    if (state.currentIndex >= state.candidates.length - 2) {
-      loadMoreCandidates();
+      if (error instanceof Error) {
+        if (error.message.includes('location')) {
+          errorMessage = 'location_required';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage
+      }));
     }
-  }, [state.currentIndex, loadMoreCandidates]);
+  }, [initialParams, loadUserProfile]);
 
   useEffect(() => {
-    // Ajouter un délai avant le premier chargement pour éviter les requêtes simultanées
-    const timer = setTimeout(() => {
-      fetchCandidates();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []); // Retirer fetchCandidates de la dépendance pour éviter la boucle
-
-  // Écouter les changements de préférences
-  useEffect(() => {
-    const unsubscribe = preferencesEventEmitter.subscribe(() => {
-      console.log('Preferences changed, clearing cache and refreshing matches');
-      clearCacheAndRefresh();
-    });
-
-    return unsubscribe;
-  }, [clearCacheAndRefresh]);
+    fetchCandidates();
+  }, []);
 
   const currentCandidate = state.candidates[state.currentIndex] || null;
   const currentProfile = currentCandidate ? state.profiles.get(currentCandidate.id) || null : null;
-  const remainingCount = Math.max(0, state.candidates.length - state.currentIndex);
+  const isProfileLoading = currentCandidate && !currentProfile && !state.error;
 
   return {
     currentProfile,
     currentCandidate,
-    remainingCount,
     loading: state.loading,
     error: state.error,
-    hasMore: state.hasMore,
-    isProfileLoading: currentCandidate ? state.loadingProfiles.has(currentCandidate.id) : false,
+    isProfileLoading,
     actions: {
       like: likeUser,
       pass: passUser,
       block: blockUser,
-      refresh: () => {
-        // Reset les profils vus et recharge complètement
-        setState(prev => ({
-          ...prev,
-          seenProfileIds: new Set(),
-          candidates: [],
-          currentIndex: 0
-        }));
-        fetchCandidates();
-      },
-      clearCacheAndRefresh, // Nouvelle fonction pour vider le cache complet
-      loadMore: loadMoreCandidates,
+      refresh
     }
   };
 }
