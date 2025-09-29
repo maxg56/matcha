@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Search, User, Settings, LogOut, Map } from 'lucide-react';
+import { Heart, MessageCircle, Search, User, Settings, LogOut, Map, Crown } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
@@ -29,6 +29,12 @@ const navItems = [
     label: 'Profil',
     icon: User,
     href: '/app/profile',
+  },
+  {
+    label: 'Premium',
+    icon: Crown,
+    href: '/app/premium',
+    isPremium: true,
   },
   {
     label: 'Map',
@@ -118,18 +124,28 @@ export function SideNavigation() {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200",
+                  "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 relative",
                   "hover:bg-accent/50 active:scale-[0.98]",
-                  isActive 
-                    ? "bg-chart-5 text-primary-foreground shadow-lg shadow-primary/25 hover:bg-gray-800/100" 
-                    : "text-muted-foreground hover:text-secondary-foreground text-white"
+                  isActive
+                    ? "bg-chart-5 text-primary-foreground shadow-lg shadow-primary/25 hover:bg-gray-800/100"
+                    : "text-muted-foreground hover:text-secondary-foreground text-white",
+                  item.isPremium && "bg-gradient-to-r from-purple-500/10 to-violet-500/10 border border-purple-500/20 hover:from-purple-500/20 hover:to-violet-500/20"
                 )}
               >
                 <Icon className={cn(
-                  "h-5 w-5 transition-transform duration-200 text-primary",
-                  isActive && "scale-110"
+                  "h-5 w-5 transition-transform duration-200",
+                  isActive && "scale-110",
+                  item.isPremium ? "text-purple-400" : "text-primary"
                 )} />
-                <span className="font-medium text-primary">{item.label}</span>
+                <span className={cn(
+                  "font-medium",
+                  item.isPremium ? "text-purple-400" : "text-primary"
+                )}>
+                  {item.label}
+                </span>
+                {item.isPremium && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full animate-pulse"></div>
+                )}
               </Link>
             );
           })}

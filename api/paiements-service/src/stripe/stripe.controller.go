@@ -2,53 +2,84 @@ package stripe
 
 import (
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stripe/stripe-go/v76"
-	"github.com/stripe/stripe-go/v76/checkout/session"
+	"github.com/matcha/api/paiements-service/src/models"
+	"github.com/matcha/api/paiements-service/src/services"
 )
 
-func CreateCheckoutSession(c *gin.Context) {
+// StripeController gère les endpoints Stripe legacy
+type StripeController struct {
+	stripeService *services.StripeService
+}
+
+// NewStripeController crée un nouveau contrôleur Stripe
+func NewStripeController() *StripeController {
+	return &StripeController{
+		stripeService: services.NewStripeService(),
+	}
+}
+
+// CreateCheckoutSession crée une session de checkout (legacy endpoint)
+func (sc *StripeController) CreateCheckoutSession(c *gin.Context) {
 	var body struct {
 		Plan string `json:"plan"`
 	}
 	if err := c.BindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid request",
+		})
 		return
 	}
 
-	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+	// Récupérer l'ID utilisateur depuis le header JWT si disponible
+	userIDStr := c.GetHeader("X-User-ID")
+	var userID uint = 1 // Valeur par défaut pour la compatibilité
 
-	// Récupérer l'ID du prix Stripe selon le plan
-	var priceID string
-	if body.Plan == "mensuel" {
-		priceID = os.Getenv("STRIPE_PRICE_MENSUEL")
-	} else if body.Plan == "annuel" {
-		priceID = os.Getenv("STRIPE_PRICE_ANNUEL")
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plan"})
+	if userIDStr != "" {
+		if parsedUserID, err := strconv.ParseUint(userIDStr, 10, 32); err == nil {
+			userID = uint(parsedUserID)
+		}
+	}
+
+	// Convertir le plan
+	var planType models.PlanType
+	switch body.Plan {
+	case "mensuel":
+		planType = models.PlanMensuel
+	case "annuel":
+		planType = models.PlanAnnuel
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid plan",
+		})
 		return
 	}
 
-	params := &stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				Price:    stripe.String(priceID),
-				Quantity: stripe.Int64(1),
-			},
-		},
-		Mode:       stripe.String("subscription"),
-		SuccessURL: stripe.String("http://localhost:5173/success"),
-		CancelURL:  stripe.String("http://localhost:5173/cancel"),
-	}
-
-	s, err := session.New(params)
+	// Utiliser le nouveau service Stripe
+	session, err := sc.stripeService.CreateCheckoutSession(userID, planType, "user@example.com")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": s.ID})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"id":  session.ID,
+			"url": session.URL,
+		},
+	})
+}
+
+// CreateCheckoutSessionLegacy fonction legacy pour compatibilité
+func CreateCheckoutSession(c *gin.Context) {
+	controller := NewStripeController()
+	controller.CreateCheckoutSession(c)
 }

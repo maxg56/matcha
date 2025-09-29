@@ -11,6 +11,7 @@ import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import SettingsPage from '../pages/SettingsPage';
 import EditProfilePage from '../pages/EditProfilePage';
+import PremiumPage from '../pages/PremiumPage';
 import { AuthenticatedLayout } from './layout/AuthenticatedLayout';
 import { RootRedirect } from './RootRedirect';
 import { NotificationButton } from './Notifications'
@@ -44,6 +45,7 @@ export function AppWrapper() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="edit-profile" element={<EditProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="premium" element={<PremiumPage />} />
               <Route path="map" element={<MapPage />} />
             </Route>
             {/* Default redirect based on authentication status */}

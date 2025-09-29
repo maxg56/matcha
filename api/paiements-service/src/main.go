@@ -3,41 +3,68 @@ package main
 import (
     "log"
     "os"
-    "time"
+    "os/signal"
+    "syscall"
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
-    "github.com/gin-contrib/cors"
-    "github.com/matcha/api/paiements-service/src/stripe"
+    "github.com/matcha/api/paiements-service/src/conf"
+    "github.com/matcha/api/paiements-service/src/middleware"
+    "github.com/matcha/api/paiements-service/src/routes"
 )
 
 func main() {
     // Charger le .env
-    if err := godotenv.Load("../../../env"); err != nil {
+    if err := godotenv.Load("../../../.env.dev"); err != nil {
         log.Println("No .env file found, relying on environment variables")
-        log.Println(os.Getenv("STRIPE_PRICE_MENSUEL"))
-        log.Println(os.Getenv("STRIPE_PRICE_ANNUEL"))
+    }
+
+    // Initialiser la base de données
+    if err := conf.InitDatabase(); err != nil {
+        log.Fatalf("Failed to initialize database: %v", err)
+    }
+    defer conf.CloseDatabase()
+
+    // Configuration Gin selon l'environnement
+    if os.Getenv("GIN_MODE") == "release" {
+        gin.SetMode(gin.ReleaseMode)
     }
 
     r := gin.Default()
 
-    // Middleware CORS
-    r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:5173"}, // ton frontend
-        AllowMethods:     []string{"POST", "GET", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type"},
-        AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
-    }))
+    // Middlewares globaux
+    r.Use(middleware.CORSMiddleware())
+    r.Use(middleware.RequestLoggerMiddleware())
 
-    // Enregistrer les routes Stripe
-    stripe.RegisterRoutes(r)
+    // Configurer toutes les routes
+    routes.SetupRoutes(r)
 
-    port := os.Getenv("PAYOUT_SERVICE_PORT")
+    // Note: Les routes legacy Stripe sont maintenant intégrées dans routes.SetupRoutes()
+    // stripe.RegisterRoutes(r) // Commenté pour éviter les doublons
+
+    // Configuration du port
+    port := os.Getenv("PAIEMENTS_SERVICE_PORT")
     if port == "" {
-        port = "8085" // port par défaut pour le microservice paiement
+        port = "8085" // port par défaut pour le service paiements
     }
 
-    log.Printf("Paiement service running on :%s", port)
-    r.Run(":" + port)
+    log.Printf("🚀 Paiements service started on port %s", port)
+    log.Printf("📊 Health check: http://localhost:%s/health", port)
+    log.Printf("🔗 Stripe webhooks: http://localhost:%s/api/stripe/webhook", port)
+
+    // Démarrer le serveur dans une goroutine
+    go func() {
+        if err := r.Run(":" + port); err != nil {
+            log.Fatalf("Failed to start server: %v", err)
+        }
+    }()
+
+    // Attendre le signal d'arrêt graceful
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
+
+    log.Println("🛑 Shutting down payment service...")
+    // Ici on pourrait ajouter du cleanup si nécessaire
+    log.Println("✅ Payment service stopped")
 }

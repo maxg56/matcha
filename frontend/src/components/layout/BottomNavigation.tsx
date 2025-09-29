@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Search, User, Map, LogOut } from 'lucide-react';
+import { Heart, MessageCircle, Search, User, LogOut, Crown } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks';
@@ -20,9 +20,10 @@ const navItems = [
     href: '/app/messages',
   },
   {
-    label: 'Map',
-    icon: Map,
-    href: '/app/map',
+    label: 'Premium',
+    icon: Crown,
+    href: '/app/premium',
+    isPremium: true,
   },
   {
     label: 'Profil',
@@ -82,23 +83,29 @@ export function BottomNavigation() {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-200",
+                "flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-200 relative",
                 "hover:bg-accent/50 active:scale-95",
-                isActive 
-                  ? "text-primary bg-primary/10" 
-                  : "text-muted-foreground hover:text-foreground"
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground",
+                item.isPremium && "text-purple-400 hover:text-purple-300"
               )}
             >
               <Icon className={cn(
                 "h-5 w-5 transition-transform duration-200",
-                isActive && "scale-110"
+                isActive && "scale-110",
+                item.isPremium && "text-purple-400"
               )} />
               <span className={cn(
                 "text-xs font-medium transition-all duration-200",
-                isActive ? "text-primary" : "text-muted-foreground"
+                isActive ? "text-primary" : "text-muted-foreground",
+                item.isPremium && "text-purple-400"
               )}>
                 {item.label}
               </span>
+              {item.isPremium && (
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full animate-pulse"></div>
+              )}
             </Link>
           );
         })}

@@ -493,3 +493,85 @@ CREATE TRIGGER trg_update_user_seen_profiles_seen_at
 BEFORE UPDATE ON user_seen_profiles
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- ====================
+-- PAYMENT SYSTEM TABLES
+-- ====================
+
+-- Subscription status enum
+CREATE TYPE subscription_status_enum AS ENUM ('active', 'inactive', 'canceled', 'past_due', 'unpaid');
+CREATE TYPE plan_type_enum AS ENUM ('mensuel', 'annuel');
+CREATE TYPE payment_status_enum AS ENUM ('pending', 'succeeded', 'failed', 'canceled');
+
+-- Table pour les abonnements utilisateurs
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    stripe_subscription_id VARCHAR(255) UNIQUE NOT NULL,
+    stripe_customer_id VARCHAR(255) NOT NULL,
+    plan_type plan_type_enum NOT NULL,
+    status subscription_status_enum NOT NULL DEFAULT 'inactive',
+    current_period_start TIMESTAMP,
+    current_period_end TIMESTAMP,
+    cancel_at_period_end BOOLEAN DEFAULT FALSE,
+    canceled_at TIMESTAMP,
+    trial_start TIMESTAMP,
+    trial_end TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Ensure unique subscription per user
+    CONSTRAINT unique_user_subscription UNIQUE (user_id)
+);
+
+-- Table pour l'historique des paiements
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscription_id INTEGER REFERENCES subscriptions(id) ON DELETE SET NULL,
+    stripe_payment_intent_id VARCHAR(255) UNIQUE NOT NULL,
+    stripe_invoice_id VARCHAR(255),
+    amount INTEGER NOT NULL, -- Amount in cents
+    currency VARCHAR(3) NOT NULL DEFAULT 'eur',
+    status payment_status_enum NOT NULL DEFAULT 'pending',
+    payment_method_type VARCHAR(50),
+    failure_reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table pour les événements webhook Stripe
+CREATE TABLE IF NOT EXISTS webhook_events (
+    id SERIAL PRIMARY KEY,
+    stripe_event_id VARCHAR(255) UNIQUE NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    processed BOOLEAN DEFAULT FALSE,
+    processed_at TIMESTAMP,
+    data JSONB NOT NULL,
+    error_message TEXT,
+    retry_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for payment system performance
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer_id ON subscriptions(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);
+
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_subscription_id ON payments(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_payments_stripe_payment_intent_id ON payments(stripe_payment_intent_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_stripe_event_id ON webhook_events(stripe_event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event_type ON webhook_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_processed ON webhook_events(processed);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_created_at ON webhook_events(created_at);
+
+-- Triggers for updated_at columns
+CREATE TRIGGER trg_update_subscriptions_updated_at
+BEFORE UPDATE ON subscriptions
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
