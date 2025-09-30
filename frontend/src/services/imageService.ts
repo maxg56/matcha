@@ -22,10 +22,13 @@ interface ImageDeleteResponse {
 class ImageService {
   private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8443';
 
-  async uploadImage(file: File, _onProgress?: (progress: number) => void): Promise<ImageUploadResponse> {
+  async uploadImage(
+    file: File, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _onProgress?: (progress: number) => void
+  ): Promise<ImageUploadResponse> {
     const formData = new FormData();
     formData.append('image', file);
-
     const token = localStorage.getItem('accessToken');
     const headers: HeadersInit = {};
 
@@ -44,16 +47,17 @@ class ImageService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Upload failed');
+    }
+
+    return data;
   }
 
   async uploadImageWithProgress(
@@ -83,7 +87,7 @@ class ImageService {
             } else {
               reject(new Error(response.error || 'Upload failed'));
             }
-          } catch (error) {
+          } catch {
             reject(new Error('Invalid response format'));
           }
         } else {
@@ -132,26 +136,22 @@ class ImageService {
     formData.append('image', file);
     formData.append('temporary', 'true');
 
-    try {
-      const response = await fetch(`${this.baseURL}/api/v1/media/upload-temp`, {
-        method: 'POST',
-        body: formData,
-      });
+    const response = await fetch(`${this.baseURL}/api/v1/media/upload-temp`, {
+      method: 'POST',
+      body: formData,
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Temporary upload failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Temporary upload failed');
+    }
+
+    return data;
   }
 
   // Convert temporary images to permanent after registration
@@ -197,7 +197,12 @@ class ImageService {
 
   // Note: Image reordering is now handled via the profile update API
   // This method is kept for future potential use with a dedicated reorder endpoint
-  async reorderImages(_userId: number, _newOrder: string[]): Promise<void> {
+  async reorderImages(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _userId: number, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _newOrder: string[]
+  ): Promise<void> {
     throw new Error('Image reordering should use the profile update API');
   }
 }

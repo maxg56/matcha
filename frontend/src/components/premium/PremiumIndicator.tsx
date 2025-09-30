@@ -63,6 +63,7 @@ export function PremiumIndicator({
 }
 
 // Hook pour utiliser le statut premium dans d'autres composants
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePremiumStatus() {
   const [isPremium, setIsPremium] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);

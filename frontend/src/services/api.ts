@@ -16,7 +16,8 @@ class ApiService {
 
   private retryCount = 0;
   private maxRetries = 2;
-  private readonly retryDelay = 1000; // 1 seconde
+  // Délai de retry pour les futures implémentations
+  // private readonly retryDelay = 1000;
 
   private async makeRequest<T>(
     endpoint: string,
@@ -136,7 +137,7 @@ class ApiService {
                 throw new Error('Refresh token invalid');
               }
             }
-          } catch (refreshError) {
+          } catch {
             // Si le refresh échoue, on déconnecte l'utilisateur
             this.retryCount = 0;
             localStorage.removeItem('accessToken');

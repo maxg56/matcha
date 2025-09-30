@@ -97,7 +97,7 @@ export function getValidEnumValue<T extends keyof typeof DEFAULT_ENUM_VALUES>(
 }
 
 // Function to sanitize registration data for API
-export function sanitizeRegistrationData(data: any): any {
+export function sanitizeRegistrationData(data: Record<string, unknown>): Record<string, unknown> {
   const sanitized = { ...data };
   
   // Ensure all enum fields have valid values
@@ -105,13 +105,14 @@ export function sanitizeRegistrationData(data: any): any {
   
   enumFields.forEach(field => {
     if (field in sanitized) {
-      sanitized[field] = getValidEnumValue(field, sanitized[field] || '');
+      const value = sanitized[field];
+      sanitized[field] = getValidEnumValue(field, typeof value === 'string' ? value : '');
     }
   });
   
   // Remove empty strings for required fields
   Object.keys(sanitized).forEach(key => {
-    if (sanitized[key] === '' && enumFields.includes(key as any)) {
+    if (sanitized[key] === '' && enumFields.includes(key as keyof typeof DEFAULT_ENUM_VALUES)) {
       const enumField = key as keyof typeof DEFAULT_ENUM_VALUES;
       sanitized[key] = DEFAULT_ENUM_VALUES[enumField];
     }
@@ -121,7 +122,7 @@ export function sanitizeRegistrationData(data: any): any {
 }
 
 // Validation errors for invalid enum values
-export function validateRegistrationEnums(data: any): string[] {
+export function validateRegistrationEnums(data: Record<string, unknown>): string[] {
   const errors: string[] = [];
   
   // Check required enum fields
@@ -145,9 +146,10 @@ export function validateRegistrationEnums(data: any): string[] {
     if (!value || value === '') {
       errors.push(`${field} is required`);
     } else {
-      const validValue = getValidEnumValue(field, value);
-      if (validValue !== value) {
-        errors.push(`Invalid value for ${field}: ${value}`);
+      const stringValue = typeof value === 'string' ? value : String(value);
+      const validValue = getValidEnumValue(field, stringValue);
+      if (validValue !== stringValue) {
+        errors.push(`Invalid value for ${field}: ${stringValue}`);
       }
     }
   });

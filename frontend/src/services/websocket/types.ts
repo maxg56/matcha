@@ -1,6 +1,6 @@
 export interface WebSocketMessage {
   type: string;
-  data?: any;
+  data?: Record<string, unknown>;
   to?: string;
   from?: string;
   // Chat specific fields (for backward compatibility)
@@ -14,7 +14,7 @@ export interface WebSocketMessage {
 
 export interface WebSocketResponse {
   type: string;
-  data: any;
+  data: Record<string, unknown>;
   channel?: string;
   user_id?: string;
   from_user?: string;
@@ -53,7 +53,7 @@ export const MessageType = {
 
 export type MessageType = typeof MessageType[keyof typeof MessageType];
 
-export type MessageHandler = (data: any, message: WebSocketResponse) => void;
+export type MessageHandler = (data: Record<string, unknown>, message: WebSocketResponse) => void;
 
 export interface WebSocketConfig {
   maxReconnectAttempts?: number;

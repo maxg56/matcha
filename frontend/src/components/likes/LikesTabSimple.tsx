@@ -10,7 +10,7 @@ interface LikesTabProps {
 }
 
 export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
-  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [likes, setLikes] = useState<LikeReceived[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,11 +55,24 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
     }
   };
 
-  const handleViewProfile = (like: any) => {
-    setSelectedProfile({
+  const [selectedProfileData, setSelectedProfileData] = useState<{
+    id: string;
+    name: string;
+    age: number;
+    images?: string[];
+    bio?: string;
+    location?: string;
+    occupation?: string;
+    interests?: string[];
+    distance?: number;
+  } | null>(null);
+
+  const handleViewProfile = (like: LikeReceived) => {
+
+    setSelectedProfileData({
       id: like.user.id.toString(),
-      name: like.user.first_name,
-      age: like.user.age,
+      name: like.user.first_name || like.user.username || 'Utilisateur',
+      age: like.user.age || 25,
       images: like.user.images || [],
       bio: like.user.bio,
       location: like.user.current_city,
@@ -71,7 +84,7 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedProfile(null);
+    setSelectedProfileData(null);
   };
 
   const handleLike = async (profileId: string) => {
@@ -256,9 +269,9 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
       )}
 
       {/* Modal du profil */}
-      {selectedProfile && (
+      {selectedProfileData && (
         <ProfileModal
-          profile={selectedProfile}
+          profile={selectedProfileData}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onLike={handleLike}

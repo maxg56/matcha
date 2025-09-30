@@ -163,7 +163,7 @@ export function UserMap({
               console.log('Localisation automatique réussie');
               // Recharger les matches après avoir défini la localisation
               setTimeout(() => loadMatchedUsers(), 1000);
-            } catch (autoErr) {
+            } catch {
               console.log('Localisation automatique échouée, Paris sera proposé comme option');
             }
           }
