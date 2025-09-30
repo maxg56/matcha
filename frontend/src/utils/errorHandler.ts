@@ -69,7 +69,7 @@ export class ErrorHandler {
     // Erreurs spécifiques au contexte d'inscription
     else if (context === 'registration') {
       // Erreurs de champs spécifiques
-      if (lowerError.includes('username') && (lowerError.includes('exists') || lowerError.includes('taken') || lowerError.includes('déjà pris'))) {
+      if ((lowerError.includes('username') || lowerError.includes('Nom d\'utilisateur')) ) {
         fieldErrors.username = '❌ Ce pseudo est déjà pris. Essayez-en un autre.';
       }
       else if (lowerError.includes('username') && lowerError.includes('invalid')) {
@@ -93,8 +93,8 @@ export class ErrorHandler {
       else if (lowerError.includes('firstname') || lowerError.includes('prénom')) {
         fieldErrors.firstName = '👤 Le prénom est requis et doit contenir au moins 2 caractères.';
       }
-      else if (lowerError.includes('lastname') || lowerError.includes('nom')) {
-        fieldErrors.lastName = '👤 Le nom est requis et doit contenir au moins 2 caractères.';
+      else if (lowerError.includes('lastname') ) {
+        globalError = '👤 Le nom est requis et doit contenir au moins 2 caractères.';
       }
       else if (lowerError.includes('birth') && (lowerError.includes('invalid') || lowerError.includes('age'))) {
         fieldErrors.birthDate = '🎂 Vous devez avoir au moins 18 ans pour vous inscrire.';
@@ -132,7 +132,7 @@ export class ErrorHandler {
       }
       // Erreur générique améliorée
       else {
-        globalError = '❌ Erreur lors de la création du compte. Vérifiez vos informations et réessayez.';
+        globalError = errorMessage;
       }
     }
     
