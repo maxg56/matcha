@@ -1,6 +1,7 @@
 import { InputField } from '../InputField';
 import { SelectField } from '../SelectField';
 import { fieldOptions } from '@/types/registration';
+import { useFieldValidation } from '@/hooks/useFieldValidation';
 import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 
 interface AccountStepProps {
@@ -10,14 +11,19 @@ interface AccountStepProps {
 }
 
 export function AccountStep({ formData, errors, updateField }: AccountStepProps) {
+  const { createFieldBlurHandler } = useFieldValidation();
+
   return (
     <div className="space-y-6">
       <InputField
         label="Pseudo"
         value={formData.username}
         onChange={(value) => updateField('username', value)}
+        onBlur={createFieldBlurHandler('username')}
         placeholder="@votre_pseudo"
         error={errors.username}
+        helpText="3-20 caractères : lettres, chiffres, tirets et underscores uniquement"
+        required
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -25,16 +31,22 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
           label="Prénom"
           value={formData.firstName}
           onChange={(value) => updateField('firstName', value)}
+          onBlur={createFieldBlurHandler('firstName')}
           placeholder="Votre prénom"
           error={errors.firstName}
+          helpText="Minimum 2 caractères"
+          required
         />
 
         <InputField
           label="Nom"
           value={formData.lastName}
           onChange={(value) => updateField('lastName', value)}
+          onBlur={createFieldBlurHandler('lastName')}
           placeholder="Votre nom"
           error={errors.lastName}
+          helpText="Minimum 2 caractères"
+          required
         />
       </div>
 
@@ -43,8 +55,11 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
         type="email"
         value={formData.email}
         onChange={(value) => updateField('email', value)}
+        onBlur={createFieldBlurHandler('email')}
         placeholder="votre.email@exemple.com"
         error={errors.email}
+        helpText="Vous recevrez un code de vérification à cette adresse"
+        required
       />
 
       <InputField
@@ -52,8 +67,11 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
         type="password"
         value={formData.password}
         onChange={(value) => updateField('password', value)}
+        onBlur={createFieldBlurHandler('password')}
         placeholder="Votre mot de passe"
         error={errors.password}
+        helpText="Minimum 8 caractères avec majuscule, minuscule et chiffre"
+        required
       />
 
       <InputField
@@ -61,8 +79,10 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
         type="password"
         value={formData.confirmPassword}
         onChange={(value) => updateField('confirmPassword', value)}
+        onBlur={createFieldBlurHandler('confirmPassword')}
         placeholder="Confirmez votre mot de passe"
         error={errors.confirmPassword}
+        required
       />
 
       <div className="border-t pt-6">
@@ -74,7 +94,10 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
             type="date"
             value={formData.birthDate}
             onChange={(value) => updateField('birthDate', value)}
+            onBlur={createFieldBlurHandler('birthDate')}
             error={errors.birthDate}
+            helpText="Vous devez avoir au moins 18 ans"
+            required
           />
 
           <SelectField
@@ -83,6 +106,7 @@ export function AccountStep({ formData, errors, updateField }: AccountStepProps)
             onChange={(value) => updateField('gender', value)}
             options={fieldOptions.gender}
             error={errors.gender}
+
           />
 
           <SelectField

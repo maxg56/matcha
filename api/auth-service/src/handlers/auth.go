@@ -42,7 +42,7 @@ func CheckAvailabilityHandler(c *gin.Context) {
 			response := types.AvailabilityResponse{
 				Status:      "error",
 				Available:   false,
-				Message:     "Nom d'utilisateur déjà utilisé",
+				Message:     "username déjà utilisé",
 				Suggestions: suggestions,
 			}
 			c.JSON(http.StatusConflict, response)

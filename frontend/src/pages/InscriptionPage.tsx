@@ -3,6 +3,7 @@ import { Heart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRegistration } from '@/hooks';
 import { ProgressBar } from '@/components/registration';
+import { ErrorAlert } from '@/components/ui/error-alert';
 import {
   AccountStep,
   BasicInfoStep,
@@ -23,12 +24,14 @@ export default function InscriptionPage() {
     currentStep,
     isLoading,
     errors,
+    globalError,
     updateField,
     toggleTag,
     canContinue,
     nextStep,
     prevStep,
     completeRegistration,
+    clearGlobalError,
   } = useRegistration();
 
 
@@ -75,11 +78,24 @@ export default function InscriptionPage() {
     </div>
   </div>
 
-  <ProgressBar 
-    currentStep={currentStep} 
-    totalSteps={registrationSteps.length} 
-    steps={registrationSteps} 
+  <ProgressBar
+    currentStep={currentStep}
+    totalSteps={registrationSteps.length}
+    steps={registrationSteps}
   />
+
+  {/* Global Error Alert */}
+  {globalError && (
+    <div className="px-4 sm:px-6 mb-4">
+      <div className="max-w-2xl mx-auto">
+        <ErrorAlert
+          error={globalError}
+          onDismiss={clearGlobalError}
+          className="mb-4"
+        />
+      </div>
+    </div>
+  )}
 
   {/* Main Content */}
   <div className="flex-1 px-4 sm:px-6 pb-8">

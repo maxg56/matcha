@@ -8,6 +8,7 @@ import { authService } from '@/services/auth';
 import { ErrorHandler } from '@/utils/errorHandler';
 import { apiService } from '@/services/api';
 import { imageService } from '@/services/imageService';
+import { useRegistrationErrors } from '../useRegistrationErrors';
 
 /**
  * Hook contenant toute la logique métier pour l'inscription
@@ -15,6 +16,7 @@ import { imageService } from '@/services/imageService';
  */
 export function useRegistrationLogic() {
   const navigate = useNavigate();
+  const { handleCriticalError, showSuccess } = useRegistrationErrors();
   const {
     formData,
     currentStep,
@@ -84,13 +86,17 @@ export function useRegistrationLogic() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du code';
       const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
-      
+
       setErrors({ ...fieldErrors });
       setGlobalError(globalError || 'Erreur lors de l\'envoi du code de vérification');
+
+      // Show critical error toast for sending email verification
+      handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'email_verification');
+
       setLoading(false);
       throw error;
     }
-  }, [formData.email, setLoading, clearGlobalError, setErrors, setGlobalError]);
+  }, [formData.email, setLoading, clearGlobalError, setErrors, setGlobalError, handleCriticalError]);
 
   const verifyEmail = useCallback(async () => {
     setLoading(true);
@@ -110,16 +116,23 @@ export function useRegistrationLogic() {
       setCurrentStep(3);
       setErrors({});
       setLoading(false);
+
+      // Show success message
+      showSuccess('✅ Email vérifié', 'Votre email a été vérifié avec succès');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Code de vérification invalide';
       const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
-      
+
       setErrors({ ...fieldErrors });
       setGlobalError(globalError || 'Code de vérification invalide');
+
+      // Show critical error toast for email verification
+      handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'email_verification');
+
       setLoading(false);
       throw error;
     }
-  }, [formData.email, emailVerificationCode, setLoading, clearGlobalError, setEmailVerified, setCurrentStep, setErrors, setGlobalError]);
+  }, [formData.email, emailVerificationCode, setLoading, clearGlobalError, setEmailVerified, setCurrentStep, setErrors, setGlobalError, showSuccess, handleCriticalError]);
 
   // === REGISTRATION PROCESS ===
   const submitRegistration = useCallback(async () => {
@@ -223,6 +236,8 @@ export function useRegistrationLogic() {
           const result = await imageService.uploadImage(imagePreview.file);
           return result.data.url;
         } catch (error) {
+          // Show toast for image upload error
+          handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'image_upload');
           throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       });
@@ -265,6 +280,10 @@ export function useRegistrationLogic() {
       // 5. Succès - rediriger vers la page de découverte
       setSubmitting(false);
       setLoading(false);
+
+      // Show success message
+      showSuccess('🎉 Profil créé avec succès', 'Bienvenue sur Matcha ! Découvrez dès maintenant des profils compatibles.');
+
       navigate('/app/discover');
       
     } catch (error) {
@@ -319,15 +338,19 @@ export function useRegistrationLogic() {
       
       // Autres erreurs
       const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
-      
+
       setErrors(fieldErrors);
       setGlobalError(globalError);
+
+      // Show critical error toast for profile completion
+      handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'profile_completion');
+
       setSubmitting(false);
       setLoading(false);
-      
+
       throw error;
     }
-  }, [isAccountCreated, selectedImages, formData, setSubmitting, setLoading, clearGlobalError, setGlobalError, setErrors]);
+  }, [isAccountCreated, selectedImages, formData, setSubmitting, setLoading, clearGlobalError, setGlobalError, setErrors, handleCriticalError, showSuccess, navigate]);
 
   return {
     // Validation

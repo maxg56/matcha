@@ -137,11 +137,7 @@ export class RegistrationValidator {
   private static validatePersonalStep(formData: RegistrationData): FieldValidationErrors {
     const errors: FieldValidationErrors = {};
     
-    if (!formData.bio?.trim()) {
-      errors.bio = 'Biographie requise';
-    } else if (formData.bio.length < 50) {
-      errors.bio = 'La biographie doit contenir au moins 50 caractères';
-    }
+  
     
     if (!formData.birthCity?.trim()) errors.birthCity = 'Ville de naissance requise';
     // if (!formData.currentCity?.trim()) errors.currentCity = 'Ville actuelle requise';
