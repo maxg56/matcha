@@ -11,6 +11,7 @@ interface Match {
   lastMessage?: string | null;
   timestamp?: string | null;
   unread: boolean;
+  isOnline?: boolean;
   commonInterests: string[];
   matchedAt?: string;
   isNew?: boolean;
@@ -62,9 +63,9 @@ export function ConversationsList({
                       <AvatarFallback>{match.name[0]}</AvatarFallback>
                     </Avatar>
                   </button>
-                  {match.unread && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-background shadow-lg" />
-                  )}
+                  <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-background shadow-lg ${
+                    match.isOnline ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -148,9 +149,9 @@ export function ConversationsList({
                     </div>
                   </div>
                   
-                  {match.unread && (
-                    <div className="w-3 h-3 bg-primary rounded-full shadow-lg" />
-                  )}
+                  <div className={`w-3 h-3 rounded-full shadow-lg ${
+                    match.isOnline ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
                 </div>
               </div>
             ))}
