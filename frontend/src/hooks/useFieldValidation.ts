@@ -12,17 +12,20 @@ export function useFieldValidation() {
   /**
    * Valide un champ spécifique et met à jour les erreurs
    */
-  const validateField = useCallback((fieldName: keyof RegistrationData, value: string | string[]) => {
+  const validateField = useCallback((fieldName: keyof RegistrationData, value: string | number | string[]) => {
     const newErrors = { ...errors };
+
+    // Convert number to string for validation
+    const stringValue = typeof value === 'number' ? String(value) : value;
 
     // Validation selon le type de champ
     switch (fieldName) {
       case 'username':
-        if (!value || (typeof value === 'string' && value.trim().length < 3)) {
+        if (!stringValue || (typeof stringValue === 'string' && stringValue.trim().length < 3)) {
           newErrors.username = '👤 Le pseudo doit contenir au moins 3 caractères';
-        } else if (typeof value === 'string' && value.length > 20) {
+        } else if (typeof stringValue === 'string' && stringValue.length > 20) {
           newErrors.username = '📏 Le pseudo ne peut pas dépasser 20 caractères';
-        } else if (typeof value === 'string' && !/^[a-zA-Z0-9_-]+$/.test(value)) {
+        } else if (typeof stringValue === 'string' && !/^[a-zA-Z0-9_-]+$/.test(stringValue)) {
           newErrors.username = '❌ Seules les lettres, chiffres, tirets et underscores sont autorisés';
         } else {
           delete newErrors.username;
@@ -30,9 +33,9 @@ export function useFieldValidation() {
         break;
 
       case 'email':
-        if (!value || typeof value !== 'string') {
+        if (!stringValue || typeof stringValue !== 'string') {
           newErrors.email = '📧 L\'email est requis';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(stringValue)) {
           newErrors.email = '❌ Format d\'email invalide (exemple: nom@domaine.com)';
         } else {
           delete newErrors.email;
@@ -40,11 +43,11 @@ export function useFieldValidation() {
         break;
 
       case 'password':
-        if (!value || typeof value !== 'string') {
+        if (!stringValue || typeof stringValue !== 'string') {
           newErrors.password = '🔒 Le mot de passe est requis';
-        } else if (value.length < 8) {
+        } else if (stringValue.length < 8) {
           newErrors.password = '📏 Le mot de passe doit contenir au moins 8 caractères';
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(stringValue)) {
           newErrors.password = '🔒 Doit contenir : minuscule, majuscule et chiffre';
         } else {
           delete newErrors.password;
@@ -52,7 +55,7 @@ export function useFieldValidation() {
         break;
 
       case 'confirmPassword':
-        if (!value || typeof value !== 'string') {
+        if (!stringValue || typeof stringValue !== 'string') {
           newErrors.confirmPassword = '🔄 Confirmez votre mot de passe';
         } else if (value !== formData.password) {
           newErrors.confirmPassword = '❌ Les mots de passe ne correspondent pas';
@@ -62,11 +65,11 @@ export function useFieldValidation() {
         break;
 
       case 'firstName':
-        if (!value || (typeof value === 'string' && value.trim().length < 2)) {
+        if (!stringValue || (typeof stringValue === 'string' && stringValue.trim().length < 2)) {
           newErrors.firstName = '👤 Le prénom doit contenir au moins 2 caractères';
-        } else if (typeof value === 'string' && value.length > 50) {
+        } else if (typeof stringValue === 'string' && stringValue.length > 50) {
           newErrors.firstName = '📏 Le prénom ne peut pas dépasser 50 caractères';
-        } else if (typeof value === 'string' && !/^[a-zA-ZÀ-ÿ\s-']+$/.test(value)) {
+        } else if (typeof stringValue === 'string' && !/^[a-zA-ZÀ-ÿ\s-']+$/.test(stringValue)) {
           newErrors.firstName = '❌ Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes';
         } else {
           delete newErrors.firstName;
@@ -74,11 +77,11 @@ export function useFieldValidation() {
         break;
 
       case 'lastName':
-        if (!value || (typeof value === 'string' && value.trim().length < 2)) {
+        if (!stringValue || (typeof stringValue === 'string' && stringValue.trim().length < 2)) {
           newErrors.lastName = '👤 Le nom doit contenir au moins 2 caractères';
-        } else if (typeof value === 'string' && value.length > 50) {
+        } else if (typeof stringValue === 'string' && stringValue.length > 50) {
           newErrors.lastName = '📏 Le nom ne peut pas dépasser 50 caractères';
-        } else if (typeof value === 'string' && !/^[a-zA-ZÀ-ÿ\s-']+$/.test(value)) {
+        } else if (typeof stringValue === 'string' && !/^[a-zA-ZÀ-ÿ\s-']+$/.test(stringValue)) {
           newErrors.lastName = '❌ Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes';
         } else {
           delete newErrors.lastName;
@@ -86,10 +89,10 @@ export function useFieldValidation() {
         break;
 
       case 'birthDate':
-        if (!value || typeof value !== 'string') {
+        if (!stringValue || typeof stringValue !== 'string') {
           newErrors.birthDate = '📅 La date de naissance est requise';
         } else {
-          const birthDate = new Date(value);
+          const birthDate = new Date(stringValue);
           const today = new Date();
           const age = today.getFullYear() - birthDate.getFullYear();
           const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -100,7 +103,7 @@ export function useFieldValidation() {
 
           if (age < 18) {
             newErrors.birthDate = '🎂 Vous devez avoir au moins 18 ans';
-          } else if (age > 100) {
+          } else if (age > 150) {
             newErrors.birthDate = '📅 Veuillez vérifier votre date de naissance';
           } else {
             delete newErrors.birthDate;
@@ -108,27 +111,11 @@ export function useFieldValidation() {
         }
         break;
 
-      case 'gender':
-        if (!value || typeof value !== 'string' || value === '') {
-          newErrors.gender = '⚧ Veuillez sélectionner votre genre';
+      case 'bio':
+        if (stringValue && typeof stringValue === 'string' && stringValue.length > 10) {
+          newErrors.bio = '📜 La bio ne peut pas dépasser 500 caractères';
         } else {
-          delete newErrors.gender;
-        }
-        break;
-
-      case 'sexPref':
-        if (!value || typeof value !== 'string' || value === '') {
-          newErrors.sexPref = '💝 Veuillez indiquer vos préférences de rencontre';
-        } else {
-          delete newErrors.sexPref;
-        }
-        break;
-
-      case 'relationshipType':
-        if (!value || typeof value !== 'string' || value === '') {
-          newErrors.relationshipType = '💕 Veuillez indiquer le type de relation recherché';
-        } else {
-          delete newErrors.relationshipType;
+          delete newErrors.bio;
         }
         break;
 
