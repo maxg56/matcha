@@ -279,7 +279,9 @@ services:
       - ALL
 
   media-service:
-    build: ./api/media-service
+    build:
+      context: ./api/media-service
+      target: development
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -288,11 +290,14 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-password}
       PORT: 8006
       JWT_SECRET: ${JWT_SECRET}
-      FLASK_ENV: development
-      FLASK_DEBUG: 1
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
+      GIN_MODE: debug
     volumes:
       - media_uploads_dev:/app/uploads
-      - ./api/media-service/src:/app/src:ro
+      - ./api/media-service/src:/app/src
+      - ./api/media-service/go.mod:/app/go.mod
+      - ./api/media-service/go.sum:/app/go.sum
+      - ./api/media-service/.air.toml:/app/.air.toml
     depends_on:
       - postgres
     networks:
