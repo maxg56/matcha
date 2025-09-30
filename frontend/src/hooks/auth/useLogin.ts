@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { ErrorHandler } from '@/utils/errorHandler';
 
@@ -11,6 +11,7 @@ interface LoginFormData {
 export function useLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formData, setFormData] = useState<LoginFormData>({
     login: '',
     password: ''
@@ -22,6 +23,18 @@ export function useLogin() {
     login?: string;
     password?: string;
   }>({});
+
+  // Récupérer le message d'erreur depuis l'URL au chargement
+  useEffect(() => {
+    const errorFromUrl = searchParams.get('error');
+    if (errorFromUrl) {
+      setError(decodeURIComponent(errorFromUrl));
+      // Nettoyer l'URL après avoir récupéré l'erreur
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('error');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const validateField = (field: keyof LoginFormData, value: string): string | undefined => {
     switch (field) {
@@ -81,10 +94,8 @@ export function useLogin() {
       navigate('/app/discover');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
-      const { fieldErrors: serverFieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'login');
-      console.log('Pa3rsed login error:', { serverFieldErrors, globalError });
-      // setFieldErrors(serverFieldErrors);
-      setError(globalError);
+      const { globalError } = ErrorHandler.parseAPIError(errorMessage, 'login');
+      navigateToLoginWithError(globalError);
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +119,11 @@ export function useLogin() {
 
   const isFormValid = !!(formData.login && formData.password);
 
+
+  const navigateToLoginWithError = (errorMessage: string) => {
+    navigate(`/connexion?error=${encodeURIComponent(errorMessage)}`);
+  };
+
   return {
     formData,
     showPassword,
@@ -121,5 +137,6 @@ export function useLogin() {
     handleForgotPassword,
     handleNavigateToSignup,
     togglePasswordVisibility,
+    navigateToLoginWithError,
   };
 }
