@@ -53,8 +53,8 @@ func (s *PaymentService) CreatePaymentFromInvoice(invoice *stripe.Invoice) error
 
 	// Fallback: Utiliser Customer ID pour retrouver l'abonnement
 	if !foundSubscription && invoice.Customer != nil && invoice.Customer.ID != "" {
-		// Fallback: Utiliser Customer ID pour retrouver l'abonnement
 		customerID = invoice.Customer.ID
+		// Utiliser le nom exact du champ dans le modèle Go avec StripeCustomerID
 		if err := conf.DB.Where("stripe_customer_id = ?", customerID).First(&subscription).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("subscription not found for customer ID %s (invoice %s)", customerID, invoice.ID)

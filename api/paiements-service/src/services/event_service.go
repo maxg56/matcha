@@ -256,7 +256,7 @@ func (s *EventService) handleInvoicePaymentSucceeded(event *stripe.Event) error 
 	if invoice.Customer != nil {
 		// Récupérer l'abonnement le plus récent pour ce client comme fallback
 		var subscription models.Subscription
-		if err := conf.DB.Where("customer_id = ?", invoice.Customer.ID).Order("created_at DESC").First(&subscription).Error; err == nil {
+		if err := conf.DB.Where("stripe_customer_id = ?", invoice.Customer.ID).Order("created_at DESC").First(&subscription).Error; err == nil {
 			// Envoyer une notification WebSocket
 			s.websocketService.SendSubscriptionEvent(subscription.UserID, "payment_succeeded", map[string]interface{}{
 				"amount":     float64(invoice.AmountPaid) / 100.0,
@@ -279,7 +279,7 @@ func (s *EventService) handleInvoicePaymentFailed(event *stripe.Event) error {
 	// Dans v82, nous devons récupérer l'abonnement via les métadonnées ou le client
 	if invoice.Customer != nil {
 		var subscription models.Subscription
-		if err := conf.DB.Where("customer_id = ?", invoice.Customer.ID).Order("created_at DESC").First(&subscription).Error; err == nil {
+		if err := conf.DB.Where("stripe_customer_id = ?", invoice.Customer.ID).Order("created_at DESC").First(&subscription).Error; err == nil {
 			// Envoyer une notification WebSocket
 			s.websocketService.SendSubscriptionEvent(subscription.UserID, "payment_failed", map[string]interface{}{
 				"amount":     float64(invoice.AmountDue) / 100.0,
