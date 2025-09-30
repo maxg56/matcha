@@ -1,5 +1,21 @@
-import type { Message, Conversation, ConversationResponse } from '@/types/chat';
+import type { Message, Conversation } from '@/stores/chatStore';
 import type { UserPresence } from '@/services/websocket/types';
+
+// Types pour l'adapter
+interface ConversationResponse {
+  id: number;
+  other_user: {
+    id: number;
+    username: string;
+    first_name: string;
+    last_name: string;
+    avatar?: string;
+  };
+  last_message?: string;
+  last_message_at?: string;
+  created_at: string;
+  unread_count: number;
+}
 
 // Adapter function to convert API response to frontend format
 export const adaptConversationResponseToConversation = (response: ConversationResponse): Conversation => {

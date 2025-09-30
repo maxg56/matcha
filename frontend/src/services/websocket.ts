@@ -203,7 +203,7 @@ class WebSocketService {
     });
   }
 
-  getConnectionHealth(): any {
+  getConnectionHealth(): Record<string, unknown> {
     return this.connection.getConnectionHealth();
   }
 

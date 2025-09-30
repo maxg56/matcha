@@ -3,10 +3,30 @@ import { MessageCircle, Camera } from 'lucide-react';
 import { InfoCard } from './InfoCard';
 import { lifestyleLabels } from './ProfileLabels';
 
+interface User {
+  id?: number;
+  username?: string;
+  first_name?: string;
+  birthCity?: string;
+  birth_city?: string; // Compatibilité avec le format API
+  educationLevel?: string;
+  education_level?: string; // Compatibilité avec le format API
+  relationshipType?: string;
+  relationship_type?: string; // Compatibilité avec le format API
+  [key: string]: unknown;
+}
+
+interface Photo {
+  id: string | number;
+  url: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
 interface ProfileBioProps {
   bio: string;
-  user: any;
-  photos: any[];
+  user: User;
+  photos: Photo[];
 }
 
 export function ProfileBio({ bio, user, photos }: ProfileBioProps) {
@@ -56,9 +76,9 @@ export function ProfileBio({ bio, user, photos }: ProfileBioProps) {
               <div>
                 <h4 className="font-semibold text-foreground mb-2">Informations personnelles</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  <div>Ville de naissance: {user.birthCity}</div>
-                  <div>Éducation: {lifestyleLabels.educationLevel[user.educationLevel as keyof typeof lifestyleLabels.educationLevel]}</div>
-                  <div>Type de relation: {lifestyleLabels.relationshipType[user.relationshipType as keyof typeof lifestyleLabels.relationshipType]}</div>
+                  <div>Ville de naissance: {user.birthCity || user.birth_city}</div>
+                  <div>Éducation: {lifestyleLabels.educationLevel[(user.educationLevel || user.education_level) as keyof typeof lifestyleLabels.educationLevel]}</div>
+                  <div>Type de relation: {lifestyleLabels.relationshipType[(user.relationshipType || user.relationship_type) as keyof typeof lifestyleLabels.relationshipType]}</div>
                 </div>
               </div>
               

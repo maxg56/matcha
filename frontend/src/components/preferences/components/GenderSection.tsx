@@ -17,7 +17,7 @@ export function GenderSection({ selectedGenders, onChange }: GenderSectionProps)
             <Checkbox
               id={`gender-${gender.value}`}
               checked={selectedGenders.includes(gender.value)}
-              onCheckedChange={(checked) => onChange(gender.value, checked as boolean)}
+              onCheckedChange={(checked: boolean) => onChange(gender.value, checked)}
             />
             <Label htmlFor={`gender-${gender.value}`}>{gender.label}</Label>
           </div>

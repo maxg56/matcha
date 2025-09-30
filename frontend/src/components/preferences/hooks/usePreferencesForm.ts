@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePreferences } from '@/hooks';
-import { type UpdatePreferencesRequest } from '@/types/preferences';
+import { type UpdatePreferencesRequest, type UserMatchingPreferences } from '@/types/preferences';
 import { type LifestyleType } from '../constants/lifestyle';
 import { preferencesEventEmitter } from '@/utils/preferencesEvents';
 import { useToast } from '@/hooks/ui/useToast';
@@ -15,7 +15,7 @@ interface UsePreferencesFormResult {
   hasChanges: boolean;
   saving: boolean;
   loading: boolean;
-  preferences: any;
+  preferences: UserMatchingPreferences | null;
 
   // Handlers
   handleGenderChange: (gender: string, checked: boolean) => void;

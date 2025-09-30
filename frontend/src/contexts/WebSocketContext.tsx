@@ -46,6 +46,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWebSocketContext(): WebSocketContextValue {
   const context = useContext(WebSocketContext);
   if (!context) {
@@ -55,6 +56,7 @@ export function useWebSocketContext(): WebSocketContextValue {
 }
 
 // Hook pour afficher l'état de connexion WebSocket (utile pour le debug)
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWebSocketStatus() {
   const context = useContext(WebSocketContext);
   return {

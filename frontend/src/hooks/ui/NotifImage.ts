@@ -55,17 +55,22 @@ export function Notification() {
             
             addNotification({
                 type: notifType as 'like' | 'match' | 'message' | 'visit' | 'unlike',
-                message: notifData.message || 'New notification',
-                userId: notifData.to_user_id || notifData.from_user_id,
-                db: notifData.db || false,
+                message: typeof notifData.message === 'string' ? notifData.message : 'New notification',
+                userId: typeof notifData.to_user_id === 'number' ? notifData.to_user_id 
+                       : typeof notifData.from_user_id === 'number' ? notifData.from_user_id 
+                       : undefined,
+                db: typeof notifData.db === 'boolean' ? notifData.db : false,
             });
             setSeen(false); // Marquer comme non vu
         } else if (data.type === 'notification_event') {
             // Ancien format pour compatibilité
+            const notificationType = typeof data.notificationType === 'string' ? data.notificationType : 'message';
+            const validTypes: Array<'like' | 'match' | 'message' | 'visit' | 'unlike'> = ['like', 'match', 'message', 'visit', 'unlike'];
+            
             addNotification({
-                type: data.notificationType || 'message',
-                message: data.message || 'New notification',
-                userId: data.userId,
+                type: validTypes.includes(notificationType as any) ? notificationType as 'like' | 'match' | 'message' | 'visit' | 'unlike' : 'message',
+                message: typeof data.message === 'string' ? data.message : 'New notification',
+                userId: typeof data.userId === 'number' ? data.userId : undefined,
             });
         }
     };

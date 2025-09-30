@@ -221,7 +221,7 @@ export function useRegistrationLogic() {
       const uploadPromises = selectedImages.map(async (imagePreview) => {
         try {
           const result = await imageService.uploadImage(imagePreview.file);
-          return result.data.image_url;
+          return result.data.url;
         } catch (error) {
           throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -288,7 +288,8 @@ export function useRegistrationLogic() {
         // Try to update profile without tags first, then handle tags separately
         try {
           const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
-          const { tags: _tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { tags: _ignoredTags, ...payloadWithoutTags } = profilePayloadWithoutTags;
           
           await useUserStore.getState().updateProfile(payloadWithoutTags);
           
