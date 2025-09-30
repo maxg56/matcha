@@ -47,9 +47,6 @@ func main() {
 			{
 				authorized.POST("/upload", handlers.UploadHandler)
 				authorized.DELETE("/delete/:filename", handlers.DeleteFileHandler)
-				authorized.POST("/resize", handlers.ResizeImageHandler)
-				authorized.GET("/my", handlers.ListUserMediaHandler)
-				authorized.POST("/profile", handlers.SetProfileImageHandler)
 			}
 		}
 	}
