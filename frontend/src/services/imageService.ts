@@ -47,19 +47,17 @@ class ImageService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
     }
-
-    const data = await response.json();
-
-    if (!data.success) {
-      throw new Error(data.error || 'Upload failed');
-    }
-
-    return data;
   }
-
   async uploadImageWithProgress(
     file: File, 
     onProgress?: (progress: number) => void
