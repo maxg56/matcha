@@ -35,6 +35,11 @@ type BroadcastMessage struct {
 // Global manager instance
 var GlobalManager *Manager
 
+// GetBroadcastChannel returns the broadcast channel for external services
+func (m *Manager) GetBroadcastChannel() chan<- BroadcastMessage {
+	return m.broadcast
+}
+
 // NewManager creates a new WebSocket connection manager
 func NewManager() *Manager {
 	ctx, cancel := context.WithCancel(context.Background())

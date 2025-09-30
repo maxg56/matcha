@@ -44,6 +44,26 @@ const otherUserIcon = new L.Icon({
   shadowAnchor: [12, 40]
 });
 
+const tempLocationIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41" width="25" height="41">
+      <path fill="#f39c12" stroke="#e67e22" stroke-width="2" stroke-dasharray="4,2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z"/>
+      <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
+      <circle fill="#f39c12" cx="12.5" cy="12.5" r="3"/>
+    </svg>
+  `),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" width="41" height="41">
+      <ellipse fill="#000" opacity="0.3" cx="20.5" cy="37" rx="18" ry="4"/>
+    </svg>
+  `),
+  shadowSize: [41, 41],
+  shadowAnchor: [12, 40]
+});
+
 interface UserMapProps {
   onUserClick?: (user: NearbyUser) => void;
   showCurrentLocation?: boolean;
@@ -51,17 +71,33 @@ interface UserMapProps {
 
 interface MapEventsProps {
   onLocationUpdate: (lat: number, lng: number) => void;
+  isEditMode: boolean;
 }
 
-function MapEvents({ onLocationUpdate }: MapEventsProps) {
+function MapEvents({ onLocationUpdate, isEditMode }: MapEventsProps) {
   useMapEvents({
     locationfound: (e: { latlng: { lat: number; lng: number } }) => {
       onLocationUpdate(e.latlng.lat, e.latlng.lng);
     },
-    click: (e: { latlng: { lat: number; lng: number } }) => {
-      // Permettre à l'utilisateur de cliquer sur la carte pour définir sa position
-      if (confirm('Définir cette position comme votre localisation actuelle ?')) {
+    click: async (e: { latlng: { lat: number; lng: number } }) => {
+      if (isEditMode) {
+        // En mode édition, juste mettre à jour la position temporaire
         onLocationUpdate(e.latlng.lat, e.latlng.lng);
+      } else {
+        // Mode normal: demander confirmation et sauvegarder directement
+        if (confirm('Définir cette position comme votre localisation actuelle ?')) {
+          try {
+            // Mettre à jour la localisation sur le serveur
+            await locationService.updateLocation({
+              latitude: e.latlng.lat,
+              longitude: e.latlng.lng
+            });
+            onLocationUpdate(e.latlng.lat, e.latlng.lng);
+          } catch (err) {
+            console.error('Erreur lors de la mise à jour de la localisation:', err);
+            alert('Erreur lors de la mise à jour de votre position. Veuillez réessayer.');
+          }
+        }
       }
     },
   });
@@ -78,6 +114,9 @@ export function UserMap({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [tempLocation, setTempLocation] = useState<[number, number] | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const loadMatchedUsers = useCallback(async () => {
     try {
@@ -106,7 +145,28 @@ export function UserMap({
         } else if (err.message.includes('not authenticated')) {
           setError('Vous devez être connecté pour voir vos matches.');
         } else if (err.message.includes('user location not set') || err.message.includes('current user location not set')) {
-          setError('Géolocalisation non configurée. Allez dans les paramètres pour activer votre localisation et voir des matches près de chez vous.');
+          setError('Localisation requise pour voir les matches. Cliquez sur "Ma position" ou "Utiliser Paris" pour définir votre position.');
+
+          // Si pas de localisation actuelle, essayer d'en définir une automatiquement
+          if (!currentLocation) {
+            console.log('Tentative de définition automatique de la localisation...');
+            try {
+              // Essayer d'abord la géolocalisation
+              const position = await locationService.getBrowserLocation();
+              await locationService.updateLocation({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              });
+              setCurrentLocation([position.coords.latitude, position.coords.longitude]);
+              setMapCenter([position.coords.latitude, position.coords.longitude]);
+              setError(null);
+              console.log('Localisation automatique réussie');
+              // Recharger les matches après avoir défini la localisation
+              setTimeout(() => loadMatchedUsers(), 1000);
+            } catch (autoErr) {
+              console.log('Localisation automatique échouée, Paris sera proposé comme option');
+            }
+          }
         } else {
           setError(err.message);
         }
@@ -145,10 +205,68 @@ export function UserMap({
     }
   }, [loadMatchedUsers]);
 
-  const handleLocationUpdate = useCallback((lat: number, lng: number) => {
-    setCurrentLocation([lat, lng]);
-    setMapCenter([lat, lng]);
+  const handleLocationUpdate = useCallback(async (lat: number, lng: number) => {
+    if (isEditMode) {
+      // En mode édition, juste mettre à jour la position temporaire
+      setTempLocation([lat, lng]);
+      setHasUnsavedChanges(true);
+    } else {
+      // Mode normal: mettre à jour directement
+      setCurrentLocation([lat, lng]);
+      setMapCenter([lat, lng]);
+
+      // Recharger les matches après la mise à jour de la position
+      try {
+        await loadMatchedUsers();
+      } catch (err) {
+        console.error('Erreur lors du rechargement des matches:', err);
+      }
+    }
+  }, [isEditMode, loadMatchedUsers]);
+
+  const enterEditMode = useCallback(() => {
+    setIsEditMode(true);
+    setTempLocation(currentLocation);
+    setHasUnsavedChanges(false);
+  }, [currentLocation]);
+
+  const exitEditMode = useCallback(() => {
+    setIsEditMode(false);
+    setTempLocation(null);
+    setHasUnsavedChanges(false);
   }, []);
+
+  const saveLocation = useCallback(async () => {
+    if (!tempLocation || !hasUnsavedChanges) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Mettre à jour la localisation sur le serveur
+      await locationService.updateLocation({
+        latitude: tempLocation[0],
+        longitude: tempLocation[1]
+      });
+
+      // Mettre à jour l'état local
+      setCurrentLocation(tempLocation);
+      setMapCenter(tempLocation);
+
+      // Sortir du mode édition
+      setIsEditMode(false);
+      setTempLocation(null);
+      setHasUnsavedChanges(false);
+
+      // Recharger les matches
+      await loadMatchedUsers();
+    } catch (err) {
+      console.error('Erreur lors de la sauvegarde de la localisation:', err);
+      setError(err instanceof Error ? err.message : 'Erreur de sauvegarde');
+    } finally {
+      setLoading(false);
+    }
+  }, [tempLocation, hasUnsavedChanges, loadMatchedUsers]);
 
   // Initialiser la carte avec la position de l'utilisateur depuis l'API
   const initializeMapWithUserLocation = useCallback(async () => {
@@ -171,12 +289,23 @@ export function UserMap({
       console.log('Position de l\'utilisateur non disponible via API, essai géolocalisation navigateur:', err);
 
       try {
-        // Fallback: essayer la géolocalisation du navigateur
+        // Fallback: essayer la géolocalisation du navigateur et la sauvegarder automatiquement
         const position = await locationService.getBrowserLocation();
         const userCoords: [number, number] = [
           position.coords.latitude,
           position.coords.longitude
         ];
+
+        // Sauvegarder automatiquement la position récupérée
+        try {
+          await locationService.updateLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          console.log('Position du navigateur sauvegardée automatiquement');
+        } catch (saveErr) {
+          console.warn('Erreur lors de la sauvegarde automatique de la position:', saveErr);
+        }
 
         setCurrentLocation(userCoords);
         setMapCenter(userCoords);
@@ -185,10 +314,13 @@ export function UserMap({
         console.log('Carte centrée sur la géolocalisation du navigateur:', userCoords);
       } catch (geoErr) {
         console.log('Impossible d\'obtenir la géolocalisation, utilisation de Paris par défaut:', geoErr);
-        // Dernier fallback: Paris
+        // Dernier fallback: Paris (ne pas sauvegarder automatiquement Paris)
         const parisCoords: [number, number] = [48.8566, 2.3522];
         setMapCenter(parisCoords);
         setIsMapInitialized(true);
+
+        // Afficher un message pour encourager l'utilisateur à définir sa position
+        setError('Localisation non définie. Cliquez sur "Ma position" ou "Utiliser Paris" pour définir votre position.');
       }
     }
   }, [isMapInitialized]);
@@ -216,21 +348,83 @@ export function UserMap({
     <div className="relative w-full h-full">
       {/* Contrôles */}
       <div className="absolute top-4 right-4 z-[1000] space-y-2">
-        <button
-          onClick={updateUserLocation}
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors"
-        >
-          {loading ? 'Localisation...' : 'Ma position'}
-        </button>
+        {!isEditMode ? (
+          <>
+            <button
+              onClick={updateUserLocation}
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors"
+            >
+              {loading ? 'Localisation...' : 'Ma position'}
+            </button>
 
-        <button
-          onClick={() => loadMatchedUsers()}
-          disabled={loading}
-          className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
-        >
-          {loading ? 'Chargement...' : 'Actualiser matches'}
-        </button>
+            <button
+              onClick={enterEditMode}
+              disabled={loading || !currentLocation}
+              className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
+            >
+              ✏️ Modifier position
+            </button>
+
+            <button
+              onClick={() => loadMatchedUsers()}
+              disabled={loading}
+              className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
+            >
+              {loading ? 'Chargement...' : 'Actualiser matches'}
+            </button>
+
+            {/* Bouton pour définir Paris comme position par défaut */}
+            {((error && error.includes('localisation')) || !currentLocation) && (
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    setError(null);
+                    // Coordonnées de Paris
+                    const parisCoords = { latitude: 48.8566, longitude: 2.3522 };
+                    await locationService.updateLocation({
+                      latitude: parisCoords.latitude,
+                      longitude: parisCoords.longitude,
+                      city: 'Paris',
+                      country: 'France'
+                    });
+                    setCurrentLocation([parisCoords.latitude, parisCoords.longitude]);
+                    setMapCenter([parisCoords.latitude, parisCoords.longitude]);
+                    await loadMatchedUsers();
+                  } catch (err) {
+                    console.error('Erreur lors de la définition de Paris:', err);
+                    setError(err instanceof Error ? err.message : 'Erreur de localisation');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
+              >
+                📍 Utiliser Paris
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <button
+              onClick={saveLocation}
+              disabled={loading || !hasUnsavedChanges}
+              className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
+            >
+              {loading ? 'Sauvegarde...' : '💾 Sauvegarder'}
+            </button>
+
+            <button
+              onClick={exitEditMode}
+              disabled={loading}
+              className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-md shadow-lg text-sm font-medium transition-colors block w-full"
+            >
+              ❌ Annuler
+            </button>
+          </>
+        )}
       </div>
 
       {/* Indicateur d'erreur */}
@@ -239,11 +433,11 @@ export function UserMap({
           <p className="text-sm">{error}</p>
           {error.includes('Géolocalisation') || error.includes('localisation') ? (
             <p className="text-xs mt-1 text-red-200">
-              💡 Rendez-vous dans Paramètres → Géolocalisation pour activer votre position
+              💡 Cliquez sur "Ma position" pour activer la géolocalisation, ou sur "Utiliser Paris" comme position par défaut
             </p>
           ) : error.includes('session') ? (
             <p className="text-xs mt-1 text-red-200">
-              💡 Cliquez sur la carte pour définir votre position ou utilisez la recherche par ville
+              💡 Cliquez sur la carte pour définir votre position ou utilisez le bouton "Utiliser Paris"
             </p>
           ) : null}
           <button
@@ -262,6 +456,31 @@ export function UserMap({
           <p className="text-xs mt-1 text-blue-200">
             💡 Vos matches apparaîtront ici lorsque vous en aurez
           </p>
+        </div>
+      )}
+
+      {/* Instructions pour définir la localisation */}
+      {!currentLocation && !loading && !isEditMode && (
+        <div className="absolute top-4 left-4 z-[1000] bg-yellow-500 text-white px-4 py-2 rounded-md shadow-lg max-w-sm">
+          <p className="text-sm font-medium">📍 Définissez votre position</p>
+          <p className="text-xs mt-1 text-yellow-200">
+            Cliquez sur "Ma position" ou cliquez n'importe où sur la carte pour définir votre localisation
+          </p>
+        </div>
+      )}
+
+      {/* Indicateur du mode édition */}
+      {isEditMode && (
+        <div className="absolute top-4 left-4 z-[1000] bg-orange-500 text-white px-4 py-2 rounded-md shadow-lg max-w-sm">
+          <p className="text-sm font-medium">✏️ Mode édition activé</p>
+          <p className="text-xs mt-1 text-orange-200">
+            Cliquez sur la carte pour modifier votre position, puis sauvegardez
+          </p>
+          {hasUnsavedChanges && (
+            <p className="text-xs mt-1 text-orange-100 font-medium">
+              ⚠️ Modifications non sauvegardées
+            </p>
+          )}
         </div>
       )}
 
@@ -298,10 +517,10 @@ export function UserMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <MapEvents onLocationUpdate={handleLocationUpdate} />
+        <MapEvents onLocationUpdate={handleLocationUpdate} isEditMode={isEditMode} />
 
         {/* Marqueur de la position actuelle */}
-        {showCurrentLocation && currentLocation && (
+        {showCurrentLocation && currentLocation && !isEditMode && (
           <Marker
             position={currentLocation}
             icon={currentUserIcon}
@@ -312,6 +531,43 @@ export function UserMap({
                 <br />
                 <span className="text-sm text-gray-600">
                   📍 Vous êtes ici
+                </span>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Marqueur de la position actuelle (grisé en mode édition) */}
+        {showCurrentLocation && currentLocation && isEditMode && (
+          <Marker
+            position={currentLocation}
+            icon={currentUserIcon}
+            opacity={0.5}
+          >
+            <Popup>
+              <div className="text-center">
+                <strong className="text-gray-600">📍 Position actuelle</strong>
+                <br />
+                <span className="text-sm text-gray-500">
+                  Position enregistrée
+                </span>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Marqueur de la position temporaire en mode édition */}
+        {isEditMode && tempLocation && (
+          <Marker
+            position={tempLocation}
+            icon={tempLocationIcon}
+          >
+            <Popup>
+              <div className="text-center">
+                <strong className="text-orange-600">✏️ Nouvelle position</strong>
+                <br />
+                <span className="text-sm text-gray-600">
+                  {hasUnsavedChanges ? '⚠️ Non sauvegardée' : '📍 Position temporaire'}
                 </span>
               </div>
             </Popup>

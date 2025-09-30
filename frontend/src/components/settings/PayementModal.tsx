@@ -16,7 +16,7 @@ export default function PaymentModal({ onClose, plan }: PaymentModalProps) {
     const startCheckout = async () => {
       try {
         // Utiliser le service API centralisé pour créer une session Stripe
-        const session = await apiService.post<{ id: string }>('/api/stripe/create-checkout-session', { plan });
+        const session = await apiService.post<{ id: string }>('/api/v1/stripe/create-checkout-session', { plan });
 
         const stripe = await stripePromise;
         if (stripe) {

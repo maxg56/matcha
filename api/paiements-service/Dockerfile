@@ -12,9 +12,24 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o paiements-service ./src
 # Development stage with Air (optionnel)
 FROM golang:1.25-alpine AS development
 WORKDIR /app
+
+# Install Air for hot reload
 RUN go install github.com/air-verse/air@latest
+
+# Copy dependency files
 COPY go.mod go.sum ./
 RUN go mod download
+
+# Create non-root user for development
+RUN addgroup -g 1000 appgroup && \
+    adduser -D -s /bin/sh -u 1000 -G appgroup appuser
+
+# Change ownership of the work directory
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
 EXPOSE 8085
 CMD ["air", "-c", ".air.toml"]
 

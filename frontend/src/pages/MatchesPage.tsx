@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TabNavigation , type Tab} from '@/components/ui/TabNavigation';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 
 type TabType = 'matches' | 'likes' | 'viewers' | 'viewed';
@@ -205,18 +206,20 @@ export default function MatchesPage() {
           </p>
         </div>
 
-        <div className="mb-6">
-          <TabNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={(tabId) => setActiveTab(tabId as TabType)}
-          />
-        </div>
+        <PremiumGate feature="vos matches et analytics avancées">
+          <div className="mb-6">
+            <TabNavigation
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={(tabId) => setActiveTab(tabId as TabType)}
+            />
+          </div>
 
-        {/* Tab Content */}
-        <div className="mt-6">
-          {renderTabContent()}
-        </div>
+          {/* Tab Content */}
+          <div className="mt-6">
+            {renderTabContent()}
+          </div>
+        </PremiumGate>
       </div>
     </div>
   );

@@ -313,13 +313,28 @@ services:
     build:
       context: ./api/paiements-service
       target: development
-    env_file:
-      - ./.env
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha_dev}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      PAIEMENTS_SERVICE_PORT: 8085
+      AUTO_MIGRATE: "true"
+      GIN_MODE: debug
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRICE_MENSUEL: ${STRIPE_PRICE_MENSUEL}
+      STRIPE_PRICE_ANNUEL: ${STRIPE_PRICE_ANNUEL}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      GATEWAY_URL: http://gateway:8080
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
     volumes:
-      - ./api/paiements-service/src:/app/src
-      - ./api/paiements-service/go.mod:/app/go.mod
-      - ./api/paiements-service/go.sum:/app/go.sum
-      - ./api/paiements-service/.air.toml:/app/.air.toml
+      - ./api/paiements-service/src:/app/src:rw
+      - ./api/paiements-service/go.mod:/app/go.mod:ro
+      - ./api/paiements-service/go.sum:/app/go.sum:ro
+      - ./api/paiements-service/.air.toml:/app/.air.toml:ro
     depends_on:
       - postgres
       - redis
@@ -339,6 +354,7 @@ services:
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
       VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
+      VITE_STRIPE_PUBLIC_KEY: ${VITE_STRIPE_PUBLIC_KEY}
     volumes:
       - ./frontend:/app
       - /app/node_modules

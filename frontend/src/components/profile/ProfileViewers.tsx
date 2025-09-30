@@ -42,7 +42,7 @@ export function ProfileViewers({ className }: ProfileViewersProps) {
   const loadMoreViewers = async () => {
     try {
       const response = await getProfileViewers(20, viewers?.length || 0);
-      setHasMore(response.viewers.length === 20);
+      setHasMore((response.viewers?.length || 0) === 20);
     } catch (err) {
       console.error('Failed to load more viewers:', err);
     }
