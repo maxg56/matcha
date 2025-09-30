@@ -13,7 +13,7 @@ interface ProfileViewer {
 }
 
 interface ProfileViewers {
-  viewers: ProfileViewer[];
+  viewers: ProfileViewer[] | null;
   pagination: {
     total: number;
     limit: number;
@@ -43,7 +43,7 @@ interface ViewedProfile {
 }
 
 interface MyProfileViews {
-  viewed_profiles: ViewedProfile[];
+  viewed_profiles: ViewedProfile[] | null;
   pagination: {
     total: number;
     limit: number;
@@ -79,9 +79,9 @@ export function useProfileAnalytics() {
       );
 
       if (offset === 0) {
-        setViewers(response.viewers);
+        setViewers(response.viewers || []);
       } else {
-        setViewers(prev => [...prev, ...response.viewers]);
+        setViewers(prev => [...prev, ...(response.viewers || [])]);
       }
 
       return response;
@@ -123,9 +123,9 @@ export function useProfileAnalytics() {
       );
 
       if (offset === 0) {
-        setMyViews(response.viewed_profiles);
+        setMyViews(response.viewed_profiles || []);
       } else {
-        setMyViews(prev => [...prev, ...response.viewed_profiles]);
+        setMyViews(prev => [...prev, ...(response.viewed_profiles || [])]);
       }
 
       return response;

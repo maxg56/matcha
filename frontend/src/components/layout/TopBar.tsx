@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/';
 import { NotificationButton } from '../Notifications';
+import { PremiumIndicator, usePremiumStatus } from '../premium/PremiumIndicator';
 
 interface TopBarProps {
   title: string;
@@ -16,6 +17,7 @@ interface TopBarProps {
 export function TopBar({ title, showBack = false, onBack, rightAction, showAuthActions = false }: TopBarProps) {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { isPremium, isLoading: isPremiumLoading } = usePremiumStatus();
 
   const handleBack = () => {
     if (onBack) {
@@ -56,14 +58,17 @@ export function TopBar({ title, showBack = false, onBack, rightAction, showAuthA
           {showAuthActions && (
             <>
               <NotificationButton />
+              {isPremium && !isPremiumLoading && (
+                <PremiumIndicator variant="crown" size="sm" />
+              )}
               {user && (
                 <span className="text-xs text-muted-foreground max-w-20 truncate">
                   {user.username}
                 </span>
               )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleLogout}
                 className="p-2 hover:bg-destructive/10 text-destructive hover:text-destructive"
                 title="Se déconnecter"
