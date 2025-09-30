@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { ErrorHandler } from '@/utils/errorHandler';
-import { PasswordValidator } from '@/utils/passwordValidator';
 
 interface LoginFormData {
   login: string; // pseudo ou email
@@ -35,8 +34,6 @@ export function useLogin() {
           return 'Le pseudo doit contenir au moins 3 caractères';
         }
         return undefined;
-      case 'password':
-        return PasswordValidator.validateForLogin(value);
       default:
         return undefined;
     }
@@ -45,8 +42,8 @@ export function useLogin() {
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear errors when user starts typing
-    if (error) setError('');
+    // // Clear errors when user starts typing
+    // if (error) setError('');
     
     // Real-time field validation
     const fieldError = validateField(field, value);
@@ -77,7 +74,6 @@ export function useLogin() {
     }
 
     setIsLoading(true);
-    setError('');
     setFieldErrors({});
 
     try {
@@ -86,8 +82,8 @@ export function useLogin() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
       const { fieldErrors: serverFieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'login');
-      
-      setFieldErrors(serverFieldErrors);
+      console.log('Pa3rsed login error:', { serverFieldErrors, globalError });
+      // setFieldErrors(serverFieldErrors);
       setError(globalError);
     } finally {
       setIsLoading(false);
