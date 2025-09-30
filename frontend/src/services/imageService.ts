@@ -29,12 +29,23 @@ class ImageService {
   ): Promise<ImageUploadResponse> {
     const formData = new FormData();
     formData.append('image', file);
+    const token = localStorage.getItem('accessToken');
+    const headers: HeadersInit = {};
 
-    const response = await fetch(`${this.baseURL}/api/v1/media/upload`, {
-      method: 'POST',
-      credentials: 'include', // Important: utiliser les cookies pour l'authentification
-      body: formData,
-    });
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/media/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -96,7 +107,13 @@ class ImageService {
 
       // Start upload
       xhr.open('POST', `${this.baseURL}/api/v1/media/upload`);
-      xhr.withCredentials = true; // Important: utiliser les cookies pour l'authentification
+
+      // Add JWT token for authentication
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+
       xhr.send(formData);
     });
   }

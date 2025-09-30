@@ -1,23 +1,60 @@
-FROM python:3.11-slim
+# Build stage
+FROM golang:1.21-alpine AS builder
 
-RUN groupadd -r mediaservice && useradd -r -g mediaservice mediaservice
+# Install build dependencies
+RUN apk add --no-cache git
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY --chown=mediaservice:mediaservice src/ .
+# Copy source code
+COPY src/ ./src/
 
-# Variables d'environnement pour Flask
-ENV FLASK_APP=main.py
-ENV FLASK_ENV=development
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o main src/main.go
 
-# Create uploads directory with proper permissions before switching user
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+# Development stage
+FROM golang:1.21-alpine AS development
 
+# Install development tools
+RUN apk add --no-cache git
+RUN apk --no-cache add ca-certificates
+RUN addgroup -g 1001 -S mediaservice && adduser -u 1001 -S mediaservice -G mediaservice
+
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
+RUN mkdir -p /app/uploads && chown -R mediaservice:mediaservice /app/uploads
+
+# Switch to non-root user
 USER mediaservice
+
+# Development command
+CMD ["go", "run", "src/main.go"]
+
+# Production stage
+FROM alpine:latest AS production
+
+# Install ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates
+RUN addgroup -g 1001 -S mediaservice && adduser -u 1001 -S mediaservice -G mediaservice
+
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /app/main .
+
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads && chown -R mediaservice:mediaservice /app/uploads
+
+# Switch to non-root user
+USER mediaservice
+
 EXPOSE 8006
 
-# --reload active le rechargement automatique
-CMD ["flask", "run", "--host=0.0.0.0", "--port=8006", "--reload"]
+CMD ["./main"]
