@@ -97,9 +97,6 @@ interface ChatActions {
 
 // Fonction pour adapter les données enrichies de l'API en format frontend
 const adaptConversationResponseToConversation = (response: ConversationResponse): Conversation => {
-  // Construire le nom complet à partir de first_name et last_name
-  const fullName = `${response.other_user.first_name} ${response.other_user.last_name}`.trim();
-
   return {
     id: response.id,
     user: {
@@ -312,7 +309,7 @@ export const useChatStore = create<ChatStore>()(
           if (message.type === MessageType.CHAT_MESSAGE) {
             // Convertir les données WebSocket au format Message
             // Fonction utilitaire pour gérer différents formats de timestamp
-            const parseTimestamp = (timestamp: any): string => {
+            const parseTimestamp = (timestamp: string | number | Date): string => {
               if (typeof timestamp === 'number') {
                 // Timestamp Unix (en secondes)
                 return new Date(timestamp * 1000).toISOString();

@@ -50,7 +50,8 @@ export const useRegistrationSubmission = () => {
       if (errorMessage.includes('failed to update tags')) {
         try {
           const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
-          const { tags: _, ...payloadWithoutTags } = profilePayloadWithoutTags;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { tags: _ignoredTags, ...payloadWithoutTags } = profilePayloadWithoutTags;
           
           await useUserStore.getState().updateProfile(payloadWithoutTags);
           
@@ -67,7 +68,9 @@ export const useRegistrationSubmission = () => {
           globalError: 'Erreur lors de la mise à jour de vos centres d\'intérêt. Vous pouvez les modifier plus tard dans votre profil.'
         };
       } else if (errorMessage.includes('token expired') || errorMessage.includes('unauthorized')) {
-        const success = await handleTokenExpiration(() => completeRegistration(formData));
+        const success = await handleTokenExpiration(async () => {
+          await completeRegistration(formData);
+        });
         if (success) return true;
         
         throw { fieldErrors: {}, globalError: 'Session expirée. Redirection en cours...' };

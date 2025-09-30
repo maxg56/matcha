@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 
 interface EmailSentViewProps {
