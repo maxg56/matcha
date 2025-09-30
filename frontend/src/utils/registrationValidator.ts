@@ -195,7 +195,7 @@ export class RegistrationValidator {
   /**
    * Prépare les données pour la mise à jour du profil
    */
-  static prepareProfilePayload(formData: RegistrationData): Record<string, any> {
+  static prepareProfilePayload(formData: RegistrationData): Record<string, unknown> {
     // Filter and clean tags to ensure they're valid strings
     const cleanTags = formData.tags
       .filter(tag => tag && typeof tag === 'string' && tag.trim().length > 0)

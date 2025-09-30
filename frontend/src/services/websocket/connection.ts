@@ -235,7 +235,7 @@ export class WebSocketConnection {
     this.handlePong();
   }
 
-  getConnectionHealth(): { healthy: boolean; lastCheck: number; diagnostics: any } {
+  getConnectionHealth(): { healthy: boolean; lastCheck: number; diagnostics: Record<string, unknown> } {
     const now = Date.now();
     const timeSinceLastPong = now - this.lastPongReceived;
     const readyState = this.ws?.readyState;

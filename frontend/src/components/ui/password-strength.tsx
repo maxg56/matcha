@@ -88,7 +88,7 @@ export function PasswordStrength({
               text="Au moins un chiffre"
             />
             <PasswordRequirement 
-              met={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)}
+              met={/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)}
               text="Au moins un caractère spécial"
             />
           </div>

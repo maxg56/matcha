@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Search, User, LogOut, Crown } from 'lucide-react';
+import { Heart, MessageCircle, Search, User, LogOut, Crown, Map } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks';
@@ -29,6 +29,11 @@ const navItems = [
     label: 'Profil',
     icon: User,
     href: '/app/profile',
+  },
+  {
+    label: 'Map',
+    icon: Map,
+    href: '/app/map',
   },
   {
     label: 'Log Out',

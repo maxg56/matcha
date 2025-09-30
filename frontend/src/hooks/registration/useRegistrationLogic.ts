@@ -307,7 +307,8 @@ export function useRegistrationLogic() {
         // Try to update profile without tags first, then handle tags separately
         try {
           const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
-          const { tags: _tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { tags: _ignoredTags, ...payloadWithoutTags } = profilePayloadWithoutTags;
           
           await useUserStore.getState().updateProfile(payloadWithoutTags);
           

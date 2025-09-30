@@ -473,7 +473,7 @@ export function MatchingPreferences({ onClose }: MatchingPreferencesProps = {}) 
                 <Checkbox
                   id={`gender-${gender.value}`}
                   checked={formData.preferred_genders.includes(gender.value)}
-                  onCheckedChange={(checked) => handleGenderChange(gender.value, checked as boolean)}
+                  onCheckedChange={(checked: boolean) => handleGenderChange(gender.value, checked)}
                 />
                 <Label htmlFor={`gender-${gender.value}`}>{gender.label}</Label>
               </div>
