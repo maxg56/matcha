@@ -24,7 +24,7 @@ export function ViewedProfilesList({ className }: ViewedProfilesListProps) {
     const loadData = async () => {
       try {
         const response = await getMyProfileViews(20, 0);
-        setHasMore(response.viewed_profiles.length === 20);
+        setHasMore((response.viewed_profiles?.length || 0) === 20);
       } catch (err) {
         console.error('Failed to load viewed profiles:', err);
       }
@@ -36,7 +36,7 @@ export function ViewedProfilesList({ className }: ViewedProfilesListProps) {
   const loadMore = async () => {
     try {
       const response = await getMyProfileViews(20, myViews?.length || 0);
-      setHasMore(response.viewed_profiles.length === 20);
+      setHasMore((response.viewed_profiles?.length || 0) === 20);
     } catch (err) {
       console.error('Failed to load more viewed profiles:', err);
     }
