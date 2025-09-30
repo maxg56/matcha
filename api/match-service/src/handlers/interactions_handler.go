@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,9 +39,8 @@ func LikeUserHandler(c *gin.Context) {
 	// Mark this profile as seen since user interacted with it
 	userService := services.NewUserService()
 	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
-		// Log but don't fail the request
-		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
-		return
+		// Log but don't fail the request - just log the error
+		log.Printf("⚠️ [WARNING] Failed to mark profile as seen: %v", err)
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, result)
@@ -75,9 +75,8 @@ func UnlikeUserHandler(c *gin.Context) {
 	// Mark this profile as seen since user interacted with it
 	userService := services.NewUserService()
 	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
-		// Log but don't fail the request
-		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
-		return
+		// Log but don't fail the request - just log the error
+		log.Printf("⚠️ [WARNING] Failed to mark profile as seen: %v", err)
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, result)
@@ -112,9 +111,8 @@ func BlockUserHandler(c *gin.Context) {
 	// Mark this profile as seen since user interacted with it
 	userService := services.NewUserService()
 	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
-		// Log but don't fail the request
-		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
-		return
+		// Log but don't fail the request - just log the error
+		log.Printf("⚠️ [WARNING] Failed to mark profile as seen: %v", err)
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, result)

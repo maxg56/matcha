@@ -206,7 +206,7 @@ export default function MatchesPage() {
           </p>
         </div>
 
-        <PremiumGate feature="vos matches et analytics avancées">
+        {/* <PremiumGate feature="vos matches et analytics avancées"> */}
           <div className="mb-6">
             <TabNavigation
               tabs={tabs}
@@ -219,7 +219,7 @@ export default function MatchesPage() {
           <div className="mt-6">
             {renderTabContent()}
           </div>
-        </PremiumGate>
+        {/* </PremiumGate> */}
       </div>
     </div>
   );
