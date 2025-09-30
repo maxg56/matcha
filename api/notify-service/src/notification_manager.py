@@ -38,16 +38,16 @@ class NotificationManager:
         if user_id in self.active_connections:
             del self.active_connections[user_id]
 
-    async def send_notification(self, to_user_id: int, notif_type: str, message: str):
+    async def send_notification(self, to_user_id: int, notif_type: str, message: str, _db: bool = False):
         print(f"📨 Sending notification to user {to_user_id}: {message}")
-        notif = Notification(notif_type=notif_type, message=message, to_user_id=to_user_id)
+        notif = Notification(notif_type=notif_type, message=message, to_user_id=to_user_id, _db=_db)
         user_id = notif.to_user_id
-        
+
         # Send to user if connected directly
         if user_id in self.active_connections:
             ws = self.active_connections[user_id]
             await ws.send_json(notif.to_dict())
-        
+
         # Also send to gateway if connected
         if self.gateway_connection:
             try:
@@ -55,6 +55,8 @@ class NotificationManager:
                     "type": "notification_received",
                     "data": notif.to_dict()
                 }
+                if gateway_message["data"]["type"] == '4':
+                    gateway_message["data"]["db"] = True
                 await self.gateway_connection.send_json(gateway_message)
                 print(f"📨 Notification forwarded to gateway for user {to_user_id}")
             except Exception as e:
@@ -69,3 +71,6 @@ class NotificationManager:
             conn.commit()
             cur.close()
             conn.close()
+            return {"status": "success", "data": {"user": {"id": user_id}}}
+        else:
+            return {"status": "error", "message": "Database connection failed", "code": 500}
