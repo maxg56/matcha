@@ -26,10 +26,17 @@ class ImageService {
     const formData = new FormData();
     formData.append('image', file);
 
+    const token = localStorage.getItem('accessToken');
+    const headers: HeadersInit = {};
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     try {
       const response = await fetch(`${this.baseURL}/api/v1/media/upload`, {
         method: 'POST',
-        credentials: 'include', // Important: utiliser les cookies pour l'authentification
+        headers,
         body: formData,
       });
 
@@ -96,7 +103,13 @@ class ImageService {
 
       // Start upload
       xhr.open('POST', `${this.baseURL}/api/v1/media/upload`);
-      xhr.withCredentials = true; // Important: utiliser les cookies pour l'authentification
+
+      // Add JWT token for authentication
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+
       xhr.send(formData);
     });
   }
