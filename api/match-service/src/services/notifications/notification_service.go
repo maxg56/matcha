@@ -17,11 +17,11 @@ type NotificationService struct {
 
 // NotificationTypes constants
 const (
-	TypeLike        = "1" // When a user receives a "like"
-	TypeProfileView = "2" // When a user's profile is viewed
-	TypeMessage     = "3" // When a user receives a message (already implemented)
+	TypeProfileView = "0" // When a user's profile is viewed
+	TypeUnlike      = "1" // When a connected user "unlikes" them
+	TypeMessage     = "2" // When a user receives a message (already implemented)
+	TypeLike        = "3" // When a user receives a "like"
 	TypeMutualLike  = "4" // When a user they "liked" likes them back (mutual match)
-	TypeUnlike      = "5" // When a connected user "unlikes" them
 )
 
 // NotificationPayload represents the payload sent to the notification service
