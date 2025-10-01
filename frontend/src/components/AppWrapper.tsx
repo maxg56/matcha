@@ -12,6 +12,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage';
 import SettingsPage from '../pages/SettingsPage';
 import EditProfilePage from '../pages/EditProfilePage';
 import PremiumPage from '../pages/PremiumPage';
+import GoodbyePage from '../pages/GoodbyePage';
 import { AuthenticatedLayout } from './layout/AuthenticatedLayout';
 import { RootRedirect } from './RootRedirect';
 import { NotificationButton } from './Notifications'
@@ -35,6 +36,7 @@ export function AppWrapper() {
             <Route path="/inscription" element={<InscriptionPage />} />
             <Route path="/mot-de-passe-oublie" element={<ProtectedRoute requireAuth={false}><ForgotPasswordPage /></ProtectedRoute>} />
             <Route path="/reinitialiser-mot-de-passe" element={<ProtectedRoute requireAuth={false}><ResetPasswordPage /></ProtectedRoute>} />
+            <Route path="/goodbye" element={<GoodbyePage />} />
 
             {/* Main app routes */}
             <Route path="/app" element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>

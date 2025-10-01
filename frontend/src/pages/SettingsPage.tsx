@@ -16,8 +16,11 @@ import {
 } from 'lucide-react';
 import { SettingItem, SettingSection, PremiumSection } from '@/components/settings';
 import { locationService } from '@/services/locationService';
+import { userService } from '@/services/userService';
+import { useAuthStore } from '@/stores/authStore';
 import { useAuth } from '@/hooks';
 import {useNavigate } from 'react-router-dom';
+
 
 const mockUser = {
   premium: false
@@ -25,7 +28,7 @@ const mockUser = {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   
   const [notifications, setNotifications] = useState({
@@ -75,6 +78,49 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      alert("Erreur : utilisateur non connecté.");
+      return;
+    }
+
+    const confirmMessage = "Êtes-vous sûr de vouloir supprimer votre compte ?\n\nCette action est irréversible et supprimera :\n• Votre profil et toutes vos informations\n• Vos photos et médias\n• Vos conversations et matches\n• Tout votre historique d'activité\n\nTapez 'SUPPRIMER' pour confirmer :";
+    
+    const userInput = window.prompt(confirmMessage);
+    
+    if (userInput === 'SUPPRIMER') {
+      try {
+        await userService.deleteAccount(user.id);
+        
+        // Déconnecter l'utilisateur et rediriger
+        await logout();
+        navigate('/goodbye');
+        
+        alert("Votre compte a été supprimé avec succès.");
+      } catch (error) {
+        console.error('Erreur lors de la suppression du compte:', error);
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : "Erreur lors de la suppression du compte.";
+        alert(errorMessage);
+      }
+    } else if (userInput !== null) {
+      alert("Suppression annulée. Vous devez taper exactement 'SUPPRIMER' pour confirmer.");
+    }
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm("Êtes-vous sûr de vouloir vous déconnecter ?")) {
+      try {
+        await logout();
+        navigate('/login');
+      } catch (error) {
+        console.error('Erreur lors de la déconnexion:', error);
+        alert("Erreur lors de la déconnexion.");
+      }
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -83,6 +129,7 @@ export default function SettingsPage() {
       console.error('Erreur lors de la déconnexion:', error);
     }
   };
+
   return (
     <div className="p-4 space-y-6">
         {/* Notifications */}
@@ -332,13 +379,15 @@ export default function SettingsPage() {
             icon={<Trash2 className="h-4 w-4" />}
             title="Supprimer le compte"
             description="Supprimer définitivement votre compte"
-            onClick={() => {}}
+            onClick={handleDeleteAccount}
             className="text-destructive"
           />
 
           <SettingItem
             icon={<LogOut className="h-4 w-4" />}
             title="Se déconnecter"
+            description="Vous déconnecter de votre session"
+
             onClick={handleLogout}
             className="text-destructive"
           />

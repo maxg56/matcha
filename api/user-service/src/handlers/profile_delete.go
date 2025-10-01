@@ -29,7 +29,7 @@ func DeleteProfileHandler(c *gin.Context) {
 	}
 
 	// Users can only delete their own profile
-	if uint(id) != authenticatedUserID.(uint) {
+	if uint(id) != uint(authenticatedUserID.(int)) {
 		utils.RespondError(c, http.StatusForbidden, "cannot delete another user's profile")
 		return
 	}
@@ -47,6 +47,18 @@ func DeleteProfileHandler(c *gin.Context) {
 			tx.Rollback()
 		}
 	}()
+
+	// Delete ALL message reactions for messages sent by this user AND reactions made by this user
+	if err := tx.Exec(`
+		DELETE FROM message_reactions 
+		WHERE message_id IN (
+			SELECT id FROM messages WHERE sender_id = ?
+		) OR user_id = ?
+	`, user.ID, user.ID).Error; err != nil {
+		tx.Rollback()
+		utils.RespondError(c, http.StatusInternalServerError, "failed to delete message reactions")
+		return
+	}
 
 	// Delete related tags
 	if err := tx.Where("user_id = ?", user.ID).Delete(&models.UserTag{}).Error; err != nil {
