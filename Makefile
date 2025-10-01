@@ -6,7 +6,7 @@
 #    By: maxence <maxence@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/28 20:57:00 by maxence           #+#    #+#              #
-#    Updated: 2025/10/01 14:03:41 by maxence          ###   ########.fr        #
+#    Updated: 2025/10/01 17:01:55 by maxence          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,7 +39,7 @@ restart: down all
 prod:
 	@if [ -f ".env" ]; then \
 		echo "Creating volumes..."; \
-		mkdir -p volumes/ volumes/redis volumes/data volumes/caddylog volumes/kibana volumes/certs ;\
+		mkdir -p volumes/ volumes/redis volumes/data volumes/media_uploads; \
 		echo "Launching containers..."; \
 		$(DOCKER_COMPOSE_CMD) --env-file .env -p $(NAME) -f $(DOCKER_COMPOSE_PATH_PROD) up --build -d; \
 	else \
