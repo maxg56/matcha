@@ -13,6 +13,7 @@ func SetupUserRoutes(r *gin.Engine) {
 	// Public routes
 	user.GET("/profile/:id", proxy.ProxyRequest("user", "/api/v1/users/profile/:id"))
 	user.GET("/:id/images", proxy.ProxyRequest("user", "/api/v1/users/:id/images"))
+	user.GET("/:id/online-status", proxy.ProxyRequest("user", "/api/v1/users/:id/online-status"))
 	
 	// Health check endpoint
 	user.GET("/", proxy.ProxyRequest("user", "/health"))
