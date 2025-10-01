@@ -44,7 +44,8 @@ export interface UserProfile {
   tags?: string[];
   images?: string[];
   created_at: string;
-  
+  last_seen?: string; // Dernière connexion de l'utilisateur
+
   // Propriétés calculées/héritées pour compatibilité
   profile_photos?: string[]; // alias pour images
   interests?: string[]; // alias pour tags
