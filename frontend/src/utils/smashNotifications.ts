@@ -184,7 +184,7 @@ export class SmashNotificationSystem {
     try {
       // Send to backend notification service if needed
       // This could integrate with the notify-service mentioned in CLAUDE.md
-      console.log('[SmashNotificationSystem]', status);
+      // console.log('[SmashNotificationSystem]', status);
       
       // You could also dispatch custom events that the main app listens to
       const event = new CustomEvent('smash-upload-notification', { 

@@ -173,7 +173,6 @@ class MatchService {
             error.message.includes('rate') ||
             error.message.includes('500') ||
             error.message.includes('failed to record interaction')) {
-          console.log(`Retrying request in ${delay}ms... (${retries} retries left)`);
           await new Promise(resolve => setTimeout(resolve, delay));
           return this.withRetry(fn, retries - 1, delay * 2); // Exponential backoff
         }

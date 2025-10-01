@@ -15,7 +15,6 @@ export class ChatApi {
    */
   async getUserConversations(): Promise<Conversation[]> {
     const response = await apiService.get<ConversationListResponse>('/api/v1/chat/conversations');
-    console.log('Raw API response for conversations:', response);
     return response?.conversations || [];
   }
 

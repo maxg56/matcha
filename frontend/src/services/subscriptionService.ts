@@ -99,24 +99,20 @@ class SubscriptionService {
    * Redirige vers Stripe Checkout
    */
   async redirectToCheckout(sessionId: string): Promise<void> {
-    console.log('🔄 Début de redirectToCheckout avec sessionId:', sessionId);
-    console.log('🔑 Clé publique Stripe:', import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+   
 
     const stripe = await import('@stripe/stripe-js').then(module =>
       module.loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
     );
 
-    console.log('📦 Stripe instance chargée:', !!stripe);
 
     const stripeInstance = stripe;
     if (stripeInstance) {
-      console.log('✅ Stripe instance valide, redirection en cours...');
       const { error } = await stripeInstance.redirectToCheckout({ sessionId });
       if (error) {
         console.error('❌ Erreur lors de la redirection vers Stripe:', error);
         throw new Error(error.message || 'Erreur lors de la redirection vers le paiement');
       }
-      console.log('🚀 Redirection réussie');
     } else {
       console.error('❌ Impossible de charger Stripe');
       throw new Error('Impossible de charger Stripe');

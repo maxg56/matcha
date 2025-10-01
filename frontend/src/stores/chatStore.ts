@@ -179,13 +179,13 @@ export const useChatStore = create<ChatStore>()(
         try {
           const messages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
 
-          console.log('ChatStore: fetchMessages response:', {
-            conversationId,
-            messagesCount: messages.length,
-            messagesWithReactions: messages.filter(m => m.reactions && m.reactions.length > 0).length,
-            sampleMessage: messages[0],
-            allMessages: messages.map(m => ({ id: m.id, hasReactions: !!m.reactions, reactionsCount: m.reactions?.length || 0 }))
-          });
+          // console.log('ChatStore: fetchMessages response:', {
+          //   conversationId,
+          //   messagesCount: messages.length,
+          //   messagesWithReactions: messages.filter(m => m.reactions && m.reactions.length > 0).length,
+          //   sampleMessage: messages[0],
+          //   allMessages: messages.map(m => ({ id: m.id, hasReactions: !!m.reactions, reactionsCount: m.reactions?.length || 0 }))
+          // });
 
           set({
             messages: messages.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
@@ -341,7 +341,7 @@ export const useChatStore = create<ChatStore>()(
             get().addMessage(chatMessage as Message);
           } else if (message.type === MessageType.CHAT_ACK) {
             // Accusé de réception du message envoyé
-            console.log('Message acknowledgment received:', data);
+
           }
         };
 
@@ -349,14 +349,14 @@ export const useChatStore = create<ChatStore>()(
         const connectionHandler: MessageHandler = (data) => {
           if (data.status === 'connected') {
             set({ isConnected: true });
-            console.log('Chat WebSocket connected');
+            // console.log('Chat WebSocket connected');
           }
         };
 
         // Handler pour les réactions
         const reactionHandler: MessageHandler = (data, message) => {
           if (message.type === MessageType.REACTION_UPDATE) {
-            console.log('Reaction update received:', data);
+            // console.log('Reaction update received:', data);
 
             try {
               // Extraire les données de la réaction
@@ -467,7 +467,7 @@ export const useChatStore = create<ChatStore>()(
       },
 
       sendReactionWebSocket: (messageId: number, emoji: string, action: 'add' | 'remove') => {
-        console.log('ChatStore: sendReactionWebSocket called:', { messageId, emoji, action, isConnected: webSocketService.isConnected() });
+       
 
         // Validate message ID - ensure it's a real database ID, not a temporary one
         if (!messageId || messageId <= 0) {
@@ -486,7 +486,7 @@ export const useChatStore = create<ChatStore>()(
         }
 
         if (!webSocketService.isConnected()) {
-          console.log('ChatStore: WebSocket not connected, using HTTP fallback');
+          // console.log('ChatStore: WebSocket not connected, using HTTP fallback');
           // Fallback to HTTP API
           if (action === 'add') {
             get().addReaction(messageId, emoji);
@@ -502,7 +502,7 @@ export const useChatStore = create<ChatStore>()(
           message_id: messageId,
           emoji
         };
-        console.log('ChatStore: Sending WebSocket reaction message:', message);
+        // console.log('ChatStore: Sending WebSocket reaction message:', message);
         webSocketService.sendMessage(message);
       },
 

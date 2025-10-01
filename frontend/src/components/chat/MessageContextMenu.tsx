@@ -50,7 +50,7 @@ export function MessageContextMenu({
   }, [isOpen, onClose]);
 
   const handleEmojiClick = (emoji: string) => {
-    console.log('MessageContextMenu: Sending reaction:', { messageId, emoji, action: 'add' });
+    // console.log('MessageContextMenu: Sending reaction:', { messageId, emoji, action: 'add' });
     sendReactionWebSocket(messageId, emoji, 'add');
     onEmojiSelect(emoji);
     onClose();

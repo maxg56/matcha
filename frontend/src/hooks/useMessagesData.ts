@@ -156,7 +156,7 @@ export function useMessagesData() {
   const loadConversations = async (): Promise<Conversation[]> => {
     try {
       const response = await chatApi.getUserConversations();
-      console.log('Conversations API response:', response);
+      // console.log('Conversations API response:', response);
       return Array.isArray(response) ? response : [];
     } catch (error) {
       console.warn('Failed to load conversations:', error);
@@ -182,7 +182,7 @@ export function useMessagesData() {
 
       const filteredCount = conversations.length - activeConversations.length;
       if (filteredCount > 0) {
-        console.log(`🙈 Filtered out ${filteredCount} conversations from unmatched users`);
+        // console.log(`🙈 Filtered out ${filteredCount} conversations from unmatched users`);
       }
 
       return activeConversations;
@@ -196,7 +196,7 @@ export function useMessagesData() {
   const loadMatches = async (): Promise<{ matches: Match[]; count: number; user_id: number }> => {
     try {
       const response = await matchService.getMatches();
-      console.log('Matches API response:', response);
+      //console.log('Matches API response:', response);
       return response || { matches: [], count: 0, user_id: 0 };
     } catch (error) {
       console.warn('Failed to load matches:', error);
@@ -213,7 +213,7 @@ export function useMessagesData() {
       const maxConcurrentRequests = 5;
       const matchesToUpdate = prevMatches.slice(0, maxConcurrentRequests);
 
-      console.log(`Mise à jour du statut de présence pour ${matchesToUpdate.length} utilisateurs`);
+      //console.log(`Mise à jour du statut de présence pour ${matchesToUpdate.length} utilisateurs`);
 
       // Lancer les requêtes de manière asynchrone
       Promise.allSettled(
@@ -294,7 +294,7 @@ export function useMessagesData() {
           activeConversations.map(conversation => transformConversationToUI(conversation))
         );
         uiMatches.push(...transformedConversations);
-        console.log('Transformed conversations:', transformedConversations.length);
+        //console.log('Transformed conversations:', transformedConversations.length);
       }
 
       // 3. Identifier les utilisateurs qui ont déjà des conversations actives (pour éviter les doublons)
@@ -306,11 +306,11 @@ export function useMessagesData() {
       const matchesWithoutConversations = await processMatchesWithoutConversations(matchesData, userIdsWithConversations);
       uiMatches.push(...matchesWithoutConversations);
 
-      console.log('Final UI matches:', {
-        conversations: uiMatches.filter(m => m.type === 'conversation').length,
-        newMatches: uiMatches.filter(m => m.type === 'new_match').length,
-        total: uiMatches.length
-      });
+      // console.log('Final UI matches:', {
+      //   conversations: uiMatches.filter(m => m.type === 'conversation').length,
+      //   newMatches: uiMatches.filter(m => m.type === 'new_match').length,
+      //   total: uiMatches.length
+      // });
       setMatches(uiMatches);
     } catch (err) {
       console.error('Failed to load messages data:', err);

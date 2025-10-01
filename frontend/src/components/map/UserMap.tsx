@@ -149,7 +149,7 @@ export function UserMap({
 
           // Si pas de localisation actuelle, essayer d'en définir une automatiquement
           if (!currentLocation) {
-            console.log('Tentative de définition automatique de la localisation...');
+            // console.log('Tentative de définition automatique de la localisation...');
             try {
               // Essayer d'abord la géolocalisation
               const position = await locationService.getBrowserLocation();
@@ -160,7 +160,7 @@ export function UserMap({
               setCurrentLocation([position.coords.latitude, position.coords.longitude]);
               setMapCenter([position.coords.latitude, position.coords.longitude]);
               setError(null);
-              console.log('Localisation automatique réussie');
+              // console.log('Localisation automatique réussie');
               // Recharger les matches après avoir défini la localisation
               setTimeout(() => loadMatchedUsers(), 1000);
             } catch {
@@ -284,7 +284,7 @@ export function UserMap({
       setMapCenter(userCoords);
       setIsMapInitialized(true);
 
-      console.log('Carte centrée sur la position de l\'utilisateur (API):', userCoords);
+      //  console.log('Carte centrée sur la position de l\'utilisateur (API):', userCoords);
     } catch (err) {
       console.log('Position de l\'utilisateur non disponible via API, essai géolocalisation navigateur:', err);
 
@@ -302,7 +302,7 @@ export function UserMap({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
-          console.log('Position du navigateur sauvegardée automatiquement');
+          // console.log('Position du navigateur sauvegardée automatiquement');
         } catch (saveErr) {
           console.warn('Erreur lors de la sauvegarde automatique de la position:', saveErr);
         }
@@ -311,7 +311,7 @@ export function UserMap({
         setMapCenter(userCoords);
         setIsMapInitialized(true);
 
-        console.log('Carte centrée sur la géolocalisation du navigateur:', userCoords);
+        // console.log('Carte centrée sur la géolocalisation du navigateur:', userCoords);
       } catch (geoErr) {
         console.log('Impossible d\'obtenir la géolocalisation, utilisation de Paris par défaut:', geoErr);
         // Dernier fallback: Paris (ne pas sauvegarder automatiquement Paris)

@@ -155,7 +155,7 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
   const loadMoreCandidates = useCallback(async () => {
     if (state.isLoadingMore || !state.hasMoreCandidates) return;
 
-    console.log('📥 Chargement de candidats supplémentaires...');
+    // console.log('📥 Chargement de candidats supplémentaires...');
     await loadCandidates(false, state.currentOffset);
   }, [loadCandidates, state.isLoadingMore, state.hasMoreCandidates, state.currentOffset]);
 
@@ -167,7 +167,7 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
       // Si on arrive à la fin de la liste, essayer de charger plus
       if (nextIndex >= prev.candidates.length) {
         if (prev.hasMoreCandidates && !prev.isLoadingMore) {
-          console.log('🔄 Fin de liste atteinte, chargement de nouveaux candidats...');
+          // console.log('🔄 Fin de liste atteinte, chargement de nouveaux candidats...');
           loadMoreCandidates();
         }
         return prev; // Ne pas changer l'index pour l'instant
@@ -192,7 +192,7 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
         // Si on approche de la fin (moins de 5 profils restants), charger plus
         const remainingProfiles = prev.candidates.length - nextIndex;
         if (remainingProfiles <= 5 && prev.hasMoreCandidates && !prev.isLoadingMore) {
-          console.log('🔄 Approche de la fin de liste, chargement préventif...');
+          // console.log('🔄 Approche de la fin de liste, chargement préventif...');
           setTimeout(() => loadMoreCandidates(), 500);
         }
       }
@@ -234,7 +234,7 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
 
   // Fonction refresh manuelle
   const refresh = useCallback(async () => {
-    console.log('🔄 Refresh manuel des candidats...');
+    // console.log('🔄 Refresh manuel des candidats...');
     // loadCandidates avec reset=true fait déjà le reset complet
     await loadCandidates(true, 0);
   }, [loadCandidates]);
@@ -254,9 +254,9 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
     const currentParamsString = JSON.stringify(stableParams);
 
     if (paramsStringRef.current && paramsStringRef.current !== currentParamsString) {
-      console.log('🔄 Changement de filtres détecté, rechargement des candidats...');
-      console.log('Anciens paramètres:', paramsStringRef.current);
-      console.log('Nouveaux paramètres:', currentParamsString);
+      // console.log('🔄 Changement de filtres détecté, rechargement des candidats...');
+      // console.log('Anciens paramètres:', paramsStringRef.current);
+      // console.log('Nouveaux paramètres:', currentParamsString);
 
       // Délai pour éviter les appels trop rapides lors de changements multiples
       const timeoutId = setTimeout(() => {

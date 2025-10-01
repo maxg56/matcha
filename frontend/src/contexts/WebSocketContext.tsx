@@ -23,7 +23,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   // Initialiser les handlers WebSocket quand l'utilisateur est connecté
   useEffect(() => {
     if (user?.id) {
-      console.log('Initializing WebSocket connections for user:', user.id);
+      // console.log('Initializing WebSocket connections for user:', user.id);
       
       // Initialiser le WebSocket pour le chat
       initializeWebSocket();

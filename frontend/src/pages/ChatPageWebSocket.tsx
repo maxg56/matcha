@@ -99,10 +99,10 @@ export default function ChatPageWebSocket() {
   useEffect(() => {
     const chatHandler = (data: unknown, message: { type: string }) => {
       if (message.type === 'chat_message') {
-        console.log('Nouveau message WebSocket reçu:', data);
+        // console.log('Nouveau message WebSocket reçu:', data);
         // Le message sera automatiquement ajouté au store via chatStore
       } else if (message.type === 'chat_ack') {
-        console.log('Accusé de réception:', data);
+        // console.log('Accusé de réception:', data);
         setIsTyping(false);
       }
     };
