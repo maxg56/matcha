@@ -59,6 +59,9 @@ export interface MatchingAlgorithmParams {
   age_min?: number;
   age_max?: number;
   algorithm_type?: 'vector_based' | 'basic';
+  offset?: number; // Pour la pagination
+  page?: number; // Alternative à offset
+  reset_seen?: boolean; // Pour reset la liste des profils déjà vus côté serveur
 }
 
 export interface MatchesResponse {
@@ -228,12 +231,15 @@ class MatchService {
   async getMatchingCandidates(params: MatchingAlgorithmParams = {}): Promise<CandidatesResponse> {
     return this.withRetry(async () => {
       const queryParams = new URLSearchParams();
-      
+
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.max_distance) queryParams.append('max_distance', params.max_distance.toString());
       if (params.age_min) queryParams.append('age_min', params.age_min.toString());
       if (params.age_max) queryParams.append('age_max', params.age_max.toString());
       if (params.algorithm_type) queryParams.append('algorithm_type', params.algorithm_type);
+      if (params.offset) queryParams.append('offset', params.offset.toString());
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.reset_seen) queryParams.append('reset_seen', 'true');
 
       const endpoint = `${this.baseEndpoint}/algorithm${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       return apiService.get<CandidatesResponse>(endpoint);
