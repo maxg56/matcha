@@ -20,7 +20,7 @@ interface ImageDeleteResponse {
 }
 
 class ImageService {
-  private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8443';
+  private baseURL = import.meta.env.VITE_API_URL || 'https://localhost:8443';
 
   async uploadImage(
     file: File, 
