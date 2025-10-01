@@ -12,9 +12,9 @@ export function DiscoverHeader({ onOpenFilters, onMoreOptions }: DiscoverHeaderP
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg">
             <img
-              src="/public/EmojiMatcha.png"
-              alt="Heart Icon"
-              className="h-8 w-8 text-white fill-current"
+              src="/EmojiMatcha.png"
+              alt="Matcha Logo"
+              className="h-8 w-8 object-contain"
             />
           </div>
           <div>
