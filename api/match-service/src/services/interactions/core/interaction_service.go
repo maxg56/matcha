@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"match-service/src/conf"
@@ -32,11 +33,8 @@ func (i *InteractionService) GetUserService() *users.UserService {
 
 // LikeUser records a like interaction and checks for mutual matches
 func (i *InteractionService) LikeUser(userID, targetUserID int) (map[string]interface{}, error) {
-	log.Printf("🔍 [DEBUG Like] User %d is liking user %d", userID, targetUserID)
-
 	// Validate that target user exists
 	if err := i.userService.ValidateUserExists(targetUserID); err != nil {
-		log.Printf("❌ [ERROR Like] Target user %d does not exist", targetUserID)
 		return nil, errors.New("target user does not exist")
 	}
 
@@ -47,22 +45,16 @@ func (i *InteractionService) LikeUser(userID, targetUserID int) (map[string]inte
 
 	if result.Error == nil {
 		// Update existing interaction
-		log.Printf("🔍 [DEBUG Like] Updating existing interaction ID %d to 'like'", existingInteraction.ID)
 		existingInteraction.InteractionType = "like"
 		conf.DB.Save(&existingInteraction)
 	} else {
 		// Create new interaction
-		log.Printf("🔍 [DEBUG Like] Creating new like interaction")
 		interaction := models.UserInteraction{
 			UserID:          uint(userID),
 			TargetUserID:    uint(targetUserID),
 			InteractionType: "like",
 		}
-		if err := conf.DB.Create(&interaction).Error; err != nil {
-			log.Printf("❌ [ERROR Like] Failed to create interaction: %v", err)
-		} else {
-			log.Printf("✅ [SUCCESS Like] Created interaction with ID %d", interaction.ID)
-		}
+		conf.DB.Create(&interaction)
 	}
 
 	response := map[string]interface{}{
@@ -72,38 +64,24 @@ func (i *InteractionService) LikeUser(userID, targetUserID int) (map[string]inte
 	}
 
 	// Send like notification to the target user
-	if err := i.notificationService.SendLikeNotification(targetUserID, userID); err != nil {
-		log.Printf("⚠️ [WARNING] Failed to send like notification: %v", err)
-		// Don't fail the like operation if notification fails
-	}
+	i.notificationService.SendLikeNotification(targetUserID, userID)
 
 	// Check for mutual like to create match
-	log.Printf("🔍 [DEBUG Like] Checking for mutual like: looking for user %d -> user %d", targetUserID, userID)
 	var mutualLike models.UserInteraction
 	mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND interaction_type = ?",
 		targetUserID, userID, "like").First(&mutualLike)
 
 	if mutualResult.Error == nil {
-		log.Printf("✅ [DEBUG Like] Mutual like found! Creating match between users %d and %d", userID, targetUserID)
 		// Create match
 		match, err := matches.CreateMatch(userID, targetUserID)
 		if err == nil {
 			response["match_created"] = true
 			response["match_id"] = match.ID
-			log.Printf("✅ [SUCCESS Match] Match created with ID %d", match.ID)
 
 			// Send mutual like notifications to both users
-			if err := i.notificationService.SendMutualLikeNotification(targetUserID, userID); err != nil {
-				log.Printf("⚠️ [WARNING] Failed to send mutual like notification to user %d: %v", targetUserID, err)
-			}
-			if err := i.notificationService.SendMutualLikeNotification(userID, targetUserID); err != nil {
-				log.Printf("⚠️ [WARNING] Failed to send mutual like notification to user %d: %v", userID, err)
-			}
-		} else {
-			log.Printf("❌ [ERROR Match] Failed to create match: %v", err)
+			i.notificationService.SendMutualLikeNotification(targetUserID, userID)
+			i.notificationService.SendMutualLikeNotification(userID, targetUserID)
 		}
-	} else {
-		log.Printf("🔍 [DEBUG Like] No mutual like found. User %d has not liked user %d yet. Error: %v", targetUserID, userID, mutualResult.Error)
 	}
 
 	return response, nil
@@ -114,7 +92,44 @@ func (i *InteractionService) UnlikeUser(userID, targetUserID int) (map[string]in
 	// Check if there was a match before unlinking
 	wasMatched := matches.IsMatched(userID, targetUserID)
 
-	// Remove or update the interaction
+	// If they were matched, use the full unmatch logic to clean everything up
+	if wasMatched {
+		// Use interaction manager for complete unmatch (includes conversation deletion and like transformation)
+		// Note: We need to avoid circular imports, so we'll use a simpler approach
+		// Just transform the interactions and deactivate match here
+		
+		// Transform all like interactions between these users to "pass" 
+		var interactions []models.UserInteraction
+		err := conf.DB.Where(
+			"((user_id = ? AND target_user_id = ?) OR (user_id = ? AND target_user_id = ?)) AND interaction_type = ?",
+			userID, targetUserID, targetUserID, userID, "like",
+		).Find(&interactions).Error
+		
+		if err != nil {
+			return nil, fmt.Errorf("failed to find interactions: %v", err)
+		}
+		
+		// Transform each like to a pass
+		for _, interaction := range interactions {
+			interaction.InteractionType = "pass"
+			conf.DB.Save(&interaction)
+		}
+		
+		// Deactivate the match
+		matches.DeactivateMatch(userID, targetUserID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmatch users: %v", err)
+		}
+		
+		return map[string]interface{}{
+			"action":         "unlike",
+			"target_user_id": targetUserID,
+			"success":        true,
+			"message":        "Users unliked and fully unmatched (conversation deleted)",
+		}, nil
+	}
+
+	// If they weren't matched, just remove the like interaction
 	var existingInteraction models.UserInteraction
 	result := conf.DB.Where("user_id = ? AND target_user_id = ?", userID, targetUserID).
 		First(&existingInteraction)
@@ -122,17 +137,6 @@ func (i *InteractionService) UnlikeUser(userID, targetUserID int) (map[string]in
 	if result.Error == nil {
 		// Delete the interaction
 		conf.DB.Delete(&existingInteraction)
-	}
-
-	// Deactivate any existing match
-	matches.DeactivateMatch(userID, targetUserID)
-
-	// Send unlike notification only if they were previously matched
-	if wasMatched {
-		if err := i.notificationService.SendUnlikeNotification(targetUserID, userID); err != nil {
-			log.Printf("⚠️ [WARNING] Failed to send unlike notification: %v", err)
-			// Don't fail the unlike operation if notification fails
-		}
 	}
 
 	response := map[string]interface{}{
