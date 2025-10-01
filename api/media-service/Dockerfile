@@ -1,21 +1,3 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
-
-# Install build dependencies
-RUN apk add --no-cache git
-
-WORKDIR /app
-
-# Copy go mod files
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Copy source code
-COPY src/ ./src/
-
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o main src/main.go
-
 # Development stage
 FROM golang:1.21-alpine AS development
 
@@ -36,6 +18,24 @@ USER mediaservice
 
 # Development command
 CMD ["go", "run", "src/main.go"]
+
+# Build stage
+FROM golang:1.21-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY src/ ./src/
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o main src/main.go
 
 # Production stage
 FROM alpine:latest AS production

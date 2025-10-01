@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useRegistrationStore } from '@/stores/registrationStore';
-import { RegistrationValidator } from '@/utils/registrationValidator';
 import type { RegistrationData } from '@/types/registration';
 
 /**
