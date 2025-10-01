@@ -28,21 +28,21 @@ export class WebSocketConnection {
     let baseUrl: string;
 
     if (wsUrl) {
-      console.log('WebSocket: Using configured URL:', wsUrl);
+      // console.log('WebSocket: Using configured URL:', wsUrl);
       baseUrl = wsUrl;
     } else {
       // Fallback vers l'ancien système
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = import.meta.env.VITE_WS_HOST || window.location.host;
       baseUrl = `${protocol}//${host}/ws`;
-      console.log('WebSocket: Using fallback URL:', baseUrl);
+      // console.log('WebSocket: Using fallback URL:', baseUrl);
     }
 
     // Ajouter le token comme paramètre de requête si disponible
     if (token) {
       const separator = baseUrl.includes('?') ? '&' : '?';
       const finalUrl = `${baseUrl}${separator}token=${encodeURIComponent(token)}`;
-      console.log('WebSocket: URL with token parameter');
+      // console.log('WebSocket: URL with token parameter');
       return finalUrl;
     }
 
@@ -73,7 +73,7 @@ export class WebSocketConnection {
 
     try {
       const url = this.getWebSocketURL();
-      console.log('WebSocket: Connecting...', { url, attempt: this.reconnectAttempts + 1 });
+      // console.log('WebSocket: Connecting...', { url, attempt: this.reconnectAttempts + 1 });
       this.ws = new WebSocket(url);
       
       await new Promise<void>((resolve, reject) => {
@@ -84,10 +84,10 @@ export class WebSocketConnection {
         this.ws!.onopen = () => {
           clearTimeout(timeout);
           const connectionTime = Date.now() - this.connectionAttemptTimestamp;
-          console.log('WebSocket: Connected successfully', {
-            connectionTime: `${connectionTime}ms`,
-            attempt: this.reconnectAttempts + 1
-          });
+          // console.log('WebSocket: Connected successfully', {
+          //   connectionTime: `${connectionTime}ms`,
+          //   attempt: this.reconnectAttempts + 1
+          // });
           this.reconnectAttempts = 0;
           this.isConnecting = false;
           this.lastPongReceived = Date.now();
@@ -103,12 +103,6 @@ export class WebSocketConnection {
           this.stopPingInterval();
           this.connectionHealth = { healthy: false, lastCheck: Date.now() };
 
-          console.log('WebSocket: Connection closed', {
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean,
-            reconnectAttempts: this.reconnectAttempts
-          });
 
           onClose?.(event);
 
@@ -156,7 +150,7 @@ export class WebSocketConnection {
     this.reconnectAttempts++;
     const delay = this.config.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
     
-    console.log(`WebSocket: Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    // console.log(`WebSocket: Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
     
     setTimeout(async () => {
       try {
@@ -208,7 +202,7 @@ export class WebSocketConnection {
         }
 
         try {
-          console.log('WebSocket: Sending ping');
+          // console.log('WebSocket: Sending ping');
           this.ws.send(JSON.stringify({ type: 'ping' }));
         } catch (error) {
           console.error('WebSocket: Failed to send ping', error);
@@ -227,7 +221,7 @@ export class WebSocketConnection {
 
   private handlePong(): void {
     this.lastPongReceived = Date.now();
-    console.log('WebSocket: Pong received');
+    // console.log('WebSocket: Pong received');
   }
 
   // Method to be called by message handler when pong is received
@@ -273,6 +267,6 @@ export class WebSocketConnection {
       this.ws = null;
     }
 
-    console.log('WebSocket: Disconnected');
+    // console.log('WebSocket: Disconnected');
   }
 }

@@ -143,7 +143,6 @@ class LocationService {
 
     // Si une requête est déjà en cours, on retourne la même promesse
     if (this.geolocationPromise) {
-      console.log('Géolocalisation déjà en cours, réutilisation de la promesse existante');
       return this.geolocationPromise;
     }
 

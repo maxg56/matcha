@@ -188,7 +188,7 @@ export function useRegistrationLogic() {
     try {
       // 0. Vérifier l'authentification avant de commencer
       try {
-        console.log('Checking auth state before profile completion...');
+        // console.log('Checking auth state before profile completion...');
         await useAuthStore.getState().checkAuth();
         
         // Si checkAuth réussit, vérifier quand même l'état
@@ -197,10 +197,10 @@ export function useRegistrationLogic() {
           throw new Error('Not authenticated after auth check');
         }
         
-        console.log('Auth check successful:', {
-          userId: authState.user.id,
-          isAuthenticated: authState.isAuthenticated
-        });
+        // console.log('Auth check successful:', {
+        //   userId: authState.user.id,
+        //   isAuthenticated: authState.isAuthenticated
+        // });
       } catch (authError) {
         console.error('Auth check failed:', authError);
         
@@ -208,7 +208,7 @@ export function useRegistrationLogic() {
         const refreshToken = authService.getRefreshToken();
         if (refreshToken) {
           try {
-            console.log('Attempting to refresh token...');
+            // console.log('Attempting to refresh token...');
             // Utiliser le service API centralisé pour le refresh token
             const tokenData = await apiService.post<{
               access_token: string;
@@ -219,7 +219,7 @@ export function useRegistrationLogic() {
 
             // Recheck auth after refresh
             await useAuthStore.getState().checkAuth();
-            console.log('Token refresh successful');
+            // console.log('Token refresh successful');
           } catch (refreshError) {
             console.error('Token refresh failed:', refreshError);
             throw new Error('Authentication expired. Please login again.');
@@ -255,12 +255,12 @@ export function useRegistrationLogic() {
       const currentUser = authState.user;
       const isAuthenticated = authState.isAuthenticated;
       
-      console.log('Auth state before profile update:', {
-        user: currentUser,
-        isAuthenticated,
-        hasToken: !!authService.getAccessToken(),
-        hasRefreshToken: !!authService.getRefreshToken()
-      });
+      // console.log('Auth state before profile update:', {
+      //   user: currentUser,
+      //   isAuthenticated,
+      //   hasToken: !!authService.getAccessToken(),
+      //   hasRefreshToken: !!authService.getRefreshToken()
+      // });
       
       if (!currentUser?.id || !isAuthenticated) {
         console.error('Authentication failed:', { currentUser, isAuthenticated });
@@ -274,7 +274,7 @@ export function useRegistrationLogic() {
         throw new Error('Authentication token not found, please login again');
       }
 
-      console.log('Attempting to update profile with payload:', profileUpdatePayload);
+      // console.log('Attempting to update profile with payload:', profileUpdatePayload);
       await useUserStore.getState().updateProfile(profileUpdatePayload);
       
       // 5. Succès - rediriger vers la page de découverte

@@ -44,7 +44,7 @@ class WebSocketService {
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WebSocketResponse = JSON.parse(event.data);
-      console.log('WebSocket: Message received', message);
+      // console.log('WebSocket: Message received', message);
 
       // Handle pong messages specifically for connection health
       if (message.type === 'pong') {
@@ -59,7 +59,7 @@ class WebSocketService {
   }
 
   private handleClose(event: CloseEvent): void {
-    console.log('WebSocket: Connection closed', event);
+    // console.log('WebSocket: Connection closed', event);
     // La reconnexion est gérée par WebSocketConnection
   }
 
@@ -72,17 +72,17 @@ class WebSocketService {
     if (!this.connection.isConnected()) {
       // Queue message for later sending when reconnected
       this.queueMessage(message);
-      console.log('WebSocket: Message queued (not connected)', message.type);
+      // console.log('WebSocket: Message queued (not connected)', message.type);
       return false;
     }
 
     const sent = this.connection.send(JSON.stringify(message));
     if (sent) {
-      console.log('WebSocket: Message sent', message);
+      // console.log('WebSocket: Message sent', message);
     } else {
       // Connection might have dropped, queue the message
       this.queueMessage(message);
-      console.log('WebSocket: Message queued (send failed)', message.type);
+      // console.log('WebSocket: Message queued (send failed)', message.type);
     }
     return sent;
   }
@@ -179,7 +179,7 @@ class WebSocketService {
       return;
     }
 
-    console.log(`WebSocket: Flushing ${this.messageQueue.length} queued messages`);
+    // console.log(`WebSocket: Flushing ${this.messageQueue.length} queued messages`);
 
     const messagesToSend = [...this.messageQueue];
     this.messageQueue = [];
@@ -188,7 +188,7 @@ class WebSocketService {
       if (retries < this.maxRetries) {
         const sent = this.connection.send(JSON.stringify(message));
         if (sent) {
-          console.log('WebSocket: Queued message sent', message.type);
+          // console.log('WebSocket: Queued message sent', message.type);
         } else {
           // Re-queue with increased retry count
           this.messageQueue.push({

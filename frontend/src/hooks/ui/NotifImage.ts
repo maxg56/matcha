@@ -23,13 +23,13 @@ export function Notification() {
 
     // Handler pour traiter les notifications reçues
     const notificationHandler: MessageHandler = (data, message) => {
-        console.log("Notification received:", data, message);
+        // console.log("Notification received:", data, message);
         
         // Traiter les différents types de notifications WebSocket
         if (message?.type === 'notification_received') {
             // Message venant du gateway
             const notifData = data;
-            console.log("Processing notification_received:", notifData);
+            // console.log("Processing notification_received:", notifData);
             
             // Convertir le type de notification numérique en string
             let notifType = 'message';
@@ -76,7 +76,7 @@ export function Notification() {
     };
 
     useEffect(() => {
-        console.log("Notification hook mounted", user?.id, token);
+        // console.log("Notification hook mounted", user?.id, token);
         // Ne crée pas de WebSocket si l'utilisateur n'est pas authentifié
         if (!user?.id || !token) {
             return;
@@ -105,7 +105,7 @@ export function Notification() {
         try {
             // Utiliser le service API centralisé
             const data = await apiService.get(`/api/v1/notifications/delete?user_id=${user.id}`);
-            console.log("Réponse backend:", data);
+            // console.log("Réponse backend:", data);
         } catch (error) {
             console.error("Failed to clear notifications:", error);
         }
