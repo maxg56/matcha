@@ -65,25 +65,12 @@ export class ChatApi {
     return apiService.put<{ message: string }>(`/api/v1/chat/conversations/${conversationId}/read`);
   }
 
-  /**
-   * Set user as online
-   */
-  async setUserOnline(): Promise<{ message: string }> {
-    return apiService.put<{ message: string }>('/api/v1/chat/presence/online');
-  }
-
-  /**
-   * Set user as offline
-   */
-  async setUserOffline(): Promise<{ message: string }> {
-    return apiService.put<{ message: string }>('/api/v1/chat/presence/offline');
-  }
 
   /**
    * Get user presence information
    */
-  async getUserPresence(userId: number): Promise<{ user_id: number; is_online: boolean; last_seen?: string; last_activity: string }> {
-    return apiService.get(`/api/v1/chat/users/${userId}/presence`);
+  async getUserPresence(userId: number): Promise<{ user_id: number; is_online: boolean; last_seen?: string; last_activity: string }> {await apiService.get<{ user_id: number; is_online: boolean; last_seen?: string; last_activity: string }>(`/api/v1/users/${userId}/online-status`);
+    return await apiService.get<{ user_id: number; is_online: boolean; last_seen?: string; last_activity: string }>(`/api/v1/users/${userId}/online-status`);
   }
 }
 

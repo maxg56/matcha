@@ -37,17 +37,19 @@ func InitDB() {
 
 	// Auto-migrate tables if environment variable is set
 	if getEnvWithDefault("AUTO_MIGRATE", "false") == "true" {
-		if err := autoMigrate(); err != nil {
-			log.Fatal("Failed to auto-migrate:", err)
-		}
+		log.Println("Skipping AutoMigrate to avoid constraint conflicts with existing views")
+		// if err := autoMigrate(); err != nil {
+		//	log.Fatal("Failed to auto-migrate:", err)
+		// }
 	}
 
 	log.Println("Database connection established successfully")
 }
 
 func autoMigrate() error {
+	// Skip User model migration to avoid view conflicts
 	return DB.AutoMigrate(
-		&models.User{},
+		// &models.User{}, // Temporarily disabled due to view dependencies
 		&models.Tag{},
 		&models.UserTag{},
 		&models.Image{},
