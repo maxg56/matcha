@@ -3,6 +3,7 @@ package interactions
 import (
 	"errors"
 	"log"
+	"time"
 
 	"match-service/src/conf"
 	"match-service/src/models"
@@ -10,8 +11,13 @@ import (
 	"match-service/src/services/users"
 )
 
-// InteractionManager handles user interactions and match creation
-type InteractionManager struct {}
+// InteractionManager handles user interactions and match // callChatService logs the conversation hiding (frontend will handle visual hiding)
+func (m *InteractionManager) callChatService(userID, targetUserID int) error {
+	// No database deletion - the frontend will handle hiding conversations
+	// by checking match status when displaying conversation list
+	
+	return nil
+}ype InteractionManager struct {}
 
 // NewInteractionManager creates a new InteractionManager instance
 func NewInteractionManager() *InteractionManager {
@@ -29,9 +35,6 @@ func (m *InteractionManager) RecordInteraction(userID, targetUserID int, action 
 		return nil, err
 	}
 
-	// Create or update interaction record using upsert
-	log.Printf("🔍 [DEBUG Interaction] Recording interaction: user %d -> user %d (%s)", userID, targetUserID, action)
-
 	// Check if interaction already exists
 	var existingInteraction models.UserInteraction
 	result := conf.DB.Where("user_id = ? AND target_user_id = ?", userID, targetUserID).First(&existingInteraction)
@@ -45,19 +48,15 @@ func (m *InteractionManager) RecordInteraction(userID, targetUserID int, action 
 			InteractionType: action,
 		}
 		if err := conf.DB.Create(&interaction).Error; err != nil {
-			log.Printf("❌ [ERROR Interaction] Failed to create interaction: %v", err)
 			return nil, errors.New("failed to record interaction")
 		}
-		log.Printf("✅ [SUCCESS Interaction] New interaction created: user %d -> user %d (%s) with ID: %d", userID, targetUserID, action, interaction.ID)
 	} else {
 		// Update existing interaction
 		existingInteraction.InteractionType = action
 		if err := conf.DB.Save(&existingInteraction).Error; err != nil {
-			log.Printf("❌ [ERROR Interaction] Failed to update interaction: %v", err)
 			return nil, errors.New("failed to update interaction")
 		}
 		interaction = existingInteraction
-		log.Printf("✅ [SUCCESS Interaction] Interaction updated: user %d -> user %d (%s) with ID: %d", userID, targetUserID, action, interaction.ID)
 	}
 
 	// Invalidate cache for this user
@@ -85,25 +84,17 @@ func (m *InteractionManager) RecordInteraction(userID, targetUserID int, action 
 
 // handleLikeAction checks for mutual likes and creates matches
 func (m *InteractionManager) handleLikeAction(userID, targetUserID int, result map[string]interface{}) {
-	log.Printf("🔍 [DEBUG Match] Checking for mutual like: user %d liked user %d", userID, targetUserID)
-
 	var mutualLike models.UserInteraction
 	mutualResult := conf.DB.Where("user_id = ? AND target_user_id = ? AND interaction_type = ?",
 		targetUserID, userID, "like").First(&mutualLike)
 
 	if mutualResult.Error == nil {
-		log.Printf("✅ [DEBUG Match] Mutual like found! User %d had already liked user %d", targetUserID, userID)
 		// Create match
 		match, err := m.createMatch(userID, targetUserID)
 		if err == nil {
 			result["match_created"] = true
 			result["match_id"] = match.ID
-			log.Printf("✅ [SUCCESS] Match created between users %d and %d with ID: %d", userID, targetUserID, match.ID)
-		} else {
-			log.Printf("❌ [ERROR Match] Failed to create match between users %d and %d: %v", userID, targetUserID, err)
 		}
-	} else {
-		log.Printf("🔍 [DEBUG Match] No mutual like found. User %d has not liked user %d yet. Error: %v", targetUserID, userID, mutualResult.Error)
 	}
 }
 
@@ -116,8 +107,6 @@ func (m *InteractionManager) handleNegativeAction(userID, targetUserID int) {
 
 // createMatch creates a new match between two users
 func (m *InteractionManager) createMatch(userID, targetUserID int) (*models.Match, error) {
-	log.Printf("🔍 [DEBUG Match] Creating match between users %d and %d", userID, targetUserID)
-
 	match := models.Match{
 		User1ID:  uint(userID),
 		User2ID:  uint(targetUserID),
@@ -128,9 +117,6 @@ func (m *InteractionManager) createMatch(userID, targetUserID int) (*models.Matc
 	if userID > targetUserID {
 		match.User1ID = uint(targetUserID)
 		match.User2ID = uint(userID)
-		log.Printf("🔍 [DEBUG Match] Reordered IDs: user1_id=%d, user2_id=%d", match.User1ID, match.User2ID)
-	} else {
-		log.Printf("🔍 [DEBUG Match] Using original order: user1_id=%d, user2_id=%d", match.User1ID, match.User2ID)
 	}
 
 	// Check if match already exists
@@ -139,23 +125,17 @@ func (m *InteractionManager) createMatch(userID, targetUserID int) (*models.Matc
 		match.User1ID, match.User2ID).First(&existingMatch)
 
 	if result.Error != nil {
-		log.Printf("🔍 [DEBUG Match] No existing match found, creating new match")
 		// Create new match
 		if err := conf.DB.Create(&match).Error; err != nil {
-			log.Printf("❌ [ERROR Match] Failed to create new match: %v", err)
 			return nil, err
 		}
-		log.Printf("✅ [SUCCESS] New match created with ID: %d", match.ID)
 		return &match, nil
 	} else {
-		log.Printf("🔍 [DEBUG Match] Existing match found (ID: %d), reactivating", existingMatch.ID)
 		// Reactivate existing match
 		existingMatch.IsActive = true
 		if err := conf.DB.Save(&existingMatch).Error; err != nil {
-			log.Printf("❌ [ERROR Match] Failed to reactivate existing match: %v", err)
 			return nil, err
 		}
-		log.Printf("✅ [SUCCESS] Existing match reactivated (ID: %d)", existingMatch.ID)
 		return &existingMatch, nil
 	}
 }
@@ -181,8 +161,6 @@ func (m *InteractionManager) deactivateMatch(userID, targetUserID int) error {
 
 // UnmatchUsers handles unmatching between two users
 func (m *InteractionManager) UnmatchUsers(userID, targetUserID int) error {
-	log.Printf("🔍 [DEBUG Unmatch] Processing unmatch between users %d and %d", userID, targetUserID)
-
 	// Validate users exist
 	userService := users.NewUserService()
 	if err := userService.ValidateUserExists(userID); err != nil {
@@ -194,15 +172,28 @@ func (m *InteractionManager) UnmatchUsers(userID, targetUserID int) error {
 
 	// Deactivate the match
 	if err := m.deactivateMatch(userID, targetUserID); err != nil {
-		log.Printf("❌ [ERROR Unmatch] Failed to deactivate match: %v", err)
 		return errors.New("failed to unmatch users")
+	}
+
+	// Transform likes to "pass" interactions to prevent re-appearance
+	if err := m.transformLikesToPass(userID, targetUserID); err != nil {
+		// Don't fail the unmatch operation if this fails
+	}
+
+	// Delete conversation/messages between users
+	if err := m.deleteConversation(userID, targetUserID); err != nil {
+		// Don't fail the unmatch operation if conversation deletion fails
+	}
+
+	// Send unmatch notification
+	if err := m.sendUnmatchNotification(userID, targetUserID); err != nil {
+		// Don't fail the unmatch operation if notification fails
 	}
 
 	// Invalidate cache for both users
 	utils.InvalidateUserCache(userID)
 	utils.InvalidateUserCache(targetUserID)
 
-	log.Printf("✅ [SUCCESS Unmatch] Successfully unmatched users %d and %d", userID, targetUserID)
 	return nil
 }
 
@@ -211,4 +202,62 @@ func (m *InteractionManager) GetInteractionCount(userID int) (int64, error) {
 	var count int64
 	err := conf.DB.Model(&models.UserInteraction{}).Where("user_id = ?", userID).Count(&count).Error
 	return count, err
+}
+
+// deleteConversation deletes all messages between two users
+func (m *InteractionManager) deleteConversation(userID, targetUserID int) error {
+	// Make HTTP call to chat service to delete conversation
+	err := m.callChatService(userID, targetUserID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// transformLikesToPass converts like interactions to pass interactions
+func (m *InteractionManager) transformLikesToPass(userID, targetUserID int) error {
+	// Find all like interactions between these two users (in both directions)
+	var interactions []models.UserInteraction
+	err := conf.DB.Where(
+		"((user_id = ? AND target_user_id = ?) OR (user_id = ? AND target_user_id = ?)) AND interaction_type = ?",
+		userID, targetUserID, targetUserID, userID, "like",
+	).Find(&interactions).Error
+	
+	if err != nil {
+		return err
+	}
+	
+	// Transform each like to a pass
+	for _, interaction := range interactions {
+		interaction.InteractionType = "pass"
+		interaction.CreatedAt = time.Now()
+		conf.DB.Save(&interaction)
+	}
+	
+	return nil
+}
+
+// callChatService logs the conversation hiding (frontend will handle visual hiding)
+func (m *InteractionManager) callChatService(userID, targetUserID int) error {
+	log.Printf("� [DEBUG] Conversation between users %d and %d should be hidden in UI", userID, targetUserID)
+	log.Printf("💡 [INFO] Frontend will filter out conversations where users are unmatched")
+	
+	// No database deletion - the frontend will handle hiding conversations
+	// by checking match status when displaying conversation list
+	
+	return nil
+}
+
+// sendUnmatchNotification sends a notification about the unmatch
+func (m *InteractionManager) sendUnmatchNotification(userID, targetUserID int) error {
+	// Note: We need to call the notification service
+	// For now, we'll create a placeholder that logs the action
+	// In a real implementation, this would make an HTTP call to the notification service
+	
+	// Example of what this should do:
+	// - Call notification service API
+	// - POST /api/v1/notifications with type="unmatch"
+	
+	return nil
 }

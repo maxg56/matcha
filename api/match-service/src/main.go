@@ -61,7 +61,11 @@ func main() {
 			matches.DELETE("/seen", handlers.ResetSeenProfilesHandler)
 		}
 
-
+		// Test routes (no auth required - for debugging)
+		test := api.Group("/test")
+		{
+			test.POST("/unmatch", handlers.TestUnmatchHandler)
+		}
 	}
 
 	log.Println("Match service starting on port 8003")

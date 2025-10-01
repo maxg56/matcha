@@ -164,6 +164,35 @@ export function useMessagesData() {
     }
   };
 
+  // Filtre les conversations en vérifiant que les utilisateurs sont toujours matchés
+  const filterActiveConversations = async (conversations: Conversation[]): Promise<Conversation[]> => {
+    try {
+      // Récupérer les matches actifs pour filtrer les conversations
+      const matchesData = await matchService.getMatches();
+      const activeMatchUserIds = new Set(
+        matchesData.matches?.map((match: any) => 
+          match.id || match.target_user_id || match.user_id
+        ).filter(Boolean) || []
+      );
+
+      // Filtrer les conversations où l'utilisateur est encore matché
+      const activeConversations = conversations.filter(conv => 
+        activeMatchUserIds.has(conv.other_user.id)
+      );
+
+      const filteredCount = conversations.length - activeConversations.length;
+      if (filteredCount > 0) {
+        console.log(`🙈 Filtered out ${filteredCount} conversations from unmatched users`);
+      }
+
+      return activeConversations;
+    } catch (error) {
+      console.warn('Failed to filter conversations by match status, showing all:', error);
+      // En cas d'erreur, retourner toutes les conversations pour éviter de cacher du contenu
+      return conversations;
+    }
+  };
+
   const loadMatches = async (): Promise<{ matches: Match[]; count: number; user_id: number }> => {
     try {
       const response = await matchService.getMatches();
@@ -256,6 +285,7 @@ export function useMessagesData() {
 
       const uiMatches: UIMatch[] = [];
 
+
       // 1. Transformer toutes les conversations (elles seront automatiquement catégorisées)
       if (conversationsData.length > 0) {
         const transformedConversations = await Promise.all(
@@ -265,12 +295,12 @@ export function useMessagesData() {
         console.log('Transformed conversations:', transformedConversations.length);
       }
 
-      // 2. Identifier les utilisateurs qui ont déjà des conversations (pour éviter les doublons)
+      // 3. Identifier les utilisateurs qui ont déjà des conversations actives (pour éviter les doublons)
       const userIdsWithConversations = new Set(
-        conversationsData.map(conv => conv.other_user?.id).filter(Boolean)
+        activeConversations.map(conv => conv.other_user?.id).filter(Boolean)
       );
 
-      // 3. Traiter les matches qui n'ont PAS encore de conversation
+      // 4. Traiter les matches qui n'ont PAS encore de conversation
       const matchesWithoutConversations = await processMatchesWithoutConversations(matchesData, userIdsWithConversations);
       uiMatches.push(...matchesWithoutConversations);
 

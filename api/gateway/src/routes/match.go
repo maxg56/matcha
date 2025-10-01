@@ -24,6 +24,7 @@ func SetupMatchRoutes(r *gin.Engine) {
 		match.POST("/like", proxy.ProxyRequest("match", "/api/v1/matches/like"))
 		match.POST("/unlike", proxy.ProxyRequest("match", "/api/v1/matches/unlike"))
 		match.POST("/block", proxy.ProxyRequest("match", "/api/v1/matches/block"))
+		match.POST("/unmatch", proxy.ProxyRequest("match", "/api/v1/matches/unmatch"))
 		match.GET("/received-likes", proxy.ProxyRequest("match", "/api/v1/matches/received-likes"))
 	}
 

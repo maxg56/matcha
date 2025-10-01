@@ -12,6 +12,7 @@ type ChatRepository interface {
 	GetConversation(conversationID uint) (*models.Discussion, error)
 	CreateConversation(user1ID, user2ID uint) (*models.Discussion, error)
 	FindConversationBetweenUsers(user1ID, user2ID uint) (*models.Discussion, error)
+	DeleteConversation(conversationID uint) error
 	IsUserInConversation(userID, conversationID uint) (bool, error)
 	GetConversationParticipants(conversationID uint) ([]uint, error)
 	UpdateLastMessage(conversationID uint, content string) error
@@ -82,6 +83,7 @@ type ChatService interface {
 	GetUserConversations(userID uint) (*ConversationListResponse, error)
 	GetConversation(userID, conversationID uint) (*ConversationResponse, error)
 	CreateConversation(user1ID, user2ID uint) (*models.Discussion, error)
+	DeleteConversation(userID, targetUserID uint) error
 	
 	// Message methods
 	GetMessages(userID, conversationID uint, limit, offset int) ([]models.Message, error)
