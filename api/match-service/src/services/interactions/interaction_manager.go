@@ -11,13 +11,8 @@ import (
 	"match-service/src/services/users"
 )
 
-// InteractionManager handles user interactions and match // callChatService logs the conversation hiding (frontend will handle visual hiding)
-func (m *InteractionManager) callChatService(userID, targetUserID int) error {
-	// No database deletion - the frontend will handle hiding conversations
-	// by checking match status when displaying conversation list
-	
-	return nil
-}ype InteractionManager struct {}
+// InteractionManager handles user interactions and match management
+type InteractionManager struct {}
 
 // NewInteractionManager creates a new InteractionManager instance
 func NewInteractionManager() *InteractionManager {
