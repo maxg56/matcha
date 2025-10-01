@@ -18,7 +18,6 @@ import { SettingItem, SettingSection, PremiumSection } from '@/components/settin
 import { locationService } from '@/services/locationService';
 import { userService } from '@/services/userService';
 import { useAuthStore } from '@/stores/authStore';
-import { useAuth } from '@/hooks';
 import {useNavigate } from 'react-router-dom';
 
 
@@ -121,14 +120,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-    }
-  };
 
   return (
     <div className="p-4 space-y-6">
