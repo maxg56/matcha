@@ -150,7 +150,7 @@ func UnmatchHandler(c *gin.Context) {
 		utils.RespondError(c, "Cannot unmatch yourself", http.StatusBadRequest)
 		return
 	}
-
+	
 	// Use the interaction manager to handle the unmatch
 	interactionManager := services.NewInteractionManager()
 	err := interactionManager.UnmatchUsers(userID, req.TargetUserID)
