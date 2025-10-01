@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { chatApi } from '@/services/chatApi';
 import { matchService } from '@/services/matchService';
+import { useChatStore } from '@/stores/chatStore';
 import type { Conversation } from '@/types/chat';
 import type { Match, UserProfile } from '@/services/matchService';
 
@@ -19,6 +20,7 @@ export interface UIConversation {
   matchedAt: string;
   commonInterests: string[];
   isNew: boolean;
+  isOnline: boolean;
   type: 'conversation';
 }
 
@@ -37,6 +39,7 @@ export interface UINewMatch {
   matchedAt: string;
   commonInterests: string[];
   isNew: boolean;
+  isOnline: boolean;
   type: 'new_match';
 }
 
@@ -61,14 +64,25 @@ function formatTimestamp(date: Date): string {
     return date.toLocaleDateString('fr-FR');
   }
 }
+async function fetchUserProfile(userId: number): boolean {
+  try {
+    const presenceData = await chatApi.getUserPresence(userId);
+    return presenceData.is_online;
+  } catch (error) {
+    console.warn('Failed to get user presence for user', userId, error);
+    return false;
+  }
+}
 
 // Transforme une conversation en UIConversation ou UINewMatch selon qu'elle contient des messages
-function transformConversationToUI(conversation: Conversation): UIConversation | UINewMatch {
+async function transformConversationToUI(conversation: Conversation): Promise<UIConversation | UINewMatch> {
   const otherUser = conversation.other_user;
   const lastMessageDate = conversation.last_message_at ? new Date(conversation.last_message_at) : null;
   const createdDate = new Date(conversation.created_at);
   const hasMessages = Boolean(conversation.last_message && conversation.last_message.trim());
 
+  // Récupérer le statut de présence de l'utilisateur
+  let isOnline = await fetchUserProfile(otherUser.id);
   // Construire le nom complet à partir de first_name et last_name
   const displayName = `${otherUser.first_name} ${otherUser.last_name}`.trim() || otherUser.username;
 
@@ -82,7 +96,8 @@ function transformConversationToUI(conversation: Conversation): UIConversation |
     images: otherUser.avatar ? [otherUser.avatar] : undefined,
     matchedAt: formatTimestamp(createdDate),
     commonInterests: [],
-    isNew: !hasMessages
+    isNew: !hasMessages,
+    isOnline
   };
 
   // Si la conversation a des messages, c'est une conversation active
@@ -108,7 +123,9 @@ function transformConversationToUI(conversation: Conversation): UIConversation |
   } as UINewMatch;
 }
 
-function transformMatchToUINewMatch(userId: number, profile: UserProfile): UINewMatch {
+async function transformMatchToUINewMatch(userId: number, profile: UserProfile): Promise<UINewMatch> {
+  // Récupérer le statut de présence de l'utilisateur
+  let isOnline = await fetchUserProfile(userId);
   return {
     id: `match_${userId}`, // Préfixe pour éviter les conflits avec les conversations
     userId: userId,
@@ -124,6 +141,7 @@ function transformMatchToUINewMatch(userId: number, profile: UserProfile): UINew
     matchedAt: formatTimestamp(new Date()),
     commonInterests: [],
     isNew: true,
+    isOnline,
     type: 'new_match'
   };
 }
@@ -133,6 +151,7 @@ export function useMessagesData() {
   const [matches, setMatches] = useState<UIMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { conversations: storeConversations } = useChatStore();
 
   const loadConversations = async (): Promise<Conversation[]> => {
     try {
@@ -156,6 +175,28 @@ export function useMessagesData() {
     }
   };
 
+  // Fonction pour mettre à jour uniquement le statut de présence
+  const updatePresenceStatus = useCallback(async () => {
+    if (matches.length === 0) return;
+
+    const updatedMatches = await Promise.all(
+      matches.map(async (match) => {
+        try {
+          let isOnline = await fetchUserProfile(match.userId);
+          return {
+            ...match,
+            isOnline
+          };
+        } catch (error) {
+          console.warn('Failed to update presence for user', match.userId, error);
+          return match; // Garder l'ancien statut en cas d'erreur
+        }
+      })
+    );
+
+    setMatches(updatedMatches);
+  }, [matches]);
+
   // Traite les matches qui n'ont PAS de conversation existante
   const processMatchesWithoutConversations = async (matchesData: { matches: Match[] }, userIdsWithConversations: Set<number>): Promise<UINewMatch[]> => {
     const newMatches: UINewMatch[] = [];
@@ -172,7 +213,7 @@ export function useMessagesData() {
 
       try {
         const profile = await matchService.getUserProfile(matchUserId);
-        const uiMatch = transformMatchToUINewMatch(matchUserId, profile);
+        const uiMatch = await transformMatchToUINewMatch(matchUserId, profile);
         newMatches.push(uiMatch);
       } catch (error) {
         console.error('Failed to load profile for match:', matchUserId, error);
@@ -196,7 +237,9 @@ export function useMessagesData() {
 
       // 1. Transformer toutes les conversations (elles seront automatiquement catégorisées)
       if (conversationsData.length > 0) {
-        const transformedConversations = conversationsData.map(transformConversationToUI);
+        const transformedConversations = await Promise.all(
+          conversationsData.map(conversation => transformConversationToUI(conversation))
+        );
         uiMatches.push(...transformedConversations);
         console.log('Transformed conversations:', transformedConversations.length);
       }
@@ -247,6 +290,7 @@ export function useMessagesData() {
         matchedAt: formatTimestamp(new Date(conversationResponse.created_at)),
         commonInterests: match.commonInterests,
         isNew: true, // Nouvelle conversation sans messages
+        isOnline: match.isOnline,
         type: 'conversation'
       };
 
@@ -276,7 +320,26 @@ export function useMessagesData() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    
+    updatePresenceStatus();
+  }, [loadData, updatePresenceStatus]);
+
+  // Écouter les mises à jour de présence du chatStore et synchroniser avec les matches locaux
+  useEffect(() => {
+    setMatches(prevMatches =>
+      prevMatches.map(match => {
+        // Chercher la conversation correspondante dans le chatStore
+        const storeConversation = storeConversations.find(conv => conv.user.id === match.userId);
+        if (storeConversation) {
+          return {
+            ...match,
+            isOnline: storeConversation.user.is_online
+          };
+        }
+        return match;
+      })
+    );
+  }, [storeConversations]);
 
   // Séparation intelligente :
   // - Nouveaux matchs = tous les éléments de type 'new_match' (incluant les conversations vides)
