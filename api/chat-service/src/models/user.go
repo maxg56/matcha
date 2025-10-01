@@ -7,17 +7,17 @@ import (
 
 // User maps to table `users`
 type Users struct {
-	ID           uint          `gorm:"primaryKey;column:id" json:"id"`
-	Username     string        `gorm:"column:username;uniqueIndex;not null" json:"username"`
-	FirstName    string        `gorm:"column:first_name;not null" json:"first_name"`
-	LastName     string        `gorm:"column:last_name;not null" json:"last_name"`
+	ID            uint          `gorm:"primaryKey;column:id" json:"id"`
+	Username      string        `gorm:"column:username;type:varchar(255);uniqueIndex;not null" json:"username"`
+	FirstName     string        `gorm:"column:first_name;not null" json:"first_name"`
+	LastName      string        `gorm:"column:last_name;not null" json:"last_name"`
 	Email         string        `gorm:"column:email;uniqueIndex;not null" json:"email"`
 	EmailVerified bool          `gorm:"column:email_verified;default:false" json:"email_verified"`
 	PasswordHash  string        `gorm:"column:password_hash;not null" json:"-"`
-	BirthDate    time.Time     `gorm:"column:birth_date;not null" json:"birth_date"`
-	Age          int           `gorm:"column:age" json:"age"`
-	Height       sql.NullInt64 `gorm:"column:height" json:"height"`
-	Premium      sql.NullTime  `gorm:"column:premium;default:CURRENT_TIMESTAMP" json:"premium"`
+	BirthDate     time.Time     `gorm:"column:birth_date;not null" json:"birth_date"`
+	Age           int           `gorm:"column:age" json:"age"`
+	Height        sql.NullInt64 `gorm:"column:height" json:"height"`
+	Premium       sql.NullTime  `gorm:"column:premium;default:CURRENT_TIMESTAMP" json:"premium"`
 
 	AlcoholConsumption sql.NullString `gorm:"column:alcohol_consumption" json:"alcohol_consumption"`
 	Smoking            sql.NullString `gorm:"column:smoking" json:"smoking"`
