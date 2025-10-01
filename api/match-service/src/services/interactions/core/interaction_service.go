@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"match-service/src/conf"
 	"match-service/src/models"
