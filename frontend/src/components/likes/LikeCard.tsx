@@ -1,5 +1,6 @@
 import { Heart, Clock, MapPin, Briefcase, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { LastSeenIndicator, OnlineStatus } from '@/components/ui/LastSeenIndicator';
 import type { LikeReceived } from '@/services/matchService';
 
 interface LikeCardProps {
@@ -48,10 +49,21 @@ export function LikeCard({ like, onViewProfile, onLikeBack, onPass }: LikeCardPr
           
           {/* Informations de base */}
           <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-              {user.first_name}, {user.age}
-            </h3>
-            
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                {user.first_name}, {user.age}
+              </h3>
+              <OnlineStatus lastSeen={user.last_seen} size="sm" />
+            </div>
+
+            {/* Dernière connexion */}
+            <LastSeenIndicator
+              lastSeen={user.last_seen}
+              showIcon={false}
+              size="sm"
+              className="mb-1"
+            />
+
             {/* Date du like */}
             <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-sm">
               <Clock className="h-4 w-4" />
