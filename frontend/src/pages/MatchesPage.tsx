@@ -10,7 +10,6 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TabNavigation , type Tab} from '@/components/ui/TabNavigation';
-import { PremiumGate } from '@/components/premium/PremiumGate';
 
 
 type TabType = 'matches' | 'likes' | 'viewers' | 'viewed';
