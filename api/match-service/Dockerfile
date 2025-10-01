@@ -23,7 +23,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o match-service ./src
 
 
 # Production stage
-FROM alpine:latest
+FROM alpine:latest AS production
 RUN apk --no-cache add ca-certificates
 RUN addgroup -g 1001 -S matchservice && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G matchservice matchservice

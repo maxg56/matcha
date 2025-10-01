@@ -19,7 +19,7 @@ RUN go mod tidy && go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -o chat-service ./src
 
 # Production stage
-FROM alpine:latest
+FROM alpine:latest AS production
 RUN apk --no-cache add ca-certificates
 RUN addgroup -g 1001 -S chatservice && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G chatservice chatservice

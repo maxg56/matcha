@@ -80,7 +80,7 @@ services:
   gateway:
     build:
       context: ./api/gateway
-      target: builder
+      target: production
     environment:
       PORT: 8080
       JWT_SECRET: ${JWT_SECRET}
@@ -107,7 +107,7 @@ services:
   auth-service:
     build:
       context: ./api/auth-service
-      target: builder
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -141,7 +141,7 @@ services:
   user-service:
     build:
       context: ./api/user-service
-      target: builder
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -168,7 +168,7 @@ services:
   match-service:
     build:
       context: ./api/match-service
-      target: builder
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -197,7 +197,7 @@ services:
   chat-service:
     build:
       context: ./api/chat-service
-      target: builder
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -257,7 +257,7 @@ services:
   media-service:
     build:
       context: ./api/media-service
-      target: builder
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -284,13 +284,14 @@ services:
   paiements-service:
     build:
       context: ./api/paiements-service
-      target: builder
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-matcha_dev}
+      DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_TIMEZONE: ${DB_TIMEZONE:-UTC}
       PAIEMENTS_SERVICE_PORT: 8085
       GIN_MODE: release
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
@@ -316,7 +317,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      target: builder
+      target: production
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
       VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
@@ -356,24 +357,25 @@ services:
     cap_drop:
       - ALL
 
+
 volumes:
   postgres_data_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/data_prod
+      device: ./volumes/data
       o: bind
   redis_data_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/redis_prod
+      device: ./volumes/redis
       o: bind
   media_uploads_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/media_uploads_prod
+      device: ./volumes/media_uploads
       o: bind
   frontend_node_modules:
   caddy_data:
