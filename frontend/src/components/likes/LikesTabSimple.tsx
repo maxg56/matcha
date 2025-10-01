@@ -15,21 +15,6 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
   const [likes, setLikes] = useState<LikeReceived[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Utiliser localStorage pour persister les likes traités
-  const [processedLikeIds, setProcessedLikeIds] = useState<Set<number>>(() => {
-    const saved = localStorage.getItem('processedLikeIds');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  });
-
-  // Fonction pour mettre à jour les IDs traités et les sauvegarder
-  const markAsProcessed = (userId: number) => {
-    setProcessedLikeIds(prev => {
-      const newSet = new Set(prev).add(userId);
-      const arrayToSave = Array.from(newSet);
-      localStorage.setItem('processedLikeIds', JSON.stringify(arrayToSave));
-      return newSet;
-    });
-  };
 
   // Récupérer les likes reçus au chargement du composant
   useEffect(() => {
@@ -43,9 +28,8 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
       
       const response: ReceivedLikesResponse = await matchService.getReceivedLikes();
       
-      // Filtrer les likes auxquels on a déjà répondu
-      const filteredLikes = response.likes.filter(like => !processedLikeIds.has(like.user.id));
-      setLikes(filteredLikes);
+      // Afficher tous les likes sans filtrage côté client
+      setLikes(response.likes);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erreur lors du chargement des likes';
       setError(message);
@@ -68,15 +52,14 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
   } | null>(null);
 
   const handleViewProfile = (like: LikeReceived) => {
-
     setSelectedProfileData({
       id: like.user.id.toString(),
       name: like.user.first_name || like.user.username || 'Utilisateur',
       age: like.user.age || 25,
       images: like.user.images || [],
-      bio: like.user.bio,
-      location: like.user.current_city,
-      occupation: like.user.job,
+      bio: like.user.bio || 'Aucune bio disponible',
+      location: like.user.current_city || '',
+      occupation: like.user.job || '',
       interests: like.user.tags || []
     });
     setIsModalOpen(true);
@@ -100,9 +83,7 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
         }
       }
       
-      // Marquer ce like comme traité et le retirer de la liste
-      const userIdNumber = parseInt(profileId);
-      markAsProcessed(userIdNumber);
+      // Retirer le like de la liste immédiatement
       setLikes(currentLikes => currentLikes.filter(like => like.user.id.toString() !== profileId));
     } catch (error) {
       console.error('Erreur lors du like:', error);
@@ -113,9 +94,7 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
     try {
       await matchService.passUser(parseInt(profileId));
       
-      // Marquer ce like comme traité et le retirer de la liste
-      const userIdNumber = parseInt(profileId);
-      markAsProcessed(userIdNumber);
+      // Retirer le like de la liste immédiatement
       setLikes(currentLikes => currentLikes.filter(like => like.user.id.toString() !== profileId));
     } catch (error) {
       console.error('Erreur lors du pass:', error);
@@ -187,12 +166,12 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
           <div key={like.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border overflow-hidden hover:shadow-xl transition-shadow">
             <div className="flex items-center p-4 space-x-3">
               <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
-                {like.user.first_name.charAt(0)}
+                {(like.user.first_name || like.user.username || 'U').charAt(0)}
               </div>
               
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">
-                  {like.user.first_name}, {like.user.age}
+                  {like.user.first_name || like.user.username || 'Utilisateur'}, {like.user.age || 'N/A'}
                 </h3>
                 <div className="flex items-center gap-1 text-gray-500 text-sm">
                   <Clock className="h-4 w-4" />
@@ -221,10 +200,10 @@ export function LikesTab({ onMatchCreated }: LikesTabProps = {}) {
                 </div>
               )}
 
-              <p className="text-gray-700 text-sm">{like.user.bio}</p>
+              <p className="text-gray-700 text-sm">{like.user.bio || 'Aucune bio disponible'}</p>
 
               <div className="flex flex-wrap gap-1 mb-3">
-                {like.user.tags?.slice(0, 3).map((tag: string, index: number) => (
+                {(like.user.tags || []).slice(0, 3).map((tag: string, index: number) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {tag}
                   </Badge>

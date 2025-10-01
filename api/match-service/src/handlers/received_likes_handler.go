@@ -15,8 +15,16 @@ func GetReceivedLikesHandler(c *gin.Context) {
 	userID := c.GetInt("userID")
 
 	// Récupérer les interactions où l'utilisateur est la cible et le type est "like"
+	// mais exclure ceux avec qui on a déjà un match actif
 	var interactions []models.UserInteraction
-	err := conf.DB.Where("target_user_id = ? AND interaction_type = ?", userID, "like").
+	err := conf.DB.Where(`target_user_id = ? AND interaction_type = ? AND user_id NOT IN (
+		SELECT CASE 
+			WHEN user1_id = ? THEN user2_id 
+			ELSE user1_id 
+		END 
+		FROM matches 
+		WHERE (user1_id = ? OR user2_id = ?) AND is_active = true
+	)`, userID, "like", userID, userID, userID).
 		Order("created_at DESC").Find(&interactions).Error
 
 	if err != nil {

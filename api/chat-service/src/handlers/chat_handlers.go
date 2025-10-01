@@ -303,6 +303,39 @@ func (h *ChatHandlers) GetUserPresence(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, presence)
 }
 
+// DeleteConversation deletes a conversation between two users
+func (h *ChatHandlers) DeleteConversation(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	var req struct {
+		TargetUserID uint `json:"target_user_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+
+	err = h.chatService.DeleteConversation(userID, req.TargetUserID)
+	if err != nil {
+		if err.Error() == "access denied" {
+			utils.RespondError(c, http.StatusForbidden, "Access denied")
+			return
+		}
+		if err.Error() == "conversation not found" {
+			utils.RespondError(c, http.StatusNotFound, "Conversation not found")
+			return
+		}
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to delete conversation")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Conversation deleted successfully"})
+}
+
 // Helper methods
 func (h *ChatHandlers) parseConversationID(c *gin.Context) (uint, error) {
 	conversationIDStr := c.Param("conversationID")

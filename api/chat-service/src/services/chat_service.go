@@ -176,6 +176,35 @@ func (s *chatService) CreateConversation(user1ID, user2ID uint) (*models.Discuss
 	return s.repo.CreateConversation(user1ID, user2ID)
 }
 
+func (s *chatService) DeleteConversation(userID, targetUserID uint) error {
+	if userID == targetUserID {
+		return errors.New("cannot delete conversation with yourself")
+	}
+
+	// Find the conversation between the two users
+	conversation, err := s.repo.FindConversationBetweenUsers(userID, targetUserID)
+	if err != nil {
+		return errors.New("conversation not found")
+	}
+
+	// Verify that the requesting user is part of this conversation
+	hasAccess, err := s.repo.IsUserInConversation(userID, conversation.ID)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return errors.New("access denied")
+	}
+
+	// Delete the conversation (this will cascade delete messages due to foreign key constraints)
+	err = s.repo.DeleteConversation(conversation.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Message methods
 func (s *chatService) GetMessages(userID, conversationID uint, limit, offset int) ([]models.Message, error) {
 	// Verify access
