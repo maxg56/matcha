@@ -10,6 +10,8 @@ import (
 	"match-service/src/services/users"
 )
 
+
+
 // InteractionManager handles user interactions and match crea// callChatService logs the conversation hiding (frontend will handle visual hiding)
 func (m *InteractionManager) callChatService(userID, targetUserID int) error {
 	// No database deletion - the frontend will handle hiding conversations
