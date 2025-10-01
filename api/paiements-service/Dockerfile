@@ -1,14 +1,4 @@
 # Multi-stage build
-FROM golang:1.25-alpine AS builder
-
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY src/ ./src/
-RUN go mod tidy && go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -o paiements-service ./src
-
 # Development stage with Air (optionnel)
 FROM golang:1.25-alpine AS development
 WORKDIR /app
@@ -32,6 +22,16 @@ USER appuser
 
 EXPOSE 8085
 CMD ["air", "-c", ".air.toml"]
+
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY src/ ./src/
+RUN go mod tidy && go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -o paiements-service ./src
 
 # Production stage
 FROM alpine:latest

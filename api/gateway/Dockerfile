@@ -1,12 +1,3 @@
-# ---------- Builder stage ----------
-FROM golang:1.25-alpine AS builder
-
-WORKDIR /app
-COPY go.mod  go.sum ./
-RUN go mod download
-COPY src/ ./src/
-RUN CGO_ENABLED=0 GOOS=linux go build -o gateway ./src
-
 # ---------- Development stage ----------
 FROM golang:1.25-alpine AS development
 
@@ -18,6 +9,15 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 CMD ["air", "-c", ".air.toml"]
+
+# ---------- Builder stage ----------
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+COPY go.mod  go.sum ./
+RUN go mod download
+COPY src/ ./src/
+RUN CGO_ENABLED=0 GOOS=linux go build -o gateway ./src
 
 # ---------- Production stage ----------
 FROM alpine:latest AS production
