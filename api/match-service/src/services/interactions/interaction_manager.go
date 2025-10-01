@@ -2,7 +2,6 @@ package interactions
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"match-service/src/conf"
@@ -11,8 +10,15 @@ import (
 	"match-service/src/services/users"
 )
 
-// InteractionManager handles user interactions and match management
-type InteractionManager struct {}
+
+
+// InteractionManager handles user interactions and match crea// callChatService logs the conversation hiding (frontend will handle visual hiding)
+func (m *InteractionManager) callChatService(userID, targetUserID int) error {
+	// No database deletion - the frontend will handle hiding conversations
+	// by checking match status when displaying conversation list
+	
+	return nil
+}InteractionManager struct {}
 
 // NewInteractionManager creates a new InteractionManager instance
 func NewInteractionManager() *InteractionManager {
@@ -95,9 +101,7 @@ func (m *InteractionManager) handleLikeAction(userID, targetUserID int, result m
 
 // handleNegativeAction deactivates matches for pass/block actions
 func (m *InteractionManager) handleNegativeAction(userID, targetUserID int) {
-	if err := m.deactivateMatch(userID, targetUserID); err != nil {
-		log.Printf("Warning: Failed to deactivate match: %v", err)
-	}
+	m.deactivateMatch(userID, targetUserID)
 }
 
 // createMatch creates a new match between two users

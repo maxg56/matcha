@@ -285,11 +285,13 @@ export function useMessagesData() {
 
       const uiMatches: UIMatch[] = [];
 
+      // 1. Filtrer les conversations actives (utilisateurs toujours matchés)
+      const activeConversations = await filterActiveConversations(conversationsData);
 
-      // 1. Transformer toutes les conversations (elles seront automatiquement catégorisées)
-      if (conversationsData.length > 0) {
+      // 2. Transformer toutes les conversations actives (elles seront automatiquement catégorisées)
+      if (activeConversations.length > 0) {
         const transformedConversations = await Promise.all(
-          conversationsData.map(conversation => transformConversationToUI(conversation))
+          activeConversations.map(conversation => transformConversationToUI(conversation))
         );
         uiMatches.push(...transformedConversations);
         console.log('Transformed conversations:', transformedConversations.length);
