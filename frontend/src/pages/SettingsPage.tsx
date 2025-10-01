@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { SettingItem, SettingSection, PremiumSection } from '@/components/settings';
 import { locationService } from '@/services/locationService';
-
+import { useAuth } from '@/hooks';
+import {useNavigate } from 'react-router-dom';
 
 const mockUser = {
   premium: false
@@ -24,6 +25,8 @@ const mockUser = {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   
   const [notifications, setNotifications] = useState({
     matches: true,
@@ -72,6 +75,14 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
+  };
   return (
     <div className="p-4 space-y-6">
         {/* Notifications */}
@@ -328,7 +339,7 @@ export default function SettingsPage() {
           <SettingItem
             icon={<LogOut className="h-4 w-4" />}
             title="Se déconnecter"
-            onClick={() => {}}
+            onClick={handleLogout}
             className="text-destructive"
           />
         </SettingSection>
