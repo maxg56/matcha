@@ -6,13 +6,15 @@ RUN addgroup -g 1001 -S frontend && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G frontend frontend
 
 # Create cache directories with proper permissions
-RUN mkdir -p /app/.cache/node /app/.pnpm-store /app/node_modules/.cache && \
+RUN mkdir -p /app/.cache/node /app/.pnpm-store /app/node_modules/.cache /app/node_modules/.vite && \
     chown -R frontend:frontend /app/.cache /app/.pnpm-store
 
 COPY package.json pnpm-lock.yaml* ./
 RUN corepack enable && pnpm install --frozen-lockfile
 
 COPY --chown=frontend:frontend . .
+# Ensure all files and cache directories have correct permissions
+RUN chown -R frontend:frontend /app
 USER frontend
 EXPOSE 5173
 CMD ["pnpm", "dev", "--host", "0.0.0.0"]

@@ -64,5 +64,7 @@ export default defineConfig({
         rewrite: (path) => path
       }
     }
-  }
+  },
+  // Fix permission issues in Docker
+  cacheDir: process.env.NODE_ENV === 'production' ? '.vite' : '/tmp/.vite-cache'
 })
