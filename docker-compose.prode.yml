@@ -317,7 +317,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      target: production
+      target: development
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
       VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
