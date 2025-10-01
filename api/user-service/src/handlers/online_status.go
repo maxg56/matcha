@@ -36,6 +36,9 @@ func GetUserOnlineStatusHandler(c *gin.Context) {
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
-		"presence": presence,
+		"id":       presence.UserID,
+		"is_online": presence.IsOnline,
+		"last_seen": presence.LastSeen,
+		"last_activity": presence.LastActivity,
 	})
 }
