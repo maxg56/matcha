@@ -27,6 +27,7 @@ RUN addgroup -g 1001 -S authservice && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G authservice authservice
 WORKDIR /app
 COPY --from=builder --chown=authservice:authservice /app/auth-service .
+COPY --from=builder --chown=authservice:authservice /app/templates ./templates
 USER authservice
 EXPOSE 8001
 CMD ["./auth-service"]
