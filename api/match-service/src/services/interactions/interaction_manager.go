@@ -9,6 +9,7 @@ import (
 	"match-service/src/models"
 	"match-service/src/utils"
 	"match-service/src/services/users"
+	"match-service/src/services/notifications"
 )
 
 
@@ -246,13 +247,15 @@ func (m *InteractionManager) callChatService(userID, targetUserID int) error {
 
 // sendUnmatchNotification sends a notification about the unmatch
 func (m *InteractionManager) sendUnmatchNotification(userID, targetUserID int) error {
-	// Note: We need to call the notification service
-	// For now, we'll create a placeholder that logs the action
-	// In a real implementation, this would make an HTTP call to the notification service
-	
-	// Example of what this should do:
-	// - Call notification service API
-	// - POST /api/v1/notifications with type="unmatch"
-	
+	notificationService := notifications.NewNotificationService()
+
+	// Send notification to the target user (the one being unmatched)
+	err := notificationService.SendUnmatchNotification(targetUserID, userID)
+	if err != nil {
+		log.Printf("❌ Failed to send unmatch notification to user %d: %v", targetUserID, err)
+		return err
+	}
+
+	log.Printf("✅ Unmatch notification sent to user %d from user %d", targetUserID, userID)
 	return nil
 }

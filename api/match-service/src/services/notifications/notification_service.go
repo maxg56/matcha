@@ -17,11 +17,12 @@ type NotificationService struct {
 
 // NotificationTypes constants
 const (
-	TypeProfileView = "0" // When a user's profile is viewed
-	TypeUnlike      = "1" // When a connected user "unlikes" them
-	TypeMessage     = "2" // When a user receives a message (already implemented)
-	TypeLike        = "3" // When a user receives a "like"
+	TypeProfileView = "2" // When a user's profile is viewed
+	TypeLike        = "1" // When a user receives a "like"
+	TypeMessage     = "3" // When a user receives a message (already implemented)
 	TypeMutualLike  = "4" // When a user they "liked" likes them back (mutual match)
+	TypeUnlike      = "5" // When a connected user "unlikes" them
+	TypeUnmatch     = "1" // When a connected user "unmatches" them
 )
 
 // NotificationPayload represents the payload sent to the notification service
@@ -81,6 +82,17 @@ func (ns *NotificationService) SendUnlikeNotification(targetUserID, fromUserID i
 		ToUserID:   targetUserID,
 		NotifType:  TypeUnlike,
 		Message:    "Un utilisateur connecté ne vous like plus 💔",
+		FromUserID: fromUserID,
+	}
+	return ns.sendNotification(payload)
+}
+
+// SendUnmatchNotification sends a notification when someone unmatches a user
+func (ns *NotificationService) SendUnmatchNotification(targetUserID, fromUserID int) error {
+	payload := NotificationPayload{
+		ToUserID:   targetUserID,
+		NotifType:  TypeUnmatch,
+		Message:    "Un utilisateur a annulé votre match 💔",
 		FromUserID: fromUserID,
 	}
 	return ns.sendNotification(payload)
