@@ -111,7 +111,7 @@ func RefreshTokenHandler(c *gin.Context) {
 	}
 
 	// Issue new tokens
-	accessTTL := utils.GetDurationFromEnv("JWT_ACCESS_TTL", 15*time.Minute)
+	accessTTL := utils.GetDurationFromEnv("JWT_ACCESS_TTL", 6*time.Hour)
 	refreshTTL := utils.GetDurationFromEnv("JWT_REFRESH_TTL", 7*24*time.Hour)
 
 	now := time.Now()
