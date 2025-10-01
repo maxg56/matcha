@@ -333,7 +333,7 @@ func (c *ChatServiceClient) handleReactionUpdate(response ChatServiceResponse) {
 				conversationIDStr = fmt.Sprintf("%v", v)
 			}
 			channelName := fmt.Sprintf("chat_%s", conversationIDStr)
-
+			log.Printf("🔔 Broadcasting reaction update to channel: %s", channelName)
 			reactionData := map[string]interface{}{
 				"type": "reaction_update",
 				"timestamp": time.Now().Unix(),

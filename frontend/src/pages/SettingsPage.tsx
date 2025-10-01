@@ -18,7 +18,8 @@ import { SettingItem, SettingSection, PremiumSection } from '@/components/settin
 import { locationService } from '@/services/locationService';
 import { userService } from '@/services/userService';
 import { useAuthStore } from '@/stores/authStore';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks';
+import {useNavigate } from 'react-router-dom';
 
 
 const mockUser = {
@@ -117,6 +118,15 @@ export default function SettingsPage() {
         console.error('Erreur lors de la déconnexion:', error);
         alert("Erreur lors de la déconnexion.");
       }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
     }
   };
 
@@ -377,6 +387,7 @@ export default function SettingsPage() {
             icon={<LogOut className="h-4 w-4" />}
             title="Se déconnecter"
             description="Vous déconnecter de votre session"
+
             onClick={handleLogout}
             className="text-destructive"
           />

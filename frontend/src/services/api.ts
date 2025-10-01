@@ -16,8 +16,7 @@ class ApiService {
 
   private retryCount = 0;
   private maxRetries = 2;
-  // Délai de retry pour les futures implémentations
-  // private readonly retryDelay = 1000;
+
 
   private async makeRequest<T>(
     endpoint: string,
@@ -94,7 +93,7 @@ class ApiService {
         let errorMessage = data.error || `HTTP ${response.status}: ${response.statusText}`;
         
         // Gérer le rafraîchissement du token en cas d'erreur 401
-        if (response.status === 401 && endpoint !== '/api/v1/auth/refresh') {
+        if (response.status === 401 && endpoint !== '/api/v1/auth/refresh' && endpoint !== '/api/v1/auth/login') {
           if (this.retryCount >= this.maxRetries) {
             // Réinitialiser le compteur et déconnecter l'utilisateur
             console.warn('Max token refresh attempts reached. Logging out user.');

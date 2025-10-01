@@ -9,7 +9,17 @@ import { MatchingPreferencesModal } from '@/components/preferences';
 import { LocationPrompt } from '@/components/LocationPrompt';
 
 export default function DiscoverPage() {
-  const { currentProfile, currentCandidate, actions, loading, error, isProfileLoading } = useMatches();
+  const {
+    currentProfile,
+    currentCandidate,
+    actions,
+    loading,
+    isLoadingMore,
+    error,
+    isProfileLoading,
+    hasMoreCandidates,
+    totalCandidates
+  } = useMatches();
   const { showFilters, onOpenFilters, onCloseFilters } = useFilters();
   const { toast } = useToast();
 
@@ -144,6 +154,10 @@ export default function DiscoverPage() {
           <NoMoreProfiles
             onOpenFilters={onOpenFilters}
             onRefresh={actions.refresh}
+            onLoadMore={actions.loadMore}
+            hasMoreCandidates={hasMoreCandidates}
+            isLoadingMore={isLoadingMore}
+            totalCandidates={totalCandidates}
           />
         )}
       </div>

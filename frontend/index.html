@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/public/EmojiMatcha.png" />
+    <link rel="icon" type="image/png" href="/EmojiMatcha.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
       content="
@@ -10,13 +10,12 @@
         script-src 'self' https://js.stripe.com https://m.stripe.network;
         style-src 'self' 'unsafe-inline' data:;
         img-src 'self' data: blob: https:;
-        connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://nominatim.openstreetmap.org ws: wss:;
+        connect-src 'self' https://localhost:8443 https://api.stripe.com https://maps.googleapis.com https://nominatim.openstreetmap.org ws: wss:;
         frame-src https://*.js.stripe.com https://js.stripe.com https://hooks.stripe.com;
         object-src 'none';
         base-uri 'self';
         form-action 'self';
         frame-ancestors 'none';
-        upgrade-insecure-requests
       ">
 
     <title>Matcha</title>

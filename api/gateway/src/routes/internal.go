@@ -18,6 +18,14 @@ func SetupInternalRoutes(r *gin.Engine) {
 		websocket := internal.Group("/websocket")
 		{
 			websocket.POST("/broadcast", internalHandler.BroadcastWebSocketMessage)
+			websocket.GET("/stats", internalHandler.GetWebSocketStats)
+		}
+
+		// User online status endpoints
+		users := internal.Group("/users")
+		{
+			users.GET("/:userID/online-status", internalHandler.GetUserOnlineStatus)
+			users.POST("/online-status/bulk", internalHandler.GetMultipleUsersOnlineStatus)
 		}
 
 		// Health check interne
