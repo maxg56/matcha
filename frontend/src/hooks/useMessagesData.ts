@@ -64,7 +64,7 @@ function formatTimestamp(date: Date): string {
     return date.toLocaleDateString('fr-FR');
   }
 }
-async function fetchUserProfile(userId: number): boolean {
+async function fetchUserProfile(userId: number): Promise<boolean> {
   try {
     const presenceData = await chatApi.getUserPresence(userId);
     return presenceData.is_online;
@@ -175,27 +175,48 @@ export function useMessagesData() {
     }
   };
 
-  // Fonction pour mettre à jour uniquement le statut de présence
+  // Fonction pour mettre à jour uniquement le statut de présence (sans dépendance sur matches)
   const updatePresenceStatus = useCallback(async () => {
-    if (matches.length === 0) return;
+    setMatches(prevMatches => {
+      if (prevMatches.length === 0) return prevMatches;
 
-    const updatedMatches = await Promise.all(
-      matches.map(async (match) => {
-        try {
-          let isOnline = await fetchUserProfile(match.userId);
-          return {
-            ...match,
-            isOnline
-          };
-        } catch (error) {
-          console.warn('Failed to update presence for user', match.userId, error);
-          return match; // Garder l'ancien statut en cas d'erreur
-        }
-      })
-    );
+      // Limiter le nombre de requêtes simultanées pour éviter la surcharge
+      const maxConcurrentRequests = 5;
+      const matchesToUpdate = prevMatches.slice(0, maxConcurrentRequests);
 
-    setMatches(updatedMatches);
-  }, [matches]);
+      console.log(`Mise à jour du statut de présence pour ${matchesToUpdate.length} utilisateurs`);
+
+      // Lancer les requêtes de manière asynchrone
+      Promise.allSettled(
+        matchesToUpdate.map(async (match) => {
+          try {
+            const isOnline = await fetchUserProfile(match.userId);
+            return {
+              ...match,
+              isOnline
+            };
+          } catch (error) {
+            console.warn('Failed to update presence for user', match.userId, error);
+            return match;
+          }
+        })
+      ).then(results => {
+        setMatches(currentMatches =>
+          currentMatches.map((match, index) => {
+            if (index < matchesToUpdate.length) {
+              const result = results[index];
+              if (result.status === 'fulfilled') {
+                return result.value;
+              }
+            }
+            return match;
+          })
+        );
+      });
+
+      return prevMatches; // Retourner l'état actuel, les mises à jour se feront via le Promise
+    });
+  }, []); // Pas de dépendances pour éviter la boucle infinie
 
   // Traite les matches qui n'ont PAS de conversation existante
   const processMatchesWithoutConversations = async (matchesData: { matches: Match[] }, userIdsWithConversations: Set<number>): Promise<UINewMatch[]> => {
@@ -320,9 +341,18 @@ export function useMessagesData() {
 
   useEffect(() => {
     loadData();
-    
-    updatePresenceStatus();
-  }, [loadData, updatePresenceStatus]);
+  }, [loadData]);
+
+  // Effet séparé pour le polling de présence (sans boucle infinie)
+  useEffect(() => {
+    const presenceInterval = setInterval(() => {
+      updatePresenceStatus();
+    }, 10000); // 10 secondes
+
+    return () => {
+      clearInterval(presenceInterval);
+    };
+  }, []); // Pas de dépendances pour éviter la boucle
 
   // Écouter les mises à jour de présence du chatStore et synchroniser avec les matches locaux
   useEffect(() => {
