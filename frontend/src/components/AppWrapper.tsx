@@ -16,6 +16,7 @@ import { AuthenticatedLayout } from './layout/AuthenticatedLayout';
 import { RootRedirect } from './RootRedirect';
 import { NotificationButton } from './Notifications'
 import MapPage  from '../pages/Map';
+import NotFoundPage from '../pages/NotFoundPage';
 import { ToastContainer } from './ui/ToastContainer';
 import { useToast } from '../hooks/ui/useToast';
 
@@ -50,6 +51,8 @@ export function AppWrapper() {
             </Route>
             {/* Default redirect based on authentication status */}
             <Route path="/" element={<RootRedirect />} />
+            {/* 404 Page */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
       </BrowserRouter>
