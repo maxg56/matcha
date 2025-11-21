@@ -16,7 +16,7 @@ func ResetSeenProfilesHandler(c *gin.Context) {
 	userService := services.NewUserService()
 	err := userService.ResetSeenProfiles(userID)
 	if err != nil {
-		utils.RespondError(c, "Failed to reset seen profiles: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to reset seen profiles: "+err.Error())
 		return
 	}
 

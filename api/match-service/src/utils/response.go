@@ -21,7 +21,10 @@ func RespondSuccess(c *gin.Context, statusCode int, data interface{}) {
 	})
 }
 
-func RespondError(c *gin.Context, message string, statusCode int) {
+// RespondError sends an error JSON response
+// IMPORTANT: Parameters are ordered: context, statusCode, message
+// This matches the standardized signature in api/common/utils
+func RespondError(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, ErrorResponse{
 		Success: false,
 		Error:   message,
