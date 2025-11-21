@@ -28,7 +28,7 @@ func GetReceivedLikesHandler(c *gin.Context) {
 		Order("created_at DESC").Find(&interactions).Error
 
 	if err != nil {
-		utils.RespondError(c, "Failed to get received likes: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to get received likes: "+err.Error())
 		return
 	}
 

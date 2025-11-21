@@ -16,7 +16,7 @@ func GetUserPreferencesHandler(c *gin.Context) {
 	preferencesManager := services.NewUserPreferencesManager()
 	preferences, err := preferencesManager.GetUserMatchingPreferences(userID)
 	if err != nil {
-		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to get user preferences: "+err.Error())
 		return
 	}
 
