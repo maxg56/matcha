@@ -1,0 +1,74 @@
+package main
+
+// This is a template showing how to use the graceful shutdown package
+// Copy this pattern to your service's main.go
+
+import (
+	"log"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/maxg56/matcha/api/common/server"
+	// Import your service packages
+	// "your-service/conf"
+	// "your-service/handlers"
+)
+
+func main() {
+	// Initialize database
+	// db := conf.InitDB()
+
+	// Initialize Redis
+	// redis := conf.InitRedis()
+
+	// Setup Gin router
+	r := gin.Default()
+
+	// Register routes
+	// handlers.RegisterRoutes(r)
+
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	// Get port from environment or use default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8001"
+	}
+
+	// Configure graceful shutdown
+	config := &server.GracefulShutdownConfig{
+		ShutdownTimeout: 10 * time.Second,
+		CleanupFunc: func() error {
+			// Close database connections
+			// sqlDB, err := db.DB()
+			// if err == nil {
+			//     sqlDB.Close()
+			// }
+
+			// Close Redis connections
+			// redis.Close()
+
+			log.Println("All resources cleaned up")
+			return nil
+		},
+	}
+
+	// Start server with graceful shutdown
+	server.RunWithGracefulShutdown(":"+port, r, config)
+}
+
+/*
+Example output when server receives SIGTERM:
+
+2025-11-21 10:00:00 Server starting on :8001
+... (server running) ...
+2025-11-21 10:05:00 Received signal: terminated. Initiating graceful shutdown...
+2025-11-21 10:05:00 Shutting down HTTP server...
+2025-11-21 10:05:01 HTTP server shut down successfully
+2025-11-21 10:05:01 Running cleanup tasks...
+2025-11-21 10:05:01 All resources cleaned up
+2025-11-21 10:05:01 Cleanup completed successfully
+2025-11-21 10:05:01 Server exited gracefully
+*/
