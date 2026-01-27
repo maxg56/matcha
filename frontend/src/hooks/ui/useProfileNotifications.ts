@@ -10,7 +10,7 @@ export function useProfileNotifications() {
 
   useEffect(() => {
     const handleProfileNotification = (event: CustomEvent) => {
-      const { type, message, error } = event.detail;
+      const { type, message } = event.detail;
 
       switch (type) {
         case 'tags_error':

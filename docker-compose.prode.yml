@@ -148,6 +148,11 @@ services:
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       GIN_MODE: release
     depends_on:
       - postgres
@@ -250,7 +255,9 @@ services:
       - ALL
 
   media-service:
-    build: ./api/media-service
+    build:
+      context: ./api/media-service
+      target: production
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
@@ -278,8 +285,23 @@ services:
     build:
       context: ./api/paiements-service
       target: production
-    env_file:
-      - ./.env
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-matcha}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_TIMEZONE: ${DB_TIMEZONE:-UTC}
+      PAIEMENTS_SERVICE_PORT: 8085
+      GIN_MODE: release
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRICE_MENSUEL: ${STRIPE_PRICE_MENSUEL}
+      STRIPE_PRICE_ANNUEL: ${STRIPE_PRICE_ANNUEL}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      GATEWAY_URL: http://gateway:8080
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
     depends_on:
       - postgres
       - redis
@@ -295,10 +317,11 @@ services:
   frontend:
     build:
       context: ./frontend
-      target: production
+      target: development
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
       VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8004}
+      VITE_STRIPE_PUBLIC_KEY: ${VITE_STRIPE_PUBLIC_KEY}
     depends_on:
       - gateway
     networks:
@@ -334,24 +357,25 @@ services:
     cap_drop:
       - ALL
 
+
 volumes:
   postgres_data_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/data_prod
+      device: ./volumes/data
       o: bind
   redis_data_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/redis_prod
+      device: ./volumes/redis
       o: bind
   media_uploads_prod:
     driver: local
     driver_opts:
       type: none
-      device: ./volumes/media_uploads_prod
+      device: ./volumes/media_uploads
       o: bind
   frontend_node_modules:
   caddy_data:

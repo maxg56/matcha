@@ -119,10 +119,15 @@ export function ConversationsList({
                 className="bg-gray-50 dark:bg-gray-700 p-4 rounded-2xl hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-all duration-300 border border-gray-200 dark:border-gray-600"
               >
                 <div className="flex items-center gap-4">
-                  <Avatar className="w-14 h-14">
-                    <AvatarImage src={match.image} alt={match.name} />
-                    <AvatarFallback>{match.name[0]}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="w-14 h-14">
+                      <AvatarImage src={match.image} alt={match.name} />
+                      <AvatarFallback>{match.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-background shadow-lg ${
+                      match.isOnline ? 'bg-green-500' : 'bg-red-500'
+                    }`} />
+                  </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
@@ -148,10 +153,6 @@ export function ConversationsList({
                       ))}
                     </div>
                   </div>
-                  
-                  <div className={`w-3 h-3 rounded-full shadow-lg ${
-                    match.isOnline ? 'bg-green-500' : 'bg-red-500'
-                  }`} />
                 </div>
               </div>
             ))}

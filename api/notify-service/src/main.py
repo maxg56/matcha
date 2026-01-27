@@ -24,8 +24,7 @@ async def health_check():
 
 
 @app.get("/api/v1/notifications/get")
-async def get_notifications(authenticated_user_id: int = Depends(authenticate_http)):
-    user_id = authenticated_user_id
+async def get_notifications(user_id: int):
     conn = db_connection()
     if conn:
         cur = conn.cursor()
@@ -53,10 +52,11 @@ async def get_notifications(authenticated_user_id: int = Depends(authenticate_ht
                 except Exception as e:
                     print(f"❌ Failed to send notification to gateway: {e}")
                     manager.gateway_connection = None
-                    return {"status": "error", "message": "gateway not connected"}
+                    return {"status": "error", "message": "gateway not connected", "code": 401}
     else:
-        return {"status": "error", "message": "Database connection failed"}
-    return {"status": "ok", "user_id": user_id}
+        return {"status": "error", "message": "Database connection failed", "code": 401}
+
+    return {"status": "success", "data": {"user": {"id": user_id}}}
 
 
 @app.websocket("/ws/notifications")
@@ -89,10 +89,9 @@ async def gateway_websocket_endpoint(websocket: WebSocket):
         manager.gateway_connection = None
 
 
-@app.delete("/api/v1/notifications/delete")
-async def delete_notifications(authenticated_user_id: int = Depends(authenticate_http)):
-    manager.delete_notification(authenticated_user_id)
-    return {"status": "deleted", "user_id": authenticated_user_id}
+@app.get("/delete")
+async def delete_notifications(user_id: int):
+    manager.delete_notification(user_id)
 
 
 @app.on_event("startup")
@@ -101,7 +100,7 @@ async def startup_event():
 
 
 @app.post("/api/v1/notifications/send")
-async def send_notification(payload: dict, authenticated_user_id: int = Depends(authenticate_http)):
+async def send_notification(payload: dict):
     """
     payload attendu :
     {
@@ -112,10 +111,8 @@ async def send_notification(payload: dict, authenticated_user_id: int = Depends(
     """
     try:
         redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-
         await redis.publish("notifications", json.dumps(payload))
         await redis.close()
+        return {"status": "success", "data": payload}
     except Exception as e:
-        print(f"❌ Failed to publish notification to Redis: {e}")
-        return {"status": "error", "message": "Failed to publish notification"}
-    return {"status": "sent", "data": payload}
+        return {"status": "error", "message": str(e), "code": 401}

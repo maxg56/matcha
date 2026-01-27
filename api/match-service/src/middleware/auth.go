@@ -14,7 +14,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Get user ID from header (set by gateway)
 		userIDStr := c.GetHeader("X-User-ID")
 		if userIDStr == "" {
-			utils.RespondError(c, "User ID header missing", http.StatusUnauthorized)
+			utils.RespondError(c, http.StatusUnauthorized, "User ID header missing")
 			c.Abort()
 			return
 		}
@@ -22,7 +22,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Validate user ID
 		userID, err := strconv.Atoi(userIDStr)
 		if err != nil || userID <= 0 {
-			utils.RespondError(c, "Invalid user ID", http.StatusBadRequest)
+			utils.RespondError(c, http.StatusBadRequest, "Invalid user ID")
 			c.Abort()
 			return
 		}

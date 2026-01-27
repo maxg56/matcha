@@ -33,6 +33,7 @@ interface Profile {
   interests?: string[];
   tags?: string[]; // source pour interests
   distance?: number;
+  last_seen?: string; // Dernière connexion
   
   // Infos détaillées
   personal_opinion?: string;
@@ -148,6 +149,8 @@ export function ProfileCard({
               <ProfileHeader
                 name={normalizedProfile.name}
                 age={normalizedProfile.age}
+                lastSeen={profile.last_seen}
+                showDetailedStatus={showDetails}
               />
 
               {/* Infos essentielles seulement - localisation */}

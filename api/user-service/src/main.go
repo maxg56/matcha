@@ -15,6 +15,14 @@ func main() {
 	// Initialize database
 	conf.InitDB()
 
+	// Initialize Redis
+	if err := conf.InitRedis(); err != nil {
+		log.Printf("Warning: Failed to connect to Redis: %v", err)
+		log.Println("Some features may not work properly without Redis")
+	} else {
+		log.Println("Redis connection established successfully")
+	}
+
 	r := gin.Default()
 
 	// Health check
@@ -31,6 +39,7 @@ func main() {
 		// Public routes
 		users.GET("/profile/:id", handlers.GetProfileHandler)
 		users.GET("/:id/images", handlers.GetUserImagesHandler)
+		users.GET("/:id/online-status", handlers.GetUserOnlineStatusHandler)
 
 		// Protected routes
 		protected := users.Group("")

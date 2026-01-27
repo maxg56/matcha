@@ -23,7 +23,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   // Initialiser les handlers WebSocket quand l'utilisateur est connecté
   useEffect(() => {
     if (user?.id) {
-      console.log('Initializing WebSocket connections for user:', user.id);
+      // console.log('Initializing WebSocket connections for user:', user.id);
       
       // Initialiser le WebSocket pour le chat
       initializeWebSocket();
@@ -46,6 +46,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWebSocketContext(): WebSocketContextValue {
   const context = useContext(WebSocketContext);
   if (!context) {
@@ -55,6 +56,7 @@ export function useWebSocketContext(): WebSocketContextValue {
 }
 
 // Hook pour afficher l'état de connexion WebSocket (utile pour le debug)
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWebSocketStatus() {
   const context = useContext(WebSocketContext);
   return {

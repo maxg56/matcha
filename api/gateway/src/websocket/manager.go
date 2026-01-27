@@ -348,11 +348,39 @@ func (m *Manager) messageToBytes(message BroadcastMessage) []byte {
 func (m *Manager) GetConnectedUsers() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	users := make([]string, 0, len(m.clients))
 	for userID := range m.clients {
 		users = append(users, userID)
 	}
 	return users
+}
+
+// IsUserOnline checks if a specific user is connected via WebSocket
+func (m *Manager) IsUserOnline(userID string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	_, exists := m.clients[userID]
+	return exists
+}
+
+// GetConnectionCount returns the total number of active WebSocket connections
+func (m *Manager) GetConnectionCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return len(m.clients)
+}
+
+// GetUserConnectionInfo returns detailed connection info for a user
+func (m *Manager) GetUserConnectionInfo(userID string) (bool, time.Time) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if client, exists := m.clients[userID]; exists {
+		return true, client.GetLastPing()
+	}
+	return false, time.Time{}
 }
 

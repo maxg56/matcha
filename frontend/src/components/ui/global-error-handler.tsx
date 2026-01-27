@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { ErrorAlert } from './error-alert';
 import { X } from 'lucide-react';
 
@@ -20,6 +20,7 @@ interface GlobalErrorContextType {
 
 const GlobalErrorContext = createContext<GlobalErrorContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useGlobalError() {
   const context = useContext(GlobalErrorContext);
   if (!context) {
@@ -119,6 +120,7 @@ function GlobalErrorDisplay() {
 }
 
 // Hook utilitaire pour gérer facilement les erreurs API
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAPIError() {
   const { addError, clearErrorsByContext } = useGlobalError();
 

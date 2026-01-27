@@ -19,6 +19,14 @@ interface ProfileCardProps {
     occupation?: string;
     interests?: string[];
     distance?: number;
+    // Propriétés supplémentaires pour les détails du profil
+    height?: number;
+    education_level?: string;
+    relationship_type?: string;
+    smoking?: string;
+    alcohol_consumption?: string;
+    sport_activity?: string;
+    pets?: string;
   };
   candidate?: {
     id: number;
@@ -35,7 +43,21 @@ interface ProfileCardProps {
   className?: string;
 }
 
-export function ProfileCard({ profile, candidate, onLike, onPass, onSuperLike, onBoost, onMessage, onReport, className }: ProfileCardProps) {
+export function ProfileCard({ 
+  profile, 
+  candidate, 
+  onLike, 
+  onPass, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onSuperLike: _onSuperLike, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onBoost: _onBoost, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onMessage: _onMessage, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onReport: _onReport, 
+  className 
+}: ProfileCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const displayName = getDisplayName(profile);

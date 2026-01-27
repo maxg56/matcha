@@ -59,7 +59,7 @@ export const useNotificationStore = create<NotificationStore>()(
           ) {
             set((state) => {
               const updated = [...state.notifications, newNotification];
-              console.log("Updated notifications:", updated);
+              // console.log("Updated notifications:", updated);
               const unreadCount = updated.filter(n => !n.read).length;
               return {
                 notifications: updated,
@@ -68,10 +68,10 @@ export const useNotificationStore = create<NotificationStore>()(
               };
             });
           } else {
-            console.log("Notification ignored due to timestamp proximity", oldNotifications[oldNotifications.length - 1]?.timestamp, newNotification.timestamp);
+            // console.log("Notification ignored due to timestamp proximity", oldNotifications[oldNotifications.length - 1]?.timestamp, newNotification.timestamp);
           }
         } else {
-          console.log("Notification ignored due to wrong id", user?.id, notificationData.userId);
+          // console.log("Notification ignored due to wrong id", user?.id, notificationData.userId);
         }
       },
 

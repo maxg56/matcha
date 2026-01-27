@@ -57,6 +57,19 @@ func (r *chatRepository) CreateConversation(user1ID, user2ID uint) (*models.Disc
 	return conversation, err
 }
 
+func (r *chatRepository) DeleteConversation(conversationID uint) error {
+	// Delete the conversation - this will cascade delete messages and reactions
+	// due to foreign key constraints in the database
+	result := r.db.Delete(&models.Discussion{}, conversationID)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("conversation not found")
+	}
+	return nil
+}
+
 func (r *chatRepository) FindConversationBetweenUsers(user1ID, user2ID uint) (*models.Discussion, error) {
 	var conversation models.Discussion
 	

@@ -29,7 +29,7 @@ export function PhotosSection({ photos, isEditing = false }: PhotosSectionProps)
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
-      } catch (error) {
+      } catch {
         // Silently handle upload errors
       }
     }
@@ -73,7 +73,7 @@ export function PhotosSection({ photos, isEditing = false }: PhotosSectionProps)
           updateProfile({ images: updatedImages });
         }
       }
-    } catch (error) {
+    } catch {
       // Silently handle errors
     }
   };
@@ -101,7 +101,7 @@ export function PhotosSection({ photos, isEditing = false }: PhotosSectionProps)
       // Appel API pour sauvegarder
       const { updateProfile } = useUserStore.getState();
       updateProfile({ images: newImages });
-    } catch (error) {
+    } catch {
       // Silently handle errors
     }
   };

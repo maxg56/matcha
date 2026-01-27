@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { ErrorHandler } from '@/utils/errorHandler';
-import { PasswordValidator } from '@/utils/passwordValidator';
 
 interface LoginFormData {
   login: string; // pseudo ou email
@@ -12,6 +11,7 @@ interface LoginFormData {
 export function useLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formData, setFormData] = useState<LoginFormData>({
     login: '',
     password: ''
@@ -24,6 +24,18 @@ export function useLogin() {
     password?: string;
   }>({});
 
+  // Récupérer le message d'erreur depuis l'URL au chargement
+  useEffect(() => {
+    const errorFromUrl = searchParams.get('error');
+    if (errorFromUrl) {
+      setError(decodeURIComponent(errorFromUrl));
+      // Nettoyer l'URL après avoir récupéré l'erreur
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('error');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const validateField = (field: keyof LoginFormData, value: string): string | undefined => {
     switch (field) {
       case 'login':
@@ -35,8 +47,6 @@ export function useLogin() {
           return 'Le pseudo doit contenir au moins 3 caractères';
         }
         return undefined;
-      case 'password':
-        return PasswordValidator.validateForLogin(value);
       default:
         return undefined;
     }
@@ -45,8 +55,8 @@ export function useLogin() {
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear errors when user starts typing
-    if (error) setError('');
+    // // Clear errors when user starts typing
+    // if (error) setError('');
     
     // Real-time field validation
     const fieldError = validateField(field, value);
@@ -77,7 +87,6 @@ export function useLogin() {
     }
 
     setIsLoading(true);
-    setError('');
     setFieldErrors({});
 
     try {
@@ -85,10 +94,8 @@ export function useLogin() {
       navigate('/app/discover');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
-      const { fieldErrors: serverFieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'login');
-      
-      setFieldErrors(serverFieldErrors);
-      setError(globalError);
+      const { globalError } = ErrorHandler.parseAPIError(errorMessage, 'login');
+      navigateToLoginWithError(globalError);
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +119,11 @@ export function useLogin() {
 
   const isFormValid = !!(formData.login && formData.password);
 
+
+  const navigateToLoginWithError = (errorMessage: string) => {
+    navigate(`/connexion?error=${encodeURIComponent(errorMessage)}`);
+  };
+
   return {
     formData,
     showPassword,
@@ -125,5 +137,6 @@ export function useLogin() {
     handleForgotPassword,
     handleNavigateToSignup,
     togglePasswordVisibility,
+    navigateToLoginWithError,
   };
 }

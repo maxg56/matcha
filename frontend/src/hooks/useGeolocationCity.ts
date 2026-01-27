@@ -36,7 +36,7 @@ export function useGeolocationCity(): GeolocationCityResult {
 
       const foundCity = result.city || "Ville inconnue";
       setCity(foundCity);
-    } catch (err: any) {
+    } catch {
       // Fallback vers l'API directe en cas d'échec du backend
       try {
         const response = await fetch(
@@ -59,8 +59,9 @@ export function useGeolocationCity(): GeolocationCityResult {
           "Ville inconnue";
 
         setCity(foundCity);
-      } catch (fallbackErr: any) {
-        setError("Impossible de récupérer le nom de la ville : " + fallbackErr.message);
+      } catch (fallbackErr) {
+        const errorMessage = fallbackErr instanceof Error ? fallbackErr.message : 'Erreur inconnue';
+        setError("Impossible de récupérer le nom de la ville : " + errorMessage);
       }
     } finally {
       setLoading(false);
