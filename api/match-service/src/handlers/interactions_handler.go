@@ -18,12 +18,12 @@ func LikeUserHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if request.TargetUserID == userID {
-		utils.RespondError(c, "Cannot like yourself", http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Cannot like yourself")
 		return
 	}
 
@@ -31,17 +31,13 @@ func LikeUserHandler(c *gin.Context) {
 	matchService := services.NewMatchService()
 	result, err := matchService.LikeUser(userID, request.TargetUserID)
 	if err != nil {
-		utils.RespondError(c, "Failed to like user: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to like user: "+err.Error())
 		return
 	}
 
 	// Mark this profile as seen since user interacted with it
 	userService := services.NewUserService()
-	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
-		// Log but don't fail the request
-		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction")
 
 	utils.RespondSuccess(c, http.StatusOK, result)
 }
@@ -55,12 +51,12 @@ func UnlikeUserHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if request.TargetUserID == userID {
-		utils.RespondError(c, "Cannot unlike yourself", http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Cannot unlike yourself")
 		return
 	}
 
@@ -68,17 +64,13 @@ func UnlikeUserHandler(c *gin.Context) {
 	matchService := services.NewMatchService()
 	result, err := matchService.UnlikeUser(userID, request.TargetUserID)
 	if err != nil {
-		utils.RespondError(c, "Failed to unlike user: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to unlike user: "+err.Error())
 		return
 	}
 
 	// Mark this profile as seen since user interacted with it
 	userService := services.NewUserService()
-	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
-		// Log but don't fail the request
-		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction")
 
 	utils.RespondSuccess(c, http.StatusOK, result)
 }
@@ -92,12 +84,12 @@ func BlockUserHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if request.TargetUserID == userID {
-		utils.RespondError(c, "Cannot block yourself", http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Cannot block yourself")
 		return
 	}
 
@@ -105,17 +97,13 @@ func BlockUserHandler(c *gin.Context) {
 	matchService := services.NewMatchService()
 	result, err := matchService.BlockUser(userID, request.TargetUserID)
 	if err != nil {
-		utils.RespondError(c, "Failed to block user: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to block user: "+err.Error())
 		return
 	}
 
 	// Mark this profile as seen since user interacted with it
 	userService := services.NewUserService()
-	if err := userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction"); err != nil {
-		// Log but don't fail the request
-		utils.RespondError(c, "Warning: Failed to mark profile as seen: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	userService.MarkProfilesAsSeen(userID, []int{request.TargetUserID}, "user_interaction")
 
 	utils.RespondSuccess(c, http.StatusOK, result)
 }

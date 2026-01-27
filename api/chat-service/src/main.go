@@ -65,6 +65,7 @@ func main() {
 		chat.GET("/conversations", chatHandlers.GetUserConversations)
 		chat.GET("/conversations/:conversationID", chatHandlers.GetConversation)
 		chat.POST("/conversations", chatHandlers.CreateConversation)
+		chat.DELETE("/conversations", chatHandlers.DeleteConversation)
 
 		// Message endpoints
 		chat.GET("/conversations/:conversationID/messages", chatHandlers.GetMessages)

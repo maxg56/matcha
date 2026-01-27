@@ -8,6 +8,7 @@ import { authService } from '@/services/auth';
 import { ErrorHandler } from '@/utils/errorHandler';
 import { apiService } from '@/services/api';
 import { imageService } from '@/services/imageService';
+import { useRegistrationErrors } from '../useRegistrationErrors';
 
 /**
  * Hook contenant toute la logique métier pour l'inscription
@@ -15,6 +16,7 @@ import { imageService } from '@/services/imageService';
  */
 export function useRegistrationLogic() {
   const navigate = useNavigate();
+  const { handleCriticalError, showSuccess } = useRegistrationErrors();
   const {
     formData,
     currentStep,
@@ -84,13 +86,17 @@ export function useRegistrationLogic() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du code';
       const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
-      
+
       setErrors({ ...fieldErrors });
       setGlobalError(globalError || 'Erreur lors de l\'envoi du code de vérification');
+
+      // Show critical error toast for sending email verification
+      handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'email_verification');
+
       setLoading(false);
       throw error;
     }
-  }, [formData.email, setLoading, clearGlobalError, setErrors, setGlobalError]);
+  }, [formData.email, setLoading, clearGlobalError, setErrors, setGlobalError, handleCriticalError]);
 
   const verifyEmail = useCallback(async () => {
     setLoading(true);
@@ -110,16 +116,23 @@ export function useRegistrationLogic() {
       setCurrentStep(3);
       setErrors({});
       setLoading(false);
+
+      // Show success message
+      showSuccess('✅ Email vérifié', 'Votre email a été vérifié avec succès');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Code de vérification invalide';
       const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'registration');
-      
+
       setErrors({ ...fieldErrors });
       setGlobalError(globalError || 'Code de vérification invalide');
+
+      // Show critical error toast for email verification
+      handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'email_verification');
+
       setLoading(false);
       throw error;
     }
-  }, [formData.email, emailVerificationCode, setLoading, clearGlobalError, setEmailVerified, setCurrentStep, setErrors, setGlobalError]);
+  }, [formData.email, emailVerificationCode, setLoading, clearGlobalError, setEmailVerified, setCurrentStep, setErrors, setGlobalError, showSuccess, handleCriticalError]);
 
   // === REGISTRATION PROCESS ===
   const submitRegistration = useCallback(async () => {
@@ -175,7 +188,7 @@ export function useRegistrationLogic() {
     try {
       // 0. Vérifier l'authentification avant de commencer
       try {
-        console.log('Checking auth state before profile completion...');
+        // console.log('Checking auth state before profile completion...');
         await useAuthStore.getState().checkAuth();
         
         // Si checkAuth réussit, vérifier quand même l'état
@@ -184,10 +197,10 @@ export function useRegistrationLogic() {
           throw new Error('Not authenticated after auth check');
         }
         
-        console.log('Auth check successful:', {
-          userId: authState.user.id,
-          isAuthenticated: authState.isAuthenticated
-        });
+        // console.log('Auth check successful:', {
+        //   userId: authState.user.id,
+        //   isAuthenticated: authState.isAuthenticated
+        // });
       } catch (authError) {
         console.error('Auth check failed:', authError);
         
@@ -195,7 +208,7 @@ export function useRegistrationLogic() {
         const refreshToken = authService.getRefreshToken();
         if (refreshToken) {
           try {
-            console.log('Attempting to refresh token...');
+            // console.log('Attempting to refresh token...');
             // Utiliser le service API centralisé pour le refresh token
             const tokenData = await apiService.post<{
               access_token: string;
@@ -206,7 +219,7 @@ export function useRegistrationLogic() {
 
             // Recheck auth after refresh
             await useAuthStore.getState().checkAuth();
-            console.log('Token refresh successful');
+            // console.log('Token refresh successful');
           } catch (refreshError) {
             console.error('Token refresh failed:', refreshError);
             throw new Error('Authentication expired. Please login again.');
@@ -221,8 +234,10 @@ export function useRegistrationLogic() {
       const uploadPromises = selectedImages.map(async (imagePreview) => {
         try {
           const result = await imageService.uploadImage(imagePreview.file);
-          return result.data.image_url;
+          return result.data.url;
         } catch (error) {
+          // Show toast for image upload error
+          handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'image_upload');
           throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       });
@@ -240,12 +255,12 @@ export function useRegistrationLogic() {
       const currentUser = authState.user;
       const isAuthenticated = authState.isAuthenticated;
       
-      console.log('Auth state before profile update:', {
-        user: currentUser,
-        isAuthenticated,
-        hasToken: !!authService.getAccessToken(),
-        hasRefreshToken: !!authService.getRefreshToken()
-      });
+      // console.log('Auth state before profile update:', {
+      //   user: currentUser,
+      //   isAuthenticated,
+      //   hasToken: !!authService.getAccessToken(),
+      //   hasRefreshToken: !!authService.getRefreshToken()
+      // });
       
       if (!currentUser?.id || !isAuthenticated) {
         console.error('Authentication failed:', { currentUser, isAuthenticated });
@@ -259,12 +274,16 @@ export function useRegistrationLogic() {
         throw new Error('Authentication token not found, please login again');
       }
 
-      console.log('Attempting to update profile with payload:', profileUpdatePayload);
+      // console.log('Attempting to update profile with payload:', profileUpdatePayload);
       await useUserStore.getState().updateProfile(profileUpdatePayload);
       
       // 5. Succès - rediriger vers la page de découverte
       setSubmitting(false);
       setLoading(false);
+
+      // Show success message
+      showSuccess('🎉 Profil créé avec succès', 'Bienvenue sur Matcha ! Découvrez dès maintenant des profils compatibles.');
+
       navigate('/app/discover');
       
     } catch (error) {
@@ -288,7 +307,8 @@ export function useRegistrationLogic() {
         // Try to update profile without tags first, then handle tags separately
         try {
           const profilePayloadWithoutTags = RegistrationValidator.prepareProfilePayload(formData);
-          const { tags: _tags, ...payloadWithoutTags } = profilePayloadWithoutTags;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { tags: _ignoredTags, ...payloadWithoutTags } = profilePayloadWithoutTags;
           
           await useUserStore.getState().updateProfile(payloadWithoutTags);
           
@@ -318,15 +338,19 @@ export function useRegistrationLogic() {
       
       // Autres erreurs
       const { fieldErrors, globalError } = ErrorHandler.parseAPIError(errorMessage, 'profile');
-      
+
       setErrors(fieldErrors);
       setGlobalError(globalError);
+
+      // Show critical error toast for profile completion
+      handleCriticalError(error instanceof Error ? error : new Error(String(error)), 'profile_completion');
+
       setSubmitting(false);
       setLoading(false);
-      
+
       throw error;
     }
-  }, [isAccountCreated, selectedImages, formData, setSubmitting, setLoading, clearGlobalError, setGlobalError, setErrors]);
+  }, [isAccountCreated, selectedImages, formData, setSubmitting, setLoading, clearGlobalError, setGlobalError, setErrors, handleCriticalError, showSuccess, navigate]);
 
   return {
     // Validation

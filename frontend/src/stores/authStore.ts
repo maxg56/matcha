@@ -127,6 +127,7 @@ export const useAuthStore = create<AuthStore>()(
             }
           } catch (error) {
             console.error('Logout API call failed:', error);
+            set({ error: error instanceof Error ? error.message : 'Logout failed' });
           } finally {
             authService.clearTokens();
             set({

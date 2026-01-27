@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -25,7 +24,7 @@ func GetMatchesHandler(c *gin.Context) {
 	matchService := services.NewMatchService()
 	matches, err := matchService.GetUserMatches(userID)
 	if err != nil {
-		utils.RespondError(c, "Failed to get matches: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to get matches: "+err.Error())
 		return
 	}
 
@@ -44,7 +43,7 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 	preferencesManager := services.NewUserPreferencesManager()
 	userPreferences, err := preferencesManager.GetUserMatchingPreferences(userID)
 	if err != nil {
-		utils.RespondError(c, "Failed to get user preferences: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to get user preferences: "+err.Error())
 		return
 	}
 
@@ -86,25 +85,18 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 
 	algorithmType := c.DefaultQuery("algorithm_type", "vector_based")
 
-	log.Printf("🔍 [DEBUG] Matching request - UserID: %d, Algorithm: %s, Limit: %d, MaxDistance: %v, AgeRange: %v",
-		userID, algorithmType, limit, maxDistance, ageRange)
-
 	matchService := services.NewMatchService()
 
 	// Check if client wants only candidate IDs (default behavior now)
 	fullProfiles := c.DefaultQuery("full_profiles", "false") == "true"
-	log.Printf("🔍 [DEBUG] Full profiles requested: %t", fullProfiles)
 
 	if fullProfiles {
 		// Return full profile data (legacy behavior)
 		matches, err := matchService.RunMatchingAlgorithm(userID, algorithmType, limit, maxDistance, ageRange)
 		if err != nil {
-			log.Printf("❌ [ERROR] Full profile matching failed: %v", err)
-			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
+			utils.RespondError(c, http.StatusInternalServerError, "Failed to run matching algorithm: "+err.Error())
 			return
 		}
-
-		log.Printf("✅ [DEBUG] Full profiles found: %d matches", len(matches))
 		// Note: Profiles are no longer marked as seen here - they will be marked when user actually interacts
 
 		utils.RespondSuccess(c, http.StatusOK, gin.H{
@@ -121,14 +113,8 @@ func MatchingAlgorithmHandler(c *gin.Context) {
 		// Return only candidate IDs with scores (new default behavior)
 		candidates, err := matchService.GetMatchingCandidates(userID, algorithmType, limit, maxDistance, ageRange)
 		if err != nil {
-			log.Printf("❌ [ERROR] Candidate matching failed: %v", err)
-			utils.RespondError(c, "Failed to run matching algorithm: "+err.Error(), http.StatusInternalServerError)
+			utils.RespondError(c, http.StatusInternalServerError, "Failed to run matching algorithm: "+err.Error())
 			return
-		}
-
-		log.Printf("✅ [DEBUG] Candidates found: %d candidates", len(candidates))
-		if len(candidates) > 0 {
-			log.Printf("🔍 [DEBUG] First few candidates: %+v", candidates[:min(3, len(candidates))])
 		}
 		// Note: Profiles are no longer marked as seen here - they will be marked when user actually interacts
 
@@ -155,31 +141,72 @@ func UnmatchHandler(c *gin.Context) {
 
 	var req UnmatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.RespondError(c, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	// Validate that user is not trying to unmatch themselves
 	if userID == req.TargetUserID {
-		utils.RespondError(c, "Cannot unmatch yourself", http.StatusBadRequest)
+		utils.RespondError(c, http.StatusBadRequest, "Cannot unmatch yourself")
 		return
 	}
-
-	log.Printf("🔍 [DEBUG UnmatchHandler] User %d requesting unmatch with user %d", userID, req.TargetUserID)
-
+	
 	// Use the interaction manager to handle the unmatch
 	interactionManager := services.NewInteractionManager()
 	err := interactionManager.UnmatchUsers(userID, req.TargetUserID)
 	if err != nil {
-		log.Printf("❌ [ERROR UnmatchHandler] Failed to unmatch users %d and %d: %v", userID, req.TargetUserID, err)
-		utils.RespondError(c, "Failed to unmatch: "+err.Error(), http.StatusInternalServerError)
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to unmatch: "+err.Error())
 		return
 	}
 
-	log.Printf("✅ [SUCCESS UnmatchHandler] Successfully unmatched users %d and %d", userID, req.TargetUserID)
-
 	utils.RespondSuccess(c, http.StatusOK, gin.H{
 		"message":        "Successfully unmatched",
+		"user_id":        userID,
+		"target_user_id": req.TargetUserID,
+	})
+}
+
+// TestUnmatchHandler handles unmatch requests for testing (no auth required)
+func TestUnmatchHandler(c *gin.Context) {
+	// Get user ID from header for testing
+	userIDStr := c.GetHeader("user_id")
+	if userIDStr == "" {
+		utils.RespondError(c, http.StatusBadRequest, "Missing user_id header")
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid user_id format")
+		return
+	}
+
+	type UnmatchRequest struct {
+		TargetUserID int `json:"target_user_id" binding:"required"`
+	}
+
+	var req UnmatchRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		return
+	}
+
+	// Validate that user is not trying to unmatch themselves
+	if userID == req.TargetUserID {
+		utils.RespondError(c, http.StatusBadRequest, "Cannot unmatch yourself")
+		return
+	}
+
+	// Use the interaction manager to handle the unmatch
+	interactionManager := services.NewInteractionManager()
+	err = interactionManager.UnmatchUsers(userID, req.TargetUserID)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to unmatch: "+err.Error())
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{
+		"message":        "Successfully unmatched (test mode)",
 		"user_id":        userID,
 		"target_user_id": req.TargetUserID,
 	})

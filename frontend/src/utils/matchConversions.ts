@@ -10,6 +10,7 @@ export interface ComponentMatch {
   matchedAt: string;
   commonInterests: string[];
   isNew: boolean;
+  isOnline: boolean;
   lastMessage?: string | null;
   timestamp?: string | null;
   unread: boolean;
@@ -34,6 +35,7 @@ export function convertUIMatchToComponentMatch(uiMatch: UIMatch): ComponentMatch
     matchedAt: uiMatch.matchedAt,
     commonInterests: uiMatch.commonInterests,
     isNew: uiMatch.isNew,
+    isOnline: uiMatch.isOnline,
     unread: false, // Default value, will be overridden for conversations
   };
 

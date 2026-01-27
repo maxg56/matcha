@@ -75,9 +75,9 @@ export class PasswordValidator {
     }
 
     // Vérification des caractères spéciaux
-    if (requirements.requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+    if (requirements.requireSpecialChars && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {
       errors.push('Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&*...)');
-    } else if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+    } else if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {
       score += 15;
     }
 
@@ -162,7 +162,7 @@ export class PasswordValidator {
       suggestions.push('Ajoutez des chiffres');
     }
     
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {
       suggestions.push('Ajoutez des caractères spéciaux (!@#$%...)');
     }
 

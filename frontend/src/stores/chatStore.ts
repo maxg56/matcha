@@ -97,9 +97,6 @@ interface ChatActions {
 
 // Fonction pour adapter les données enrichies de l'API en format frontend
 const adaptConversationResponseToConversation = (response: ConversationResponse): Conversation => {
-  // Construire le nom complet à partir de first_name et last_name
-  const fullName = `${response.other_user.first_name} ${response.other_user.last_name}`.trim();
-
   return {
     id: response.id,
     user: {
@@ -182,13 +179,13 @@ export const useChatStore = create<ChatStore>()(
         try {
           const messages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
 
-          console.log('ChatStore: fetchMessages response:', {
-            conversationId,
-            messagesCount: messages.length,
-            messagesWithReactions: messages.filter(m => m.reactions && m.reactions.length > 0).length,
-            sampleMessage: messages[0],
-            allMessages: messages.map(m => ({ id: m.id, hasReactions: !!m.reactions, reactionsCount: m.reactions?.length || 0 }))
-          });
+          // console.log('ChatStore: fetchMessages response:', {
+          //   conversationId,
+          //   messagesCount: messages.length,
+          //   messagesWithReactions: messages.filter(m => m.reactions && m.reactions.length > 0).length,
+          //   sampleMessage: messages[0],
+          //   allMessages: messages.map(m => ({ id: m.id, hasReactions: !!m.reactions, reactionsCount: m.reactions?.length || 0 }))
+          // });
 
           set({
             messages: messages.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
@@ -312,7 +309,7 @@ export const useChatStore = create<ChatStore>()(
           if (message.type === MessageType.CHAT_MESSAGE) {
             // Convertir les données WebSocket au format Message
             // Fonction utilitaire pour gérer différents formats de timestamp
-            const parseTimestamp = (timestamp: any): string => {
+            const parseTimestamp = (timestamp: string | number | Date): string => {
               if (typeof timestamp === 'number') {
                 // Timestamp Unix (en secondes)
                 return new Date(timestamp * 1000).toISOString();
@@ -333,18 +330,18 @@ export const useChatStore = create<ChatStore>()(
             };
 
             const chatMessage: Partial<Message> = {
-              id: data.message_id ? parseInt(data.message_id) : Date.now(), // Use real database ID if available
-              conv_id: parseInt(data.conversation_id),
-              sender_id: parseInt(data.from_user),
-              msg: data.message,
-              time: parseTimestamp(data.timestamp),
+              id: data.message_id ? parseInt(String(data.message_id)) : Date.now(), // Use real database ID if available
+              conv_id: parseInt(String(data.conversation_id || 0)),
+              sender_id: parseInt(String(data.from_user || 0)),
+              msg: typeof data.message === 'string' ? data.message : '',
+              time: parseTimestamp(String(data.timestamp || new Date().toISOString())),
               is_read: data.read_at ? true : false
             };
             
             get().addMessage(chatMessage as Message);
           } else if (message.type === MessageType.CHAT_ACK) {
             // Accusé de réception du message envoyé
-            console.log('Message acknowledgment received:', data);
+
           }
         };
 
@@ -352,14 +349,14 @@ export const useChatStore = create<ChatStore>()(
         const connectionHandler: MessageHandler = (data) => {
           if (data.status === 'connected') {
             set({ isConnected: true });
-            console.log('Chat WebSocket connected');
+            // console.log('Chat WebSocket connected');
           }
         };
 
         // Handler pour les réactions
         const reactionHandler: MessageHandler = (data, message) => {
           if (message.type === MessageType.REACTION_UPDATE) {
-            console.log('Reaction update received:', data);
+            // console.log('Reaction update received:', data);
 
             try {
               // Extraire les données de la réaction
@@ -385,11 +382,11 @@ export const useChatStore = create<ChatStore>()(
                     const existingReaction = reactions.find(r => r.user_id === userId && r.emoji === emoji);
                     if (!existingReaction) {
                       reactions = [...reactions, {
-                        id: Math.random(), // ID temporaire
-                        message_id: messageId,
-                        user_id: userId,
-                        emoji: emoji,
-                        created_at: new Date(timestamp).toISOString()
+                        id: Math.floor(Math.random() * 1000000), // ID temporaire
+                        message_id: typeof messageId === 'number' ? messageId : parseInt(String(messageId)),
+                        user_id: typeof userId === 'number' ? userId : parseInt(String(userId)),
+                        emoji: String(emoji),
+                        created_at: new Date(typeof timestamp === 'string' ? timestamp : new Date().toISOString()).toISOString()
                       }];
                     }
                   } else if (action === 'remove') {
@@ -470,7 +467,7 @@ export const useChatStore = create<ChatStore>()(
       },
 
       sendReactionWebSocket: (messageId: number, emoji: string, action: 'add' | 'remove') => {
-        console.log('ChatStore: sendReactionWebSocket called:', { messageId, emoji, action, isConnected: webSocketService.isConnected() });
+       
 
         // Validate message ID - ensure it's a real database ID, not a temporary one
         if (!messageId || messageId <= 0) {
@@ -489,7 +486,7 @@ export const useChatStore = create<ChatStore>()(
         }
 
         if (!webSocketService.isConnected()) {
-          console.log('ChatStore: WebSocket not connected, using HTTP fallback');
+          // console.log('ChatStore: WebSocket not connected, using HTTP fallback');
           // Fallback to HTTP API
           if (action === 'add') {
             get().addReaction(messageId, emoji);
@@ -505,7 +502,7 @@ export const useChatStore = create<ChatStore>()(
           message_id: messageId,
           emoji
         };
-        console.log('ChatStore: Sending WebSocket reaction message:', message);
+        // console.log('ChatStore: Sending WebSocket reaction message:', message);
         webSocketService.sendMessage(message);
       },
 

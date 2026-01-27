@@ -1,4 +1,5 @@
 import { HeightSlider } from '../HeightSlider';
+import { ErrorAlert } from '@/components/ui/error-alert';
 import type { RegistrationData, FieldValidationErrors } from '@/types/registration';
 
 interface BasicInfoStepProps {
@@ -7,7 +8,7 @@ interface BasicInfoStepProps {
   updateField: <K extends keyof RegistrationData>(field: K, value: RegistrationData[K]) => void;
 }
 
-export function BasicInfoStep({ formData, updateField }: BasicInfoStepProps) {
+export function BasicInfoStep({ formData, errors, updateField }: BasicInfoStepProps) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -17,12 +18,19 @@ export function BasicInfoStep({ formData, updateField }: BasicInfoStepProps) {
         </p>
       </div>
 
+      {/* Affichage des erreurs de géolocalisation ou de ville */}
+      {errors.currentCity && (
+        <ErrorAlert error={errors.currentCity} />
+      )}
+
       <HeightSlider
         label="Taille"
         value={formData.height}
         onChange={(value) => updateField('height', value)}
         currentCity={formData.currentCity}
         onCityChange={(city) => updateField('currentCity', city)}
+        error={errors.currentCity}
+        helpText="Votre taille et votre ville nous aident à vous proposer des profils compatibles dans votre région."
       />
     </div>
   );

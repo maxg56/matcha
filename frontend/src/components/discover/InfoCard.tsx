@@ -3,7 +3,7 @@ import { formatValue, type FormatType } from '../../utils/profileFormatting';
 interface InfoCardProps {
   icon: string;
   label: string;
-  value: any;
+  value: string | number | boolean | null | undefined;
   formatType?: FormatType;
 }
 

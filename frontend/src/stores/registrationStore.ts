@@ -123,7 +123,8 @@ export const useRegistrationStore = create<RegistrationStore>()(
         set({ emailVerificationCode });
         if (emailVerificationCode.length > 0) {
           set(state => {
-            const { emailVerificationCode, ...restErrors } = state.errors;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { emailVerificationCode: _ignored, ...restErrors } = state.errors;
             return { errors: restErrors, globalError: '' };
           });
         }

@@ -12,7 +12,7 @@ export class SubscriptionService {
     this.subscriptions.add(channel);
     return this.sendMessage({
       type: MessageType.SUBSCRIBE,
-      data: channel
+      data: { channel }
     });
   }
 
@@ -20,7 +20,7 @@ export class SubscriptionService {
     this.subscriptions.delete(channel);
     return this.sendMessage({
       type: MessageType.UNSUBSCRIBE,
-      data: channel
+      data: { channel }
     });
   }
 
@@ -28,7 +28,7 @@ export class SubscriptionService {
     this.subscriptions.forEach(channel => {
       this.sendMessage({
         type: MessageType.SUBSCRIBE,
-        data: channel
+        data: { channel }
       });
     });
   }

@@ -1,18 +1,21 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Crown, Zap, Star } from 'lucide-react';
 import { SettingSection } from './SettingSection';
 import { SettingItem } from './SettingItem';
-import PremiumModal from './PremiumModal';
+import { useNavigate } from 'react-router-dom';
 
 interface PremiumSectionProps {
   isPremium: boolean;
 }
 
 export function PremiumSection({ isPremium }: PremiumSectionProps) {
-  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (isPremium) return null;
+
+  const handleNavigateToPremium = () => {
+    navigate('/app/premium');
+  };
 
   return (
     <SettingSection title="Premium">
@@ -27,7 +30,7 @@ export function PremiumSection({ isPremium }: PremiumSectionProps) {
           </p>
           <Button
             className="bg-white/20 hover:bg-white/30 text-white border-white/30 shadow-lg transition-colors"
-            onClick={() => setOpen(true)}
+            onClick={handleNavigateToPremium}
           >
             Découvrir Premium
           </Button>
@@ -38,17 +41,15 @@ export function PremiumSection({ isPremium }: PremiumSectionProps) {
         icon={<Zap className="h-4 w-4" />}
         title="Boost"
         description="Soyez vu par plus de personnes"
-        onClick={() => {}}
+        onClick={handleNavigateToPremium}
       />
 
       <SettingItem
         icon={<Star className="h-4 w-4" />}
         title="Super Likes"
         description="Montrez votre intérêt spécial"
-        onClick={() => {}}
+        onClick={handleNavigateToPremium}
       />
-
-      {open && <PremiumModal onClose={() => setOpen(false)} />}
     </SettingSection>
   );
 }

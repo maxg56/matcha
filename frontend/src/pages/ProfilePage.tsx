@@ -47,7 +47,17 @@ export default function ProfilePage() {
 
           <div className="space-y-4">
             {profile && <ProfileBasicInfo user={profile} />}
-            <ProfileBio bio={profile?.bio || ''} user={profile} photos={profile?.images || []} />
+            {profile && (
+              <ProfileBio 
+                bio={profile.bio || ''} 
+                user={profile as any} 
+                photos={(profile.images || []).map((url, index) => ({
+                  id: index,
+                  url,
+                  description: `Photo ${index + 1}`
+                }))} 
+              />
+            )}
             {profile && <ProfileSections user={profile} />}
             {profile?.tags && <ProfileInterests interests={profile?.tags} />}
           </div>
