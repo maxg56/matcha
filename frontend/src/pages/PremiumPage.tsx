@@ -225,22 +225,6 @@ export default function PremiumPage() {
               </div>
             </div>
           </div>
-
-          {/* Subscription Management */}
-          <div className="text-center">
-            <div className="bg-gradient-to-r from-purple-600/30 to-indigo-600/30 backdrop-blur-sm border border-purple-400/30 rounded-2xl p-8 max-w-md mx-auto">
-              <h3 className="text-xl font-bold text-white mb-4">Gérer votre abonnement</h3>
-              <p className="text-purple-100 mb-6">
-                Plan actuel: <span className="font-bold text-yellow-400">{currentSubscription?.planType || 'Premium'}</span>
-              </p>
-              <Button
-                onClick={() => window.open('/settings', '_self')}
-                className="bg-gradient-to-r from-yellow-400 to-pink-400 hover:from-yellow-500 hover:to-pink-500 text-black font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105"
-              >
-                Paramètres d'abonnement
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     );

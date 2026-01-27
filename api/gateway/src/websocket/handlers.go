@@ -250,21 +250,41 @@ func HandleNotificationMessage(msg Message, userID, token string) {
 
 // HandleSubscription manages user subscriptions to different channels
 func HandleSubscription(msg Message, userID string) {
-	channel, ok := msg.Data.(string)
-	if !ok {
+	// Log the actual data received for debugging
+	LogMessage(userID, "subscription_debug", "data_type:", fmt.Sprintf("%T", msg.Data), "data_value:", msg.Data)
+
+	// Handle different data formats
+	var channel string
+	var ok bool
+
+	// Try direct string cast first
+	if channel, ok = msg.Data.(string); ok {
+		// Data is already a string, use it directly
+	} else if dataMap, isMap := msg.Data.(map[string]any); isMap {
+		// Data is a map, try to extract channel from it
+		if channelValue, exists := dataMap["channel"]; exists {
+			if channelStr, isString := channelValue.(string); isString {
+				channel = channelStr
+				ok = true
+			}
+		}
+	}
+
+	if !ok || channel == "" {
+		LogError(userID, "subscription_data_error", fmt.Errorf("data_type: %T, data_value: %v", msg.Data, msg.Data))
 		SendErrorToUser(userID, "invalid_subscription_data", "Channel name must be a string")
 		return
 	}
-	
+
 	// Validate channel name format
 	if !isValidChannelName(channel) {
 		SendErrorToUser(userID, "invalid_channel_name", "Invalid channel name format")
 		return
 	}
-	
+
 	LogSubscription(userID, channel, "subscribe")
 	GlobalManager.SubscribeToChannel(userID, channel)
-	
+
 	// Send confirmation
 	GlobalManager.SendToUser(userID, string(MessageTypeSubscriptionAck), map[string]any{
 		"channel": channel,
@@ -275,19 +295,40 @@ func HandleSubscription(msg Message, userID string) {
 
 // HandleUnsubscription manages user unsubscriptions from channels
 func HandleUnsubscription(msg Message, userID string) {
-	channel, ok := msg.Data.(string)
-	if !ok {
+	// Log the actual data received for debugging
+	LogMessage(userID, "unsubscription_debug", "data_type:", fmt.Sprintf("%T", msg.Data), "data_value:", msg.Data)
+
+	// Handle different data formats
+	var channel string
+	var ok bool
+
+	// Try direct string cast first
+	if channel, ok = msg.Data.(string); ok {
+		// Data is already a string, use it directly
+	} else if dataMap, isMap := msg.Data.(map[string]any); isMap {
+		// Data is a map, try to extract channel from it
+		if channelValue, exists := dataMap["channel"]; exists {
+			if channelStr, isString := channelValue.(string); isString {
+				channel = channelStr
+				ok = true
+			}
+		}
+	}
+
+	if !ok || channel == "" {
+		LogError(userID, "unsubscription_data_error", fmt.Errorf("data_type: %T, data_value: %v", msg.Data, msg.Data))
 		SendErrorToUser(userID, "invalid_unsubscription_data", "Channel name must be a string")
 		return
 	}
-	
+
+	LogSubscription(userID, channel, "unsubscribe")
 	GlobalManager.UnsubscribeFromChannel(userID, channel)
-	
+
 	// Send confirmation
 	GlobalManager.SendToUser(userID, "unsubscription_ack", map[string]any{
 		"channel": channel,
 		"status": "unsubscribed",
-		"timestamp": time.Now(),
+		"timestamp": time.Now().Unix(),
 	})
 }
 

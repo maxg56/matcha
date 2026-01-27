@@ -161,6 +161,12 @@ services:
       DB_NAME: ${DB_NAME:-matcha}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: 6379
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-false}
       GIN_MODE: debug
     volumes:
       - ./api/user-service/src:/app/src
@@ -169,6 +175,7 @@ services:
       - ./api/user-service/.air.toml:/app/.air.toml
     depends_on:
       - postgres
+      - redis
     networks:
       - DB
       - backend

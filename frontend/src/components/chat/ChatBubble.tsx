@@ -48,7 +48,7 @@ export function ChatBubble({ message, className }: ChatBubbleProps) {
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    console.log('ChatBubble: Emoji selected:', emoji);
+    // console.log('ChatBubble: Emoji selected:', emoji);
     // Envoyer la réaction via WebSocket
     // (La logique d'envoi doit être implémentée dans le store ou le service approprié)
   };

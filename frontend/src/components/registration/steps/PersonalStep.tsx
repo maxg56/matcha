@@ -19,7 +19,6 @@ export function PersonalStep({ formData, errors, updateField }: PersonalStepProp
         value={formData.bio}
         onChange={(value) => updateField('bio', value)}
         placeholder="Parlez-nous de vous..."
-        error={errors.bio}
       />
 
         <InputField

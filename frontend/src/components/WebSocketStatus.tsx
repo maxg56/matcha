@@ -1,4 +1,3 @@
-import React from 'react';
 import { useWebSocketStatus, useWebSocketContext } from '@/contexts/WebSocketContext';
 
 export function WebSocketStatus() {

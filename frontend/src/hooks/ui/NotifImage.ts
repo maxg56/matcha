@@ -23,13 +23,13 @@ export function Notification() {
 
     // Handler pour traiter les notifications reçues
     const notificationHandler: MessageHandler = (data, message) => {
-        console.log("Notification received:", data, message);
+        // console.log("Notification received:", data, message);
         
         // Traiter les différents types de notifications WebSocket
         if (message?.type === 'notification_received') {
             // Message venant du gateway
             const notifData = data;
-            console.log("Processing notification_received:", notifData);
+            // console.log("Processing notification_received:", notifData);
             
             // Convertir le type de notification numérique en string
             let notifType = 'message';
@@ -55,23 +55,28 @@ export function Notification() {
             
             addNotification({
                 type: notifType as 'like' | 'match' | 'message' | 'visit' | 'unlike',
-                message: notifData.message || 'New notification',
-                userId: notifData.to_user_id || notifData.from_user_id,
-                db: notifData.db || false,
+                message: typeof notifData.message === 'string' ? notifData.message : 'New notification',
+                userId: typeof notifData.to_user_id === 'number' ? notifData.to_user_id 
+                       : typeof notifData.from_user_id === 'number' ? notifData.from_user_id 
+                       : undefined,
+                db: typeof notifData.db === 'boolean' ? notifData.db : false,
             });
             setSeen(false); // Marquer comme non vu
         } else if (data.type === 'notification_event') {
             // Ancien format pour compatibilité
+            const notificationType = typeof data.notificationType === 'string' ? data.notificationType : 'message';
+            const validTypes: Array<'like' | 'match' | 'message' | 'visit' | 'unlike'> = ['like', 'match', 'message', 'visit', 'unlike'];
+            
             addNotification({
-                type: data.notificationType || 'message',
-                message: data.message || 'New notification',
-                userId: data.userId,
+                type: validTypes.includes(notificationType as any) ? notificationType as 'like' | 'match' | 'message' | 'visit' | 'unlike' : 'message',
+                message: typeof data.message === 'string' ? data.message : 'New notification',
+                userId: typeof data.userId === 'number' ? data.userId : undefined,
             });
         }
     };
 
     useEffect(() => {
-        console.log("Notification hook mounted", user?.id, token);
+        // console.log("Notification hook mounted", user?.id, token);
         // Ne crée pas de WebSocket si l'utilisateur n'est pas authentifié
         if (!user?.id || !token) {
             return;
@@ -100,7 +105,7 @@ export function Notification() {
         try {
             // Utiliser le service API centralisé
             const data = await apiService.get(`/api/v1/notifications/delete?user_id=${user.id}`);
-            console.log("Réponse backend:", data);
+            // console.log("Réponse backend:", data);
         } catch (error) {
             console.error("Failed to clear notifications:", error);
         }

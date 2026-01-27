@@ -16,7 +16,7 @@ class ApiService {
 
   private retryCount = 0;
   private maxRetries = 2;
-  private readonly retryDelay = 1000; // 1 seconde
+
 
   private async makeRequest<T>(
     endpoint: string,
@@ -48,19 +48,19 @@ class ApiService {
     };
 
     try {
-      console.log(`Making request to: ${url}`, { config });
+      // console.log(`Making request to: ${url}`, { config });
       const response = await fetch(url, config);
       
       // Log response details
-      console.log(`Response status: ${response.status}`, {
-        ok: response.ok,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
+      // console.log(`Response status: ${response.status}`, {
+      //   ok: response.ok,
+      //   statusText: response.statusText,
+      //   headers: Object.fromEntries(response.headers.entries())
+      // });
 
       // Get response text first to handle both JSON and non-JSON responses
       const responseText = await response.text();
-      console.log('Raw response text:', responseText.substring(0, 500));
+      // console.log('Raw response text:', responseText.substring(0, 500));
 
       // Check if response is actually JSON
       const contentType = response.headers.get('content-type');
@@ -93,7 +93,7 @@ class ApiService {
         let errorMessage = data.error || `HTTP ${response.status}: ${response.statusText}`;
         
         // Gérer le rafraîchissement du token en cas d'erreur 401
-        if (response.status === 401 && endpoint !== '/api/v1/auth/refresh') {
+        if (response.status === 401 && endpoint !== '/api/v1/auth/refresh' && endpoint !== '/api/v1/auth/login') {
           if (this.retryCount >= this.maxRetries) {
             // Réinitialiser le compteur et déconnecter l'utilisateur
             console.warn('Max token refresh attempts reached. Logging out user.');
@@ -103,7 +103,7 @@ class ApiService {
             errorMessage = 'Votre session a expiré. Veuillez vous reconnecter.';
             throw new Error(errorMessage);
           }
-          console.log('Attempting to refresh token...');
+          // console.log('Attempting to refresh token...');
           try {
             this.retryCount++;
             
@@ -136,7 +136,7 @@ class ApiService {
                 throw new Error('Refresh token invalid');
               }
             }
-          } catch (refreshError) {
+          } catch {
             // Si le refresh échoue, on déconnecte l'utilisateur
             this.retryCount = 0;
             localStorage.removeItem('accessToken');
@@ -161,8 +161,6 @@ class ApiService {
         console.error('API business logic error:', data);
         throw new Error(data.error || 'API request failed');
       }
-
-      console.log('API request successful:', data);
       return data.data!;
     } catch (error) {
       console.error('API request failed:', { url, error });

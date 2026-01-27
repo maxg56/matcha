@@ -33,7 +33,7 @@ export class NotificationService {
   private subscribe(channel: string): boolean {
     return this.sendMessage({
       type: MessageType.SUBSCRIBE,
-      data: channel
+      data: { channel }
     });
   }
 }

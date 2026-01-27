@@ -20,6 +20,7 @@ func SetupChatRoutes(r *gin.Engine) {
 		chat.GET("/conversations", proxy.ProxyRequest("chat", "/api/v1/chat/conversations"))
 		chat.GET("/conversations/:id", proxy.ProxyRequest("chat", "/api/v1/chat/conversations/:id"))
 		chat.POST("/conversations", proxy.ProxyRequest("chat", "/api/v1/chat/conversations"))
+		chat.DELETE("/conversations", proxy.ProxyRequest("chat", "/api/v1/chat/conversations"))
 		chat.PUT("/conversations/:id/read", proxy.ProxyRequest("chat", "/api/v1/chat/conversations/:id/read"))
 
 		// Message endpoints
