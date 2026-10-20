@@ -81,3 +81,10 @@ dist/
 # Coverage
 coverage/
 .nyc_output/
+
+# Compiled Go binaries (build via Docker / go build, never commit)
+api/media-service/main
+api/match-service/src/src
+api/*/src/src
+api/*/main
+api/*/tmp/
