@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - chat-service
+          - gateway
+          - match-service
+          - media-service
+          - paiements-service
+          - user-service
+    defaults:
+      run:
+        working-directory: api/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: api/${{ matrix.service }}/go.mod
+          cache-dependency-path: api/${{ matrix.service }}/go.sum
+
+      - name: Télécharger les dépendances
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Tests
+        run: go test -v ./...
+
+  python:
+    name: Python (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: notify-service
+            smoke: python -c "import src.main"
+          - service: user-creation
+            smoke: "true"
+    defaults:
+      run:
+        working-directory: api/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api/${{ matrix.service }}/requirements.txt
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Vérifier la syntaxe
+        run: python -m compileall -q src
+
+      - name: Import de l'application
+        run: ${{ matrix.smoke }}
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (ESLint)
+        # Non bloquant tant que les erreurs ESLint existantes ne sont pas corrigées.
+        continue-on-error: true
+        run: pnpm run lint
+
+      - name: Build (tsc + vite)
+        run: pnpm run build

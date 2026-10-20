@@ -4,6 +4,7 @@
 
 **Une application de rencontres moderne construite avec une architecture microservices**
 
+[![CI](https://github.com/maxg56/matcha/actions/workflows/ci.yml/badge.svg)](https://github.com/maxg56/matcha/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg)](https://golang.org/)
