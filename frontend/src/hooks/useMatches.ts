@@ -37,21 +37,6 @@ export function useMatches(initialParams: MatchingAlgorithmParams = {}) {
   const paramsStringRef = useRef<string>('');
   const isUnmountedRef = useRef(false);
 
-  // Fonction utilitaire pour réinitialiser l'état
-  const resetState = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      candidates: [],
-      profiles: new Map(),
-      currentIndex: 0,
-      loading: true,
-      isLoadingMore: false,
-      error: null,
-      hasMoreCandidates: true,
-      currentOffset: 0,
-    }));
-  }, []);
-
   // Fonction pour charger les profils utilisateur
   const loadUserProfile = useCallback(async (userId: number) => {
     // Éviter les chargements doublons

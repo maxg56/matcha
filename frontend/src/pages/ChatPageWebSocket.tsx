@@ -4,7 +4,6 @@ import { TopBar } from '@/components/layout/TopBar';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { WebSocketStatus } from '@/components/WebSocketStatus';
 import { useChatStore, type Message } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useWebSocketChat } from '@/hooks/useWebSocketConnection';
@@ -97,7 +96,7 @@ export default function ChatPageWebSocket() {
 
   // Handler pour les messages WebSocket entrants
   useEffect(() => {
-    const chatHandler = (data: unknown, message: { type: string }) => {
+    const chatHandler = (_data: unknown, message: { type: string }) => {
       if (message.type === 'chat_message') {
         // console.log('Nouveau message WebSocket reçu:', data);
         // Le message sera automatiquement ajouté au store via chatStore

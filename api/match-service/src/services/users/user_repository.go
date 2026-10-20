@@ -19,6 +19,9 @@ func NewUserRepository() *UserRepository {
 
 // ValidateUserExists checks if a user exists in the database
 func (r *UserRepository) ValidateUserExists(userID int) error {
+	if conf.DB == nil {
+		return errors.New("database not initialized")
+	}
 	var user models.User
 	result := conf.DB.First(&user, userID)
 	if result.Error != nil {

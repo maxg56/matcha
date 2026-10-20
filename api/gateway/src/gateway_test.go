@@ -51,6 +51,7 @@ func TestCORS_NoOrigin_WildcardNoCredentials(t *testing.T) {
 }
 
 func TestCORS_WithOrigin_EchoAndCredentials(t *testing.T) {
+	t.Setenv("ALLOWED_ORIGINS", "http://example.com")
 	r := setupTestRouter()
 	r.GET("/", func(c *gin.Context) { c.String(200, "ok") })
 
@@ -64,6 +65,24 @@ func TestCORS_WithOrigin_EchoAndCredentials(t *testing.T) {
 	}
 	if got := w.Header().Get("Access-Control-Allow-Credentials"); got != "true" {
 		t.Fatalf("expected credentials true when Origin present")
+	}
+}
+
+func TestCORS_DisallowedOrigin_Rejected(t *testing.T) {
+	t.Setenv("ALLOWED_ORIGINS", "http://example.com")
+	r := setupTestRouter()
+	r.GET("/", func(c *gin.Context) { c.String(200, "ok") })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Origin", "http://evil.com")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "null" {
+		t.Fatalf("expected 'null' for disallowed origin, got %q", got)
+	}
+	if got := w.Header().Get("Access-Control-Allow-Credentials"); got == "true" {
+		t.Fatalf("expected credentials disabled for disallowed origin")
 	}
 }
 

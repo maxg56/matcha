@@ -104,7 +104,7 @@ export function Notification() {
         clearAll();
         try {
             // Utiliser le service API centralisé
-            const data = await apiService.get(`/api/v1/notifications/delete?user_id=${user.id}`);
+            await apiService.get(`/api/v1/notifications/delete?user_id=${user.id}`);
             // console.log("Réponse backend:", data);
         } catch (error) {
             console.error("Failed to clear notifications:", error);
