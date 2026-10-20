@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"chat-service/src/models"
+	"chat-service/src/types"
 	"testing"
 	"time"
 )
@@ -57,6 +58,54 @@ func (m *mockChatRepository) MarkMessagesAsRead(conversationID, userID uint) err
 
 func (m *mockChatRepository) GetUnreadCount(conversationID, userID uint) (int64, error) {
 	return 0, nil
+}
+
+func (m *mockChatRepository) DeleteConversation(conversationID uint) error {
+	return nil
+}
+
+func (m *mockChatRepository) GetUserInfo(userID uint) (*types.UserInfo, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) GetUsersInfo(userIDs []uint) (map[uint]*types.UserInfo, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) GetMessage(messageID uint) (*models.Message, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) AddReaction(messageID, userID uint, emoji string) (*models.MessageReaction, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) RemoveReaction(messageID, userID uint, emoji string) error {
+	return nil
+}
+
+func (m *mockChatRepository) GetMessageReactions(messageID uint) ([]models.MessageReaction, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) GetReactionsSummary(messageIDs []uint, currentUserID uint) (map[uint]models.ReactionSummary, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) UpdateUserPresence(userID uint, isOnline bool) error {
+	return nil
+}
+
+func (m *mockChatRepository) GetUserPresence(userID uint) (*models.UserPresence, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) GetUsersPresence(userIDs []uint) ([]models.UserPresence, error) {
+	return nil, nil
+}
+
+func (m *mockChatRepository) SetUserOffline(userID uint) error {
+	return nil
 }
 
 func TestHubGetConversationParticipants(t *testing.T) {
