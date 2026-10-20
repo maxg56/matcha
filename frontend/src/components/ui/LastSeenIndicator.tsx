@@ -1,4 +1,3 @@
-import React from 'react';
 import { Circle } from 'lucide-react';
 import { formatLastSeen, getLastSeenColor, isUserOnline } from '@/utils/dateUtils';
 
@@ -68,13 +67,14 @@ export function OnlineStatus({ lastSeen, className = '', size = 'md' }: OnlineSt
   };
 
   return (
-    <Circle
-      className={`${iconSizes[size]} ${className} ${
-        isOnline
-          ? 'text-green-500 fill-green-500'
-          : 'text-gray-400 fill-gray-400'
-      }`}
-      title={isOnline ? 'En ligne' : 'Hors ligne'}
-    />
+    <span title={isOnline ? 'En ligne' : 'Hors ligne'}>
+      <Circle
+        className={`${iconSizes[size]} ${className} ${
+          isOnline
+            ? 'text-green-500 fill-green-500'
+            : 'text-gray-400 fill-gray-400'
+        }`}
+      />
+    </span>
   );
 }

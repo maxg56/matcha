@@ -58,7 +58,7 @@ class WebSocketService {
     }
   }
 
-  private handleClose(event: CloseEvent): void {
+  private handleClose(_event: CloseEvent): void {
     // console.log('WebSocket: Connection closed', event);
     // La reconnexion est gérée par WebSocketConnection
   }

@@ -10,7 +10,6 @@ export class WebSocketConnection {
   private pingInterval: NodeJS.Timeout | null = null;
   private lastPongReceived = Date.now();
   private connectionHealth = { healthy: true, lastCheck: Date.now() };
-  private connectionAttemptTimestamp = 0;
 
   constructor(config: WebSocketConfig = {}) {
     this.config = {
@@ -69,7 +68,6 @@ export class WebSocketConnection {
 
     this.isConnecting = true;
     this.isAuthenticated = true;
-    this.connectionAttemptTimestamp = Date.now();
 
     try {
       const url = this.getWebSocketURL();
@@ -83,9 +81,7 @@ export class WebSocketConnection {
 
         this.ws!.onopen = () => {
           clearTimeout(timeout);
-          const connectionTime = Date.now() - this.connectionAttemptTimestamp;
           // console.log('WebSocket: Connected successfully', {
-          //   connectionTime: `${connectionTime}ms`,
           //   attempt: this.reconnectAttempts + 1
           // });
           this.reconnectAttempts = 0;
